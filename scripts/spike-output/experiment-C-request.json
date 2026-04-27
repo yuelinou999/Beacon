@@ -1,0 +1,10 @@
+{
+  "model": "gemma4:e2b",
+  "messages": [
+    {
+      "role": "user",
+      "content": "You are analyzing a student's learning history to build a portrait of who they are as a learner. Given their data below, produce a short narrative (2-3 paragraphs) describing: (1) their interests and what they choose to spend time on, (2) how they behave under difficulty, (3) their independence trend over time, and (4) their dominant learning style. Write in second person. Be specific to this student's data, not generic.\n\nSTUDENT DATA (raw JSON):\n{\n  \"student_id\": \"local_001\",\n  \"language\": \"en\",\n  \"current_unit\": \"unit_6_equations\",\n  \"topics\": {\n    \"what_is_variable\": { \"mastery\": 0.0, \"attempts\": 0, \"last_seen\": null },\n    \"expressions_vs_equations\": { \"mastery\": 0.0, \"attempts\": 0, \"last_seen\": null },\n    \"solving_one_step\": { \"mastery\": 0.0, \"attempts\": 0, \"last_seen\": null },\n    \"inverse_operations\": { \"mastery\": 0.0, \"attempts\": 0, \"last_seen\": null },\n    \"solving_two_step\": { \"mastery\": 0.0, \"attempts\": 0, \"last_seen\": null },\n    \"variables_both_sides\": { \"mastery\": 0.0, \"attempts\": 0, \"last_seen\": null },\n    \"equation_word_problems\": { \"mastery\": 0.0, \"attempts\": 0, \"last_seen\": null }\n  },\n  \"wrong_answers\": []\n}\n"
+    }
+  ],
+  "stream": false
+}
