@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { useAIContext } from "@/components/ai-context";
@@ -11,6 +11,7 @@ import InsightCards from "./_components/insight-cards";
 import ProfileCards from "./_components/profile-cards";
 import SuggestionsCard from "./_components/suggestions-card";
 import QuickFacts from "./_components/quick-facts";
+import ThinkingTrace from "./_components/thinking-trace";
 
 type DashboardState =
   | { status: "loading" }
@@ -26,35 +27,32 @@ export default function DashboardPage() {
     setContext({ page: "general" });
   }, [setContext]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/portrait", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: "{}",
-        });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
-        }
-        const data = (await res.json()) as PortraitResponse;
-        if (!cancelled) setState({ status: "ready", data });
-      } catch (err) {
-        if (!cancelled) {
-          setState({
-            status: "error",
-            message:
-              err instanceof Error ? err.message : "Unknown fetch error",
-          });
-        }
+  const loadPortrait = useCallback(async () => {
+    setState({ status: "loading" });
+    try {
+      const res = await fetch("/api/portrait", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+      const data = (await res.json()) as PortraitResponse;
+      setState({ status: "ready", data });
+    } catch (err) {
+      setState({
+        status: "error",
+        message:
+          err instanceof Error ? err.message : "Unknown fetch error",
+      });
+    }
   }, []);
+
+  useEffect(() => {
+    loadPortrait();
+  }, [loadPortrait]);
 
   return (
     <div className="h-full overflow-y-auto bg-gray-50">
@@ -90,7 +88,9 @@ export default function DashboardPage() {
             <PortraitCard
               portrait={state.data.portrait}
               viewMode={viewMode}
+              onRegenerate={loadPortrait}
             />
+            <ThinkingTrace thinking={state.data.thinking} />
             <InsightCards
               portrait={state.data.portrait}
               viewMode={viewMode}
@@ -109,13 +109,26 @@ export default function DashboardPage() {
 }
 
 function LoadingCard() {
+  const lines = [
+    "Reading your learning patterns…",
+    "Comparing across subjects…",
+    "Looking for what makes you unique…",
+    "Writing your portrait…",
+  ];
   return (
     <section className="rounded-xl bg-white border border-gray-200 border-l-[3px] border-l-blue-600 p-8 mb-8">
-      <p className="text-sm text-gray-500">
-        <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse mr-2 align-middle" />
-        Generating your portrait — Gemma 4 is thinking locally. This usually
-        takes 20–30 seconds.
-      </p>
+      <ul className="space-y-3">
+        {lines.map((line, i) => (
+          <li
+            key={i}
+            className="flex items-center gap-3 text-sm text-gray-600 animate-pulse"
+            style={{ animationDelay: `${i * 150}ms` }}
+          >
+            <span className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin shrink-0" />
+            <span>{line}</span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

@@ -134,7 +134,8 @@ function ShellInner({ children }: { children: React.ReactNode }) {
   const studentName = typeof window !== "undefined" ? getStudentName() : "";
   const subtitle = pathname === "/" && studentName ? `Welcome back, ${studentName}` : undefined;
 
-  const centerHidden = expanded === "panel";
+  const aiPanelHidden = pathname === "/dashboard";
+  const centerHidden = expanded === "panel" && !aiPanelHidden;
 
   return (
     <div className="flex h-screen bg-surface">
@@ -172,8 +173,8 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        {/* AI panel — always visible on all pages */}
-        <AIPanel />
+        {/* AI panel — hidden on /dashboard (full-width design) */}
+        {!aiPanelHidden && <AIPanel />}
       </div>
 
       <SettingsModal

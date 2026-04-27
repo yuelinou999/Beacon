@@ -107,7 +107,7 @@ function WhereTimeGoesCard({
           {insight.observation}
         </p>
       )}
-      {footer && (
+      {hasBreakdown && footer && (
         <p className="mt-3 text-center text-[11px] text-gray-500 leading-relaxed">
           {footer}
         </p>
@@ -152,7 +152,7 @@ function WhenThingsGetHardCard({
           {insight.observation}
         </p>
       )}
-      {footer && (
+      {hasPatterns && footer && (
         <p className="mt-3 text-center text-[11px] text-gray-500 leading-relaxed">
           {footer}
         </p>

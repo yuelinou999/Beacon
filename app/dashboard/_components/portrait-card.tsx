@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { RefreshCw, Sparkles } from "lucide-react";
 import type { PortraitBody } from "@/lib/portrait";
 import type { ViewMode } from "./view-toggle";
 
 interface PortraitCardProps {
   portrait: PortraitBody;
   viewMode: ViewMode;
+  onRegenerate?: () => void;
 }
 
 // Take the first sentence-ish chunk of a longer narrative for the
@@ -73,6 +74,7 @@ function buildCompressedLines(
 export default function PortraitCard({
   portrait,
   viewMode,
+  onRegenerate,
 }: PortraitCardProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -156,10 +158,15 @@ export default function PortraitCard({
       <div className="mt-8 pt-5 border-t border-gray-100 flex items-center justify-between">
         <button
           type="button"
-          disabled
-          className="rounded-lg border border-gray-200 bg-gray-50 text-gray-400 text-xs font-medium px-3.5 py-1.5 cursor-not-allowed"
-          title="Regenerate is wired in D3c"
+          onClick={onRegenerate}
+          disabled={!onRegenerate}
+          className={
+            onRegenerate
+              ? "rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium px-3.5 py-1.5 inline-flex items-center gap-1.5 transition"
+              : "rounded-lg border border-gray-200 bg-gray-50 text-gray-400 text-xs font-medium px-3.5 py-1.5 cursor-not-allowed inline-flex items-center gap-1.5"
+          }
         >
+          <RefreshCw className="w-3 h-3" />
           Regenerate portrait
         </button>
         <span className="text-[11px] text-gray-400">
