@@ -7,18 +7,58 @@ import type { OllamaMessage, StudentProfile } from "@/lib/types";
 export type Confidence = "high" | "medium" | "low";
 export type TrendDirection = "rising" | "falling" | "stable";
 
+// ── New visualization-data types (D3-pre, all optional in PortraitBody) ──
+
+export interface SubjectTimeBreakdown {
+  subject: string;
+  percentage: number;
+}
+
+export interface DifficultyBehaviorPattern {
+  trigger: string;
+  reaction: string;
+}
+
+export interface ModalityScore {
+  modality: string;
+  score: number;
+}
+
+export interface EmergingPattern {
+  trend: TrendDirection;
+  description: string;
+}
+
+export interface PortraitMetadata {
+  interaction_count: number;
+  session_count: number;
+  updated_label: string;
+}
+
+// ── Insight shapes ──────────────────────────────────────────
+
 export interface PortraitInsight {
   observation: string;
   evidence: string;
 }
 
+export interface PortraitInsightWithBreakdown extends PortraitInsight {
+  breakdown?: SubjectTimeBreakdown[];
+}
+
+export interface PortraitInsightWithBehaviorPattern extends PortraitInsight {
+  behavior_pattern?: DifficultyBehaviorPattern[];
+}
+
 export interface PortraitInsightWithDirection extends PortraitInsight {
   direction: TrendDirection;
+  weekly_values?: number[];
 }
 
 export interface PortraitProfileCard {
   label: string;
   description: string;
+  modality_scores?: ModalityScore[];
 }
 
 export interface PortraitSuggestion {
@@ -37,13 +77,13 @@ export interface PortraitBody {
     analytical: string;
   };
   insights: {
-    where_time_goes: PortraitInsight;
-    under_difficulty: PortraitInsight;
+    where_time_goes: PortraitInsightWithBreakdown;
+    under_difficulty: PortraitInsightWithBehaviorPattern;
     independence_trend: PortraitInsightWithDirection;
   };
   profile: {
     learning_style: PortraitProfileCard;
-    interests: PortraitProfileCard;
+    emerging_patterns?: EmergingPattern[];
   };
   suggestions: PortraitSuggestion[];
   quick_facts: PortraitQuickFact[];
@@ -51,6 +91,7 @@ export interface PortraitBody {
     level: Confidence;
     reason: string;
   };
+  metadata?: PortraitMetadata;
 }
 
 export interface PortraitResponse {
@@ -91,13 +132,26 @@ const SCHEMA_DESCRIPTION = `{
     "analytical": "string — 3rd person, clinical tone, ~3-4 sentences. (\\"This student ...\\")"
   },
   "insights": {
-    "where_time_goes":     { "observation": "string ≤2 sentences", "evidence": "string ≤2 sentences citing specific data points" },
-    "under_difficulty":    { "observation": "string ≤2 sentences", "evidence": "string ≤2 sentences" },
-    "independence_trend":  { "observation": "string ≤2 sentences", "evidence": "string ≤2 sentences", "direction": "rising | falling | stable" }
+    "where_time_goes": {
+      "observation": "string ≤2 sentences",
+      "evidence":    "string ≤2 sentences citing specific data points",
+      "breakdown":   /* OPTIONAL */ [ { "subject": "Math", "percentage": 70 }, { "subject": "Science", "percentage": 20 }, { "subject": "English", "percentage": 10 } ]
+    },
+    "under_difficulty": {
+      "observation":       "string ≤2 sentences",
+      "evidence":          "string ≤2 sentences",
+      "behavior_pattern":  /* OPTIONAL */ [ { "trigger": "After 1 mistake", "reaction": "Speeds up" } ]
+    },
+    "independence_trend": {
+      "observation":    "string ≤2 sentences",
+      "evidence":       "string ≤2 sentences",
+      "direction":      "rising | falling | stable",
+      "weekly_values":  /* OPTIONAL */ [ 30, 45, 55, 70 ]   /* exactly 4 numbers, 0-100, oldest → newest */
+    }
   },
   "profile": {
-    "learning_style": { "label": "short label, e.g. 'procedural' or 'exploratory'", "description": "1-2 sentence description" },
-    "interests":      { "label": "short label", "description": "1-2 sentence description" }
+    "learning_style":    { "label": "short label, e.g. 'procedural' or 'exploratory'", "description": "1-2 sentence description", "modality_scores": /* OPTIONAL */ [ { "modality": "Try it yourself", "score": 80 }, { "modality": "Guided examples", "score": 60 }, { "modality": "Next-day review", "score": 40 }, { "modality": "Long explanations", "score": 20 } ] },
+    "emerging_patterns": /* OPTIONAL */ [ { "trend": "rising | falling | stable", "description": "1 sentence" } ]   /* 0-3 items; replaces the older 'interests' field */
   },
   "suggestions": [
     { "suggestion": "specific action", "rationale": "why, citing data" }
@@ -110,7 +164,8 @@ const SCHEMA_DESCRIPTION = `{
   "confidence": {
     "level": "high | medium | low",
     "reason": "string — why this level"
-  }
+  },
+  "metadata": { "interaction_count": 0, "session_count": 0, "updated_label": "today | yesterday | 3 days ago | just now" }   /* ALWAYS emit */
 }`;
 
 export function buildPortraitPrompt(profile: StudentProfile): {
@@ -141,6 +196,28 @@ export function buildPortraitPrompt(profile: StudentProfile): {
     "use the most neutral allowed value (e.g. direction: \"stable\", " +
     "level: \"low\") and explain the uncertainty in the corresponding " +
     "reason or evidence field.\n\n" +
+    "OPTIONAL FIELDS — emit each only if the data supports it. Omit the " +
+    "field entirely (do not emit a placeholder) when the condition is not " +
+    "met. The validator handles missing optional fields gracefully.\n" +
+    "- breakdown (insights.where_time_goes.breakdown): emit only when the " +
+    "profile shows at least 2 distinct subjects with measurable time. For a " +
+    "math-only profile, OMIT.\n" +
+    "- behavior_pattern (insights.under_difficulty.behavior_pattern): emit " +
+    "only when there are at least 2 wrong answers logged. For an empty " +
+    "wrong_answers array, OMIT.\n" +
+    "- weekly_values (insights.independence_trend.weekly_values): emit only " +
+    "when there are at least 2 distinct weeks of session data. Otherwise " +
+    "OMIT (do NOT emit a flat array of zeros).\n" +
+    "- modality_scores (profile.learning_style.modality_scores): emit only " +
+    "when there are >=10 logged interactions. Otherwise OMIT.\n" +
+    "- emerging_patterns (profile.emerging_patterns): 0-3 items; emit only " +
+    "patterns the data actually supports. For sparse data, an empty array " +
+    "or omission is the correct answer.\n" +
+    "- metadata: ALWAYS emit. interaction_count and session_count are " +
+    "derivable from any non-empty profile (count answer_history entries " +
+    "and session_logs entries respectively, or 0). updated_label is " +
+    "inferred from the most recent session_logs timestamp; for an empty " +
+    "profile use \"just now\".\n\n" +
     "TONE rules (mandatory):\n" +
     "- headline.narrative: 2nd person, warm. Speak directly to the student.\n" +
     "- headline.analytical: 3rd person, clinical. Refer to \"this student\".\n\n" +
@@ -193,9 +270,11 @@ const DEFAULT_LEARNING_STYLE: PortraitProfileCard = {
   label: "undetermined",
   description: "Not enough data to determine learning style.",
 };
-const DEFAULT_INTERESTS: PortraitProfileCard = {
-  label: "unknown",
-  description: "Not enough data to determine interests.",
+
+const DEFAULT_METADATA: PortraitMetadata = {
+  interaction_count: 0,
+  session_count: 0,
+  updated_label: "just now",
 };
 
 function isObj(v: unknown): v is Record<string, unknown> {
@@ -206,6 +285,9 @@ function isStr(v: unknown): v is string {
 }
 function isNonEmptyStr(v: unknown): v is string {
   return typeof v === "string" && v.trim().length > 0;
+}
+function isNumArr(v: unknown): v is number[] {
+  return Array.isArray(v) && v.every((x) => typeof x === "number" && Number.isFinite(x));
 }
 
 /**
@@ -299,12 +381,37 @@ export function validate(obj: unknown, raw: string): PortraitBody {
     indep.direction = "stable";
   }
 
+  // insights.where_time_goes.breakdown — decorative, type-check only
+  const wtg = (insights as Record<string, unknown>).where_time_goes as Record<string, unknown>;
+  if ("breakdown" in wtg && !Array.isArray(wtg.breakdown)) {
+    console.warn(
+      `[portrait] auto-filled missing field: insights.where_time_goes.breakdown (was non-array ${typeof wtg.breakdown})`,
+    );
+    delete wtg.breakdown;
+  }
+
+  // insights.under_difficulty.behavior_pattern — decorative, type-check only
+  const ud = (insights as Record<string, unknown>).under_difficulty as Record<string, unknown>;
+  if ("behavior_pattern" in ud && !Array.isArray(ud.behavior_pattern)) {
+    console.warn(
+      `[portrait] auto-filled missing field: insights.under_difficulty.behavior_pattern (was non-array ${typeof ud.behavior_pattern})`,
+    );
+    delete ud.behavior_pattern;
+  }
+
+  // insights.independence_trend.weekly_values — decorative, must be all numbers
+  if ("weekly_values" in indep && !isNumArr(indep.weekly_values)) {
+    console.warn(
+      "[portrait] auto-filled missing field: insights.independence_trend.weekly_values (was non-numeric or non-array)",
+    );
+    delete indep.weekly_values;
+  }
+
   // profile
   if (!isObj(obj.profile)) {
     console.warn("[portrait] auto-filled missing field: profile");
     obj.profile = {
       learning_style: { ...DEFAULT_LEARNING_STYLE },
-      interests: { ...DEFAULT_INTERESTS },
     };
   } else {
     const profile = obj.profile as Record<string, unknown>;
@@ -313,10 +420,22 @@ export function validate(obj: unknown, raw: string): PortraitBody {
         "[portrait] auto-filled missing field: profile.learning_style",
       );
       profile.learning_style = { ...DEFAULT_LEARNING_STYLE };
+    } else {
+      // profile.learning_style.modality_scores — decorative, type-check only
+      const ls = profile.learning_style as Record<string, unknown>;
+      if ("modality_scores" in ls && !Array.isArray(ls.modality_scores)) {
+        console.warn(
+          `[portrait] auto-filled missing field: profile.learning_style.modality_scores (was non-array ${typeof ls.modality_scores})`,
+        );
+        delete ls.modality_scores;
+      }
     }
-    if (!isObj(profile.interests)) {
-      console.warn("[portrait] auto-filled missing field: profile.interests");
-      profile.interests = { ...DEFAULT_INTERESTS };
+    // profile.emerging_patterns — auto-fill to [] when missing
+    if (!Array.isArray(profile.emerging_patterns)) {
+      console.warn(
+        "[portrait] auto-filled missing field: profile.emerging_patterns",
+      );
+      profile.emerging_patterns = [];
     }
   }
 
@@ -336,6 +455,32 @@ export function validate(obj: unknown, raw: string): PortraitBody {
   ) {
     console.warn("[portrait] auto-filled missing field: quick_facts");
     obj.quick_facts = [];
+  }
+
+  // metadata — always emit; auto-fill default when missing or wrong shape
+  if (!isObj(obj.metadata)) {
+    console.warn("[portrait] auto-filled missing field: metadata");
+    obj.metadata = { ...DEFAULT_METADATA };
+  } else {
+    const meta = obj.metadata as Record<string, unknown>;
+    if (typeof meta.interaction_count !== "number") {
+      console.warn(
+        "[portrait] auto-filled missing field: metadata.interaction_count",
+      );
+      meta.interaction_count = 0;
+    }
+    if (typeof meta.session_count !== "number") {
+      console.warn(
+        "[portrait] auto-filled missing field: metadata.session_count",
+      );
+      meta.session_count = 0;
+    }
+    if (!isStr(meta.updated_label)) {
+      console.warn(
+        "[portrait] auto-filled missing field: metadata.updated_label",
+      );
+      meta.updated_label = "just now";
+    }
   }
 
   return obj as unknown as PortraitBody;

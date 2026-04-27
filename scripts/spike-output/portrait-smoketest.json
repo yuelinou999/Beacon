@@ -1,67 +1,69 @@
 {
-  "thinking": "Thinking Process:\n\n1.  **Analyze the Request:** The goal is to create a structured JSON learning portrait based on the provided raw student data.\n2.  **Analyze the Raw Data:**\n    *   `student_id`: \"local_001\"\n    *   `language`: \"en\"\n    *   `current_unit`: \"unit_6_equations\"\n    *   `topics`: All topics (`what_is_variable`, `expressions_vs_equations`, `solving_one_step`, etc.) have `mastery: 0`, `attempts: 0`, and `last_seen: null`.\n    *   `wrong_answers`: [] (No performance data available).\n3.  **Determine Constraints & Critical Points:**\n    *   The data is extremely sparse (zero attempts, zero mastery).\n    *   I must adhere strictly to the required output schema.\n    *   The confidence calibration rule states: If data is sparse (few attempts, no mastery), I MUST set confidence.level to \"low\" and explain why.\n    *   The independence trend must be provided, even if \"stable,\" and the reason must cite the lack of data.\n4.  **Draft Content based on Sparse Data:**\n\n    *   **Headline (Narrative & Analytical):** Must acknowledge the current state (new/beginning phase).\n    *   **Insights:** Since there are no attempts, observations must reflect the lack of data.\n    *   **Profile:** Learning style and interests are indeterminable from this data.\n    *   **Suggestions:** Focus on starting the learning process and establishing a baseline.\n    *   **Quick Facts:** Will be limited due to zero data points.\n    *   **Confidence:** Must be \"low\" due to lack of data.\n\n5.  **Populate the JSON Schema (Self-Correction/Refinement):**\n\n    *   *Where time goes/Under difficulty/Independence Trend:* Since all attempts are 0, I cannot observe time allocation or difficulty mastery trends. I must default to stable and justify it.\n    *   *Confidence:* Must be low, explained by the lack of session data.\n\n6.  **Final JSON Construction:** (Proceed to generate the output adhering to all formatting rules.)",
+  "thinking": "Thinking Process:\n\n1.  **Analyze the Request:** The goal is to create a structured JSON learner portrait based on the provided raw student data.\n2.  **Examine Raw Data:**\n    *   `student_id`: \"local_001\"\n    *   `language`: \"en\"\n    *   `current_unit`: \"unit_6_equations\"\n    *   `topics`: All topics (`what_is_variable`, `expressions_vs_equations`, etc.) have `mastery: 0`, `attempts: 0`, and `last_seen: null`.\n    *   `wrong_answers`: `[]` (Empty)\n\n3.  **Determine Data Sufficiency:** The data is extremely sparse. There are no mastery scores, no attempts, no history, and no wrong answers.\n\n4.  **Apply Output Schema Rules & Constraints:**\n\n    *   **headline:** Needs narrative (2nd person, warm) and analytical (3rd person, clinical).\n    *   **insights:**\n        *   `where_time_goes`: Cannot be determined (no time data). Omit breakdown.\n        *   `under_difficulty`: Cannot be determined (no attempts/errors). Omit behavior pattern.\n        *   `independence_trend`: Cannot be determined (no weekly values or history). Must set direction to \"stable\" and explain why.\n    *   **profile:**\n        *   `learning_style`: Cannot determine style (no interactions/scores).\n        *   `emerging_patterns`: Cannot determine patterns.\n    *   **suggestions:** Needs to be based on the lack of engagement/data.\n    *   **quick_facts:** Can be populated based on the zero data.\n    *   **confidence:** Must be set to \"low\" because there is insufficient data.\n    *   **metadata:** interaction_count and session_count must be 0. `updated_label` defaults to \"just now\".\n\n5.  **Draft Content (Focusing on Sparsity):**\n\n    *   *Headline:* Needs to address the current state (no data available yet).\n    *   *Insights:* Must reflect the lack of activity.\n    *   *Confidence:* Must be low, citing lack of data.\n\n6.  **Final JSON Construction (Adhering strictly to format and constraints):** (Self-Correction: Ensure all required fields are present, even if empty/minimal, and follow the omission rules for optional fields.) (The constraint states: \"If data is sparse... you MUST still return direction: 'stable' and explain in evidence that there is not enough data to detect a trend.\")\n\n7.  **Review against Schema:** Confirmed structure matches the required format. (Proceed to output generation.)",
   "portrait": {
     "headline": {
-      "narrative": "You are just beginning your journey through the concepts of equations and variables. You have a great foundation to build upon as you start mastering these mathematical concepts. Focus on taking your first steps with each lesson to build confidence.",
-      "analytical": "This student is currently at the very start of learning unit 6 equations. There is no performance data available yet to assess current skill levels or learning patterns. Further interaction is required to generate meaningful analytical insights."
+      "narrative": "You are beginning your mathematical journey, and we are excited to help you build a strong foundation in equations. Since we have not yet seen any learning activity, we are ready to start whenever you are.",
+      "analytical": "This student currently has no recorded learning data, meaning no performance metrics or learning patterns can be observed at this time. We do not yet have enough information to establish a profile or identify specific learning tendencies."
     },
     "insights": {
       "where_time_goes": {
-        "observation": "No time or activity data is present yet for this student.",
-        "evidence": "There are zero recorded attempts for any topic, meaning no data exists to observe time allocation."
+        "observation": "No time or progress data is available for analysis yet.",
+        "evidence": "There are zero recorded attempts or session logs to determine time allocation.",
+        "breakdown": []
       },
       "under_difficulty": {
-        "observation": "It is not possible to determine a difficulty trend as no practice has been completed.",
-        "evidence": "Since no attempts have been made, no evidence exists to measure difficulty progression."
+        "observation": "It is impossible to assess the student's current difficulty level without any practice data.",
+        "evidence": "The student has no recorded wrong answers or attempts in the system.",
+        "behavior_pattern": []
       },
       "independence_trend": {
-        "observation": "The trend in independence cannot be determined.",
-        "evidence": "There is insufficient data (zero attempts) to detect any trend in learning independence.",
-        "direction": "stable"
+        "observation": "No trend can be detected because there is no historical data to analyze.",
+        "evidence": "There are no weekly session values recorded.",
+        "direction": "stable",
+        "weekly_values": []
       }
     },
     "profile": {
       "learning_style": {
-        "label": "unknown",
-        "description": "No data is available to determine a preferred learning style at this time."
+        "label": "undetermined",
+        "description": "The student's learning style cannot be assessed without any interactions or performance data.",
+        "modality_scores": []
       },
-      "interests": {
-        "label": "mathematical concepts",
-        "description": "The student is currently focusing on the structure and solving methods related to equations and variables."
-      }
+      "emerging_patterns": []
     },
     "suggestions": [
       {
-        "suggestion": "Start with basic practice",
-        "rationale": "Since there are no attempts, begin by working through the 'solving_one_step' topic to establish a baseline for practical experience."
+        "suggestion": "Start with basic concepts",
+        "rationale": "Begin with the 'what is variable' topic to establish a baseline before moving to solving equations, as seen in the current unit."
       },
       {
-        "suggestion": "Focus on foundational understanding",
-        "rationale": "Mastering 'what_is_variable' and 'expressions_vs_equations' first will provide the necessary conceptual scaffolding for later algebraic problem-solving."
+        "suggestion": "Engage with guided practice",
+        "rationale": "When practice begins, focus on guided examples to help build foundational understanding, as this is often effective for new equation concepts."
       }
     ],
     "quick_facts": [
       {
         "icon_hint": "topic",
-        "label": "Current Unit"
+        "label": "Starting topic"
       },
       {
-        "icon_hint": "streak",
-        "label": "No Sessions"
-      },
-      {
-        "icon_hint": "accuracy",
-        "label": "No Mastery Data"
+        "icon_hint": "session",
+        "label": "Zero sessions logged"
       }
     ],
     "confidence": {
       "level": "low",
-      "reason": "Confidence is low because there is no learning data available yet. There are zero attempts and no mastery scores to evaluate current understanding."
+      "reason": "There is insufficient data to make any meaningful assessment of the student's learning style or progress."
+    },
+    "metadata": {
+      "interaction_count": 0,
+      "session_count": 0,
+      "updated_label": "just now"
     }
   },
   "meta": {
     "model": "gemma4:e2b",
-    "duration_ms": 27099,
+    "duration_ms": 30491,
     "profile_snapshot_size": 567
   }
 }
