@@ -1,58 +1,117 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { useAIContext } from "@/components/ai-context";
+import type { PortraitResponse } from "@/lib/portrait";
+import PortraitCard from "./_components/portrait-card";
+import ViewToggle, { type ViewMode } from "./_components/view-toggle";
+
+type DashboardState =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; data: PortraitResponse };
 
 export default function DashboardPage() {
   const { setContext } = useAIContext();
+  const [state, setState] = useState<DashboardState>({ status: "loading" });
+  const [viewMode, setViewMode] = useState<ViewMode>("student");
 
   useEffect(() => {
     setContext({ page: "general" });
   }, [setContext]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/portrait", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
+        }
+        const data = (await res.json()) as PortraitResponse;
+        if (!cancelled) setState({ status: "ready", data });
+      } catch (err) {
+        if (!cancelled) {
+          setState({
+            status: "error",
+            message:
+              err instanceof Error ? err.message : "Unknown fetch error",
+          });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
-    <div className="max-w-3xl mx-auto px-8 py-12">
-      <div
-        className="rounded-xl"
-        style={{
-          backgroundColor: "#FFFFFF",
-          border: "0.5px solid #E2E5EA",
-          padding: 32,
-        }}
-      >
-        <div className="flex items-start justify-between mb-6">
-          <h1 style={{ fontSize: 24, fontWeight: 500, color: "#0F2A4A" }}>
-            AI Learner Portrait
-          </h1>
-          <span
-            className="px-2 py-1 rounded text-xs"
-            style={{ backgroundColor: "#FEF3C7", color: "#D97706", fontWeight: 500 }}
-          >
-            Preview
-          </span>
-        </div>
-        <p style={{ fontSize: 14, color: "#6B7280", lineHeight: 1.6, marginBottom: 24 }}>
-          Beacon will use Gemma 4, running locally via Ollama, to analyze your
-          learning patterns — which concepts you grasp quickly, where you slow
-          down, and how your mistakes cluster — and surface that picture here.
-          The portrait stays on your device.
-        </p>
-        <button
-          disabled
-          className="rounded-lg"
-          style={{
-            backgroundColor: "#F5F6F8",
-            color: "#9CA3AF",
-            padding: "10px 20px",
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: "not-allowed",
-            border: "none",
-          }}
+    <div className="h-full overflow-y-auto bg-gray-50">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-8 py-3 border-b border-gray-200 bg-white">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 transition"
         >
-          Coming in v1
-        </button>
+          <ChevronLeft className="w-4 h-4" />
+          Home
+        </Link>
+        <ViewToggle value={viewMode} onChange={setViewMode} />
+      </div>
+
+      {/* Page body */}
+      <div className="max-w-3xl mx-auto px-8 py-10">
+        {/* Page header */}
+        <header className="mb-8">
+          <h1 className="text-2xl font-medium text-[#0F2A4A] mb-1">
+            Dashboard
+          </h1>
+          <p className="text-sm text-gray-500">
+            Understanding you as a learner
+          </p>
+        </header>
+
+        {/* Section 1 — AI Portrait card */}
+        {state.status === "loading" && <LoadingCard />}
+        {state.status === "error" && <ErrorCard message={state.message} />}
+        {state.status === "ready" && (
+          <PortraitCard portrait={state.data.portrait} viewMode={viewMode} />
+        )}
       </div>
     </div>
+  );
+}
+
+function LoadingCard() {
+  return (
+    <section className="rounded-xl bg-white border border-gray-200 border-l-[3px] border-l-blue-600 p-8 mb-8">
+      <p className="text-sm text-gray-500">
+        <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse mr-2 align-middle" />
+        Generating your portrait — Gemma 4 is thinking locally. This usually
+        takes 20–30 seconds.
+      </p>
+    </section>
+  );
+}
+
+function ErrorCard({ message }: { message: string }) {
+  return (
+    <section className="rounded-xl bg-white border border-red-200 border-l-[3px] border-l-red-500 p-8 mb-8">
+      <p className="text-sm font-medium text-red-700 mb-2">
+        Could not generate portrait
+      </p>
+      <p className="text-xs text-gray-600 break-words">{message}</p>
+      <p className="text-xs text-gray-500 mt-3">
+        Make sure Ollama is running and gemma4:e2b is pulled, then refresh the
+        page.
+      </p>
+    </section>
   );
 }
