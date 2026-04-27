@@ -1,0 +1,67 @@
+{
+  "thinking": "Thinking Process:\n\n1.  **Analyze the Request:** The goal is to create a structured JSON learning portrait based on the provided raw student data.\n2.  **Analyze the Raw Data:**\n    *   `student_id`: \"local_001\"\n    *   `language`: \"en\"\n    *   `current_unit`: \"unit_6_equations\"\n    *   `topics`: All topics (`what_is_variable`, `expressions_vs_equations`, `solving_one_step`, etc.) have `mastery: 0`, `attempts: 0`, and `last_seen: null`.\n    *   `wrong_answers`: [] (No performance data available).\n3.  **Determine Constraints & Critical Points:**\n    *   The data is extremely sparse (zero attempts, zero mastery).\n    *   I must adhere strictly to the required output schema.\n    *   The confidence calibration rule states: If data is sparse (few attempts, no mastery), I MUST set confidence.level to \"low\" and explain why.\n    *   The independence trend must be provided, even if \"stable,\" and the reason must cite the lack of data.\n4.  **Draft Content based on Sparse Data:**\n\n    *   **Headline (Narrative & Analytical):** Must acknowledge the current state (new/beginning phase).\n    *   **Insights:** Since there are no attempts, observations must reflect the lack of data.\n    *   **Profile:** Learning style and interests are indeterminable from this data.\n    *   **Suggestions:** Focus on starting the learning process and establishing a baseline.\n    *   **Quick Facts:** Will be limited due to zero data points.\n    *   **Confidence:** Must be \"low\" due to lack of data.\n\n5.  **Populate the JSON Schema (Self-Correction/Refinement):**\n\n    *   *Where time goes/Under difficulty/Independence Trend:* Since all attempts are 0, I cannot observe time allocation or difficulty mastery trends. I must default to stable and justify it.\n    *   *Confidence:* Must be low, explained by the lack of session data.\n\n6.  **Final JSON Construction:** (Proceed to generate the output adhering to all formatting rules.)",
+  "portrait": {
+    "headline": {
+      "narrative": "You are just beginning your journey through the concepts of equations and variables. You have a great foundation to build upon as you start mastering these mathematical concepts. Focus on taking your first steps with each lesson to build confidence.",
+      "analytical": "This student is currently at the very start of learning unit 6 equations. There is no performance data available yet to assess current skill levels or learning patterns. Further interaction is required to generate meaningful analytical insights."
+    },
+    "insights": {
+      "where_time_goes": {
+        "observation": "No time or activity data is present yet for this student.",
+        "evidence": "There are zero recorded attempts for any topic, meaning no data exists to observe time allocation."
+      },
+      "under_difficulty": {
+        "observation": "It is not possible to determine a difficulty trend as no practice has been completed.",
+        "evidence": "Since no attempts have been made, no evidence exists to measure difficulty progression."
+      },
+      "independence_trend": {
+        "observation": "The trend in independence cannot be determined.",
+        "evidence": "There is insufficient data (zero attempts) to detect any trend in learning independence.",
+        "direction": "stable"
+      }
+    },
+    "profile": {
+      "learning_style": {
+        "label": "unknown",
+        "description": "No data is available to determine a preferred learning style at this time."
+      },
+      "interests": {
+        "label": "mathematical concepts",
+        "description": "The student is currently focusing on the structure and solving methods related to equations and variables."
+      }
+    },
+    "suggestions": [
+      {
+        "suggestion": "Start with basic practice",
+        "rationale": "Since there are no attempts, begin by working through the 'solving_one_step' topic to establish a baseline for practical experience."
+      },
+      {
+        "suggestion": "Focus on foundational understanding",
+        "rationale": "Mastering 'what_is_variable' and 'expressions_vs_equations' first will provide the necessary conceptual scaffolding for later algebraic problem-solving."
+      }
+    ],
+    "quick_facts": [
+      {
+        "icon_hint": "topic",
+        "label": "Current Unit"
+      },
+      {
+        "icon_hint": "streak",
+        "label": "No Sessions"
+      },
+      {
+        "icon_hint": "accuracy",
+        "label": "No Mastery Data"
+      }
+    ],
+    "confidence": {
+      "level": "low",
+      "reason": "Confidence is low because there is no learning data available yet. There are zero attempts and no mastery scores to evaluate current understanding."
+    }
+  },
+  "meta": {
+    "model": "gemma4:e2b",
+    "duration_ms": 27099,
+    "profile_snapshot_size": 567
+  }
+}
