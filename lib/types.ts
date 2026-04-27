@@ -168,6 +168,6 @@ export interface OllamaToolCall {
 
 export interface OllamaStreamChunk {
   model: string;
-  message: { role: string; content: string };
+  message: { role: string; content: string; thinking?: string };
   done: boolean;
 }

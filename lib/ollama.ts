@@ -43,6 +43,7 @@ interface OllamaToolResponse {
   message: {
     role: string;
     content: string;
+    thinking?: string;
     tool_calls?: Array<{
       function: {
         name: string;
