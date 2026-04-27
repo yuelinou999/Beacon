@@ -1,0 +1,112 @@
+{
+  "problems": [
+    {
+      "id": "lin-01",
+      "topic": "linear-equations",
+      "hero": true,
+      "question": "Solve for x: 3x + 7 = 22"
+    },
+    {
+      "id": "lin-02",
+      "topic": "linear-equations",
+      "hero": false,
+      "question": "Solve for y: 2y - 5 = 11"
+    },
+    {
+      "id": "lin-03",
+      "topic": "linear-equations",
+      "hero": false,
+      "question": "Solve for x: 4x + 3 = 2x + 9"
+    },
+    {
+      "id": "frac-01",
+      "topic": "fractions-ratios",
+      "hero": true,
+      "question": "If 2/3 of a number is 18, what is the number?"
+    },
+    {
+      "id": "frac-02",
+      "topic": "fractions-ratios",
+      "hero": false,
+      "question": "Simplify the fraction: 12/18"
+    },
+    {
+      "id": "frac-03",
+      "topic": "fractions-ratios",
+      "hero": false,
+      "question": "A car travels 150 miles in 3 hours. How far does it travel in 5 hours at the same speed?"
+    },
+    {
+      "id": "quad-01",
+      "topic": "quadratics",
+      "hero": false,
+      "question": "Solve for x: x² - 5x + 6 = 0"
+    },
+    {
+      "id": "quad-02",
+      "topic": "quadratics",
+      "hero": false,
+      "question": "What are the roots of x² - 9 = 0?"
+    },
+    {
+      "id": "quad-03",
+      "topic": "quadratics",
+      "hero": false,
+      "question": "Solve: x² + 4x + 4 = 0"
+    },
+    {
+      "id": "geo-01",
+      "topic": "geometry",
+      "hero": false,
+      "question": "Find the area of a triangle with base 8 cm and height 5 cm."
+    },
+    {
+      "id": "geo-02",
+      "topic": "geometry",
+      "hero": false,
+      "question": "A rectangle has length 12 m and width 7 m. Find its perimeter."
+    },
+    {
+      "id": "geo-03",
+      "topic": "geometry",
+      "hero": false,
+      "question": "Two angles of a triangle are 45° and 60°. What is the third angle?"
+    },
+    {
+      "id": "newton-01",
+      "topic": "newtons-laws",
+      "hero": true,
+      "question": "A 5 kg object accelerates at 3 m/s². What is the net force acting on it?"
+    },
+    {
+      "id": "newton-02",
+      "topic": "newtons-laws",
+      "hero": false,
+      "question": "A 10 N force acts on a 2 kg object. What is its acceleration?"
+    },
+    {
+      "id": "newton-03",
+      "topic": "newtons-laws",
+      "hero": false,
+      "question": "A book rests on a table. Identify the action-reaction force pairs according to Newton's Third Law."
+    },
+    {
+      "id": "energy-01",
+      "topic": "energy-work",
+      "hero": false,
+      "question": "How much work is done when a 20 N force moves an object 5 m in the direction of the force?"
+    },
+    {
+      "id": "energy-02",
+      "topic": "energy-work",
+      "hero": false,
+      "question": "A 2 kg ball falls from a height of 10 m. What is its kinetic energy just before hitting the ground? (Use g = 10 m/s²)"
+    },
+    {
+      "id": "energy-03",
+      "topic": "energy-work",
+      "hero": false,
+      "question": "A 50 kg person climbs 3 m of stairs. How much gravitational potential energy do they gain? (Use g = 10 m/s²)"
+    }
+  ]
+}

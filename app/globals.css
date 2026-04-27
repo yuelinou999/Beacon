@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  color: #1F2937;
+  line-height: 1.8;
+  background: #FAFBFC;
+}
+
+/* Smooth scrollbar */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 3px;
+}
+
+/* KaTeX display math: centered blocks */
+.math-display .katex-display {
+  background: #F0F3F7;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 12px 0;
+  font-size: 20px;
+  text-align: center;
+}
+
+/* Inline KaTeX sizing */
+.math-display .katex {
+  font-size: 1.05em;
+}

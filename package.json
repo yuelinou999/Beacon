@@ -1,0 +1,31 @@
+{
+  "name": "beacon",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test:image": "node scripts/test-image.mjs",
+    "test:app-image": "node scripts/test-app-image.mjs",
+    "test:hero": "node scripts/run-tests.mjs --hero-only",
+    "test:guided": "node scripts/run-tests.mjs --mode guided",
+    "test:explain": "node scripts/run-tests.mjs --mode explain",
+    "test:all": "node scripts/run-tests.mjs"
+  },
+  "dependencies": {
+    "katex": "^0.16.45",
+    "next": "14.2.21",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10",
+    "postcss": "^8",
+    "tailwindcss": "^3.4",
+    "typescript": "^5"
+  }
+}

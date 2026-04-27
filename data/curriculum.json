@@ -1,0 +1,403 @@
+{
+  "subject": "mathematics",
+  "unit": "unit_6_equations",
+  "grade": 7,
+  "language_default": "en",
+  "topics": [
+    {
+      "id": "what_is_scale",
+      "title": { "en": "What is a scale drawing?", "zh": "什么是比例图？" },
+      "prerequisite": null,
+      "difficulty_base": 1,
+      "unit_id": "unit_1_scale_drawings"
+    },
+    {
+      "id": "scale_factor",
+      "title": { "en": "Understanding scale factors", "zh": "理解比例因子" },
+      "prerequisite": "what_is_scale",
+      "difficulty_base": 1,
+      "unit_id": "unit_1_scale_drawings"
+    },
+    {
+      "id": "using_scale",
+      "title": { "en": "Using scale to find actual sizes", "zh": "用比例求实际大小" },
+      "prerequisite": "scale_factor",
+      "difficulty_base": 2,
+      "unit_id": "unit_1_scale_drawings"
+    },
+    {
+      "id": "creating_scale",
+      "title": { "en": "Creating your own scale drawings", "zh": "绘制自己的比例图" },
+      "prerequisite": "using_scale",
+      "difficulty_base": 2,
+      "unit_id": "unit_1_scale_drawings"
+    },
+    {
+      "id": "what_is_ratio",
+      "title": { "en": "What is a ratio?", "zh": "什么是比？" },
+      "prerequisite": null,
+      "difficulty_base": 1,
+      "unit_id": "unit_2_proportional"
+    },
+    {
+      "id": "unit_rate",
+      "title": { "en": "Finding unit rates", "zh": "求单位比率" },
+      "prerequisite": "what_is_ratio",
+      "difficulty_base": 1,
+      "unit_id": "unit_2_proportional"
+    },
+    {
+      "id": "proportional_tables",
+      "title": { "en": "Proportional relationships in tables", "zh": "表格中的比例关系" },
+      "prerequisite": "unit_rate",
+      "difficulty_base": 2,
+      "unit_id": "unit_2_proportional"
+    },
+    {
+      "id": "proportional_graphs",
+      "title": { "en": "Proportional relationships in graphs", "zh": "图表中的比例关系" },
+      "prerequisite": "proportional_tables",
+      "difficulty_base": 2,
+      "unit_id": "unit_2_proportional"
+    },
+    {
+      "id": "constant_proportionality",
+      "title": { "en": "The constant of proportionality", "zh": "比例常数" },
+      "prerequisite": "proportional_graphs",
+      "difficulty_base": 3,
+      "unit_id": "unit_2_proportional"
+    },
+    {
+      "id": "proportional_equations",
+      "title": { "en": "Writing proportional equations", "zh": "写比例方程" },
+      "prerequisite": "constant_proportionality",
+      "difficulty_base": 3,
+      "unit_id": "unit_2_proportional"
+    },
+    {
+      "id": "parts_of_circle",
+      "title": { "en": "Parts of a circle", "zh": "圆的各部分" },
+      "prerequisite": null,
+      "difficulty_base": 1,
+      "unit_id": "unit_3_circles"
+    },
+    {
+      "id": "circumference",
+      "title": { "en": "Circumference and pi", "zh": "周长与圆周率" },
+      "prerequisite": "parts_of_circle",
+      "difficulty_base": 2,
+      "unit_id": "unit_3_circles"
+    },
+    {
+      "id": "area_circle",
+      "title": { "en": "Area of a circle", "zh": "圆的面积" },
+      "prerequisite": "circumference",
+      "difficulty_base": 2,
+      "unit_id": "unit_3_circles"
+    },
+    {
+      "id": "circle_problems",
+      "title": { "en": "Solving circle problems", "zh": "解决圆的问题" },
+      "prerequisite": "area_circle",
+      "difficulty_base": 3,
+      "unit_id": "unit_3_circles"
+    },
+    {
+      "id": "percent_basics",
+      "title": { "en": "What is a percentage?", "zh": "什么是百分比？" },
+      "prerequisite": null,
+      "difficulty_base": 1,
+      "unit_id": "unit_4_percentages"
+    },
+    {
+      "id": "percent_of_number",
+      "title": { "en": "Finding a percent of a number", "zh": "求一个数的百分之几" },
+      "prerequisite": "percent_basics",
+      "difficulty_base": 2,
+      "unit_id": "unit_4_percentages"
+    },
+    {
+      "id": "discount_tax",
+      "title": { "en": "Discounts and tax", "zh": "折扣与税" },
+      "prerequisite": "percent_of_number",
+      "difficulty_base": 2,
+      "unit_id": "unit_4_percentages"
+    },
+    {
+      "id": "percent_change",
+      "title": { "en": "Percent increase and decrease", "zh": "百分比增减" },
+      "prerequisite": "discount_tax",
+      "difficulty_base": 3,
+      "unit_id": "unit_4_percentages"
+    },
+    {
+      "id": "multi_step_percent",
+      "title": { "en": "Multi-step percent problems", "zh": "多步百分比问题" },
+      "prerequisite": "percent_change",
+      "difficulty_base": 3,
+      "unit_id": "unit_4_percentages"
+    },
+    {
+      "id": "negative_numbers",
+      "title": { "en": "Understanding negative numbers", "zh": "理解负数" },
+      "prerequisite": null,
+      "difficulty_base": 1,
+      "unit_id": "unit_5_rational"
+    },
+    {
+      "id": "adding_integers",
+      "title": { "en": "Adding and subtracting integers", "zh": "整数加减法" },
+      "prerequisite": "negative_numbers",
+      "difficulty_base": 2,
+      "unit_id": "unit_5_rational"
+    },
+    {
+      "id": "multiplying_integers",
+      "title": { "en": "Multiplying and dividing integers", "zh": "整数乘除法" },
+      "prerequisite": "adding_integers",
+      "difficulty_base": 2,
+      "unit_id": "unit_5_rational"
+    },
+    {
+      "id": "fraction_operations",
+      "title": { "en": "Operations with fractions", "zh": "分数运算" },
+      "prerequisite": "multiplying_integers",
+      "difficulty_base": 3,
+      "unit_id": "unit_5_rational"
+    },
+    {
+      "id": "decimal_operations",
+      "title": { "en": "Operations with decimals", "zh": "小数运算" },
+      "prerequisite": "fraction_operations",
+      "difficulty_base": 3,
+      "unit_id": "unit_5_rational"
+    },
+    {
+      "id": "rational_word_problems",
+      "title": { "en": "Rational number word problems", "zh": "有理数应用题" },
+      "prerequisite": "decimal_operations",
+      "difficulty_base": 4,
+      "unit_id": "unit_5_rational"
+    },
+    {
+      "id": "what_is_variable",
+      "title": { "en": "What is a variable?", "zh": "什么是变量？" },
+      "prerequisite": null,
+      "difficulty_base": 1,
+      "unit_id": "unit_6_equations"
+    },
+    {
+      "id": "expressions_vs_equations",
+      "title": { "en": "Expressions vs. equations", "zh": "表达式与方程的区别" },
+      "prerequisite": "what_is_variable",
+      "difficulty_base": 1,
+      "unit_id": "unit_6_equations"
+    },
+    {
+      "id": "solving_one_step",
+      "title": { "en": "Solving one-step equations", "zh": "一步方程求解" },
+      "prerequisite": "expressions_vs_equations",
+      "difficulty_base": 2,
+      "unit_id": "unit_6_equations"
+    },
+    {
+      "id": "inverse_operations",
+      "title": { "en": "Why inverse operations work", "zh": "为什么逆运算有效？" },
+      "prerequisite": "solving_one_step",
+      "difficulty_base": 2,
+      "unit_id": "unit_6_equations"
+    },
+    {
+      "id": "solving_two_step",
+      "title": { "en": "Solving two-step equations", "zh": "两步方程求解" },
+      "prerequisite": "inverse_operations",
+      "difficulty_base": 3,
+      "unit_id": "unit_6_equations"
+    },
+    {
+      "id": "variables_both_sides",
+      "title": { "en": "Variables on both sides", "zh": "两边都有变量的方程" },
+      "prerequisite": "solving_two_step",
+      "difficulty_base": 4,
+      "unit_id": "unit_6_equations"
+    },
+    {
+      "id": "equation_word_problems",
+      "title": { "en": "Word problems with equations", "zh": "方程应用题" },
+      "prerequisite": "solving_two_step",
+      "difficulty_base": 4,
+      "unit_id": "unit_6_equations"
+    },
+    {
+      "id": "angle_relationships",
+      "title": { "en": "Angle relationships", "zh": "角的关系" },
+      "prerequisite": null,
+      "difficulty_base": 1,
+      "unit_id": "unit_7_geometry"
+    },
+    {
+      "id": "triangle_properties",
+      "title": { "en": "Triangle properties", "zh": "三角形的性质" },
+      "prerequisite": "angle_relationships",
+      "difficulty_base": 2,
+      "unit_id": "unit_7_geometry"
+    },
+    {
+      "id": "triangle_inequality",
+      "title": { "en": "The triangle inequality", "zh": "三角不等式" },
+      "prerequisite": "triangle_properties",
+      "difficulty_base": 2,
+      "unit_id": "unit_7_geometry"
+    },
+    {
+      "id": "surface_area",
+      "title": { "en": "Surface area of prisms", "zh": "棱柱的表面积" },
+      "prerequisite": "triangle_inequality",
+      "difficulty_base": 3,
+      "unit_id": "unit_7_geometry"
+    },
+    {
+      "id": "volume_prisms",
+      "title": { "en": "Volume of prisms", "zh": "棱柱的体积" },
+      "prerequisite": "surface_area",
+      "difficulty_base": 3,
+      "unit_id": "unit_7_geometry"
+    },
+    {
+      "id": "intro_probability",
+      "title": { "en": "What is probability?", "zh": "什么是概率？" },
+      "prerequisite": null,
+      "difficulty_base": 1,
+      "unit_id": "unit_8_probability"
+    },
+    {
+      "id": "experimental_prob",
+      "title": { "en": "Experimental probability", "zh": "实验概率" },
+      "prerequisite": "intro_probability",
+      "difficulty_base": 2,
+      "unit_id": "unit_8_probability"
+    },
+    {
+      "id": "probability_models",
+      "title": { "en": "Probability models", "zh": "概率模型" },
+      "prerequisite": "experimental_prob",
+      "difficulty_base": 2,
+      "unit_id": "unit_8_probability"
+    },
+    {
+      "id": "sampling_methods",
+      "title": { "en": "Sampling methods", "zh": "抽样方法" },
+      "prerequisite": "probability_models",
+      "difficulty_base": 3,
+      "unit_id": "unit_8_probability"
+    },
+    {
+      "id": "population_inference",
+      "title": { "en": "Making inferences about populations", "zh": "关于总体的推断" },
+      "prerequisite": "sampling_methods",
+      "difficulty_base": 3,
+      "unit_id": "unit_8_probability"
+    }
+  ],
+  "grades": {
+    "7": {
+      "id": "g7_math",
+      "title": "Grade 7 Mathematics",
+      "summary": "Builds proportional reasoning, rational number fluency, equation solving, geometry understanding, and introductory probability.",
+      "description": "You'll learn how ratios and percentages work, how to calculate with positive and negative numbers, how to solve equations, how circles and prisms are measured, and how to reason about probability and samples.",
+      "estimated_lessons": 42,
+      "estimated_hours": 17,
+      "who_its_for": "Best for learners ready for middle-school pre-algebra and multi-step problem solving.",
+      "units": [
+        {
+          "id": "unit_1_scale_drawings",
+          "number": 1,
+          "title": "Scale Drawings",
+          "description": "Learn how drawings can represent real sizes using scale.",
+          "skills": ["Scale factor", "Proportional sizing", "Map reading", "Scale calculations"],
+          "estimated_lessons": 4,
+          "estimated_hours": 1.5,
+          "prerequisites": [],
+          "topics": ["what_is_scale", "scale_factor", "using_scale", "creating_scale"]
+        },
+        {
+          "id": "unit_2_proportional",
+          "number": 2,
+          "title": "Proportional Relationships",
+          "description": "Learn ratios, unit rates, tables, graphs, and constants of proportionality.",
+          "skills": ["Ratios", "Unit rates", "Proportional graphs", "Constant of proportionality"],
+          "estimated_lessons": 6,
+          "estimated_hours": 2.5,
+          "prerequisites": ["unit_1_scale_drawings"],
+          "topics": ["what_is_ratio", "unit_rate", "proportional_tables", "proportional_graphs", "constant_proportionality", "proportional_equations"]
+        },
+        {
+          "id": "unit_3_circles",
+          "number": 3,
+          "title": "Measuring Circles",
+          "description": "Explore circumference and area of circles using proportional reasoning.",
+          "skills": ["Circumference", "Area of circles", "Pi", "Circle diagrams"],
+          "estimated_lessons": 4,
+          "estimated_hours": 1.5,
+          "prerequisites": ["unit_2_proportional"],
+          "topics": ["parts_of_circle", "circumference", "area_circle", "circle_problems"]
+        },
+        {
+          "id": "unit_4_percentages",
+          "number": 4,
+          "title": "Percentages",
+          "description": "Use percentages to solve real-world problems like discounts, tips, and tax.",
+          "skills": ["Percent of a number", "Discount and tax", "Percent change", "Tips and markups"],
+          "estimated_lessons": 5,
+          "estimated_hours": 2,
+          "prerequisites": ["unit_2_proportional"],
+          "topics": ["percent_basics", "percent_of_number", "discount_tax", "percent_change", "multi_step_percent"]
+        },
+        {
+          "id": "unit_5_rational",
+          "number": 5,
+          "title": "Rational Number Arithmetic",
+          "description": "Work with positive and negative numbers, fractions, and decimals.",
+          "skills": ["Integer operations", "Fraction arithmetic", "Decimal operations", "Number line"],
+          "estimated_lessons": 6,
+          "estimated_hours": 2.5,
+          "prerequisites": ["unit_4_percentages"],
+          "topics": ["negative_numbers", "adding_integers", "multiplying_integers", "fraction_operations", "decimal_operations", "rational_word_problems"]
+        },
+        {
+          "id": "unit_6_equations",
+          "number": 6,
+          "title": "Expressions, Equations, and Inequalities",
+          "description": "Learn variables, equations, one-step and two-step solving, and inequality basics.",
+          "skills": ["Variables", "One-step equations", "Two-step equations", "Word problems", "Inequalities"],
+          "estimated_lessons": 7,
+          "estimated_hours": 3,
+          "prerequisites": ["unit_5_rational"],
+          "topics": ["what_is_variable", "expressions_vs_equations", "solving_one_step", "inverse_operations", "solving_two_step", "variables_both_sides", "equation_word_problems"]
+        },
+        {
+          "id": "unit_7_geometry",
+          "number": 7,
+          "title": "Angles, Triangles, and Prisms",
+          "description": "Study angle relationships, triangle properties, and 3D measurement.",
+          "skills": ["Angle pairs", "Triangle inequality", "Surface area", "Volume"],
+          "estimated_lessons": 5,
+          "estimated_hours": 2,
+          "prerequisites": ["unit_6_equations"],
+          "topics": ["angle_relationships", "triangle_properties", "triangle_inequality", "surface_area", "volume_prisms"]
+        },
+        {
+          "id": "unit_8_probability",
+          "number": 8,
+          "title": "Probability and Sampling",
+          "description": "Learn how chance works and how samples describe larger groups.",
+          "skills": ["Probability models", "Experimental probability", "Sampling", "Population inference"],
+          "estimated_lessons": 5,
+          "estimated_hours": 2,
+          "prerequisites": ["unit_5_rational"],
+          "topics": ["intro_probability", "experimental_prob", "probability_models", "sampling_methods", "population_inference"]
+        }
+      ]
+    }
+  }
+}

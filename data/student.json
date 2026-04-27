@@ -1,0 +1,15 @@
+{
+  "student_id": "local_001",
+  "language": "en",
+  "current_unit": "unit_6_equations",
+  "topics": {
+    "what_is_variable": { "mastery": 0.0, "attempts": 0, "last_seen": null },
+    "expressions_vs_equations": { "mastery": 0.0, "attempts": 0, "last_seen": null },
+    "solving_one_step": { "mastery": 0.0, "attempts": 0, "last_seen": null },
+    "inverse_operations": { "mastery": 0.0, "attempts": 0, "last_seen": null },
+    "solving_two_step": { "mastery": 0.0, "attempts": 0, "last_seen": null },
+    "variables_both_sides": { "mastery": 0.0, "attempts": 0, "last_seen": null },
+    "equation_word_problems": { "mastery": 0.0, "attempts": 0, "last_seen": null }
+  },
+  "wrong_answers": []
+}
