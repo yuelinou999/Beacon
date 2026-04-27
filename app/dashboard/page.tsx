@@ -7,6 +7,10 @@ import { useAIContext } from "@/components/ai-context";
 import type { PortraitResponse } from "@/lib/portrait";
 import PortraitCard from "./_components/portrait-card";
 import ViewToggle, { type ViewMode } from "./_components/view-toggle";
+import InsightCards from "./_components/insight-cards";
+import ProfileCards from "./_components/profile-cards";
+import SuggestionsCard from "./_components/suggestions-card";
+import QuickFacts from "./_components/quick-facts";
 
 type DashboardState =
   | { status: "loading" }
@@ -82,7 +86,22 @@ export default function DashboardPage() {
         {state.status === "loading" && <LoadingCard />}
         {state.status === "error" && <ErrorCard message={state.message} />}
         {state.status === "ready" && (
-          <PortraitCard portrait={state.data.portrait} viewMode={viewMode} />
+          <>
+            <PortraitCard
+              portrait={state.data.portrait}
+              viewMode={viewMode}
+            />
+            <InsightCards
+              portrait={state.data.portrait}
+              viewMode={viewMode}
+            />
+            <ProfileCards portrait={state.data.portrait} />
+            <SuggestionsCard
+              suggestions={state.data.portrait.suggestions}
+              viewMode={viewMode}
+            />
+            <QuickFacts quickFacts={state.data.portrait.quick_facts} />
+          </>
         )}
       </div>
     </div>

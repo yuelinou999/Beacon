@@ -22,7 +22,7 @@ const navItems: NavItem[] = [
   { id: "practice", href: "/practice", label: "Practice", status: "ready" },
   { id: "quiz", href: "/quiz", label: "Quiz", status: "soon" },
   { id: "review", href: "/review", label: "Review", status: "soon" },
-  { id: "dashboard", href: "/dashboard", label: "Dashboard", status: "preview" },
+  { id: "dashboard", href: "/dashboard", label: "Dashboard", status: "ready" },
 ];
 
 const STATUS_DOT: Record<ModuleStatus, string> = {
