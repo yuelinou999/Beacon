@@ -1,0 +1,25 @@
+{
+  "phase": {
+    "scenario": "A taxi service charges a flat fee of $5 for the ride and an additional $2 for every mile traveled. This relationship can be modeled by a linear equation.",
+    "question": "If you want to find the total cost (C) for a trip of 10 miles (m), which equation correctly represents this relationship?",
+    "options": [
+      "C = 2m + 5",
+      "C = 10m + 5",
+      "C = 5m + 2"
+    ],
+    "correct_index": 0,
+    "explanation": "The correct equation is C = 2m + 5 because the total cost (C) is the fixed starting fee ($5) plus the variable cost ($2 multiplied by the number of miles, m).",
+    "phase": 2
+  },
+  "verifier": {
+    "passed": true,
+    "reason": "",
+    "severity": "ok"
+  },
+  "meta": {
+    "model": "gemma4:e2b",
+    "duration_ms": 11484,
+    "topicId": "linear_equations_basic",
+    "requested_phase": 2
+  }
+}

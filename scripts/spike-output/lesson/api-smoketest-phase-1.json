@@ -1,0 +1,20 @@
+{
+  "phase": {
+    "concept_name": "Finding the missing number in a rule",
+    "explanation": "A linear equation is just a mathematical sentence that shows two things are exactly equal. We use this idea to figure out what an unknown number must be to make the equation true. It's like a puzzle where we need to find the missing piece to make the balance correct.",
+    "key_idea": "An equation shows that two sides are equal, and our goal is to find the value that keeps them balanced.",
+    "visual_hint": "balance_scale",
+    "phase": 1
+  },
+  "verifier": {
+    "passed": true,
+    "reason": "",
+    "severity": "ok"
+  },
+  "meta": {
+    "model": "gemma4:e2b",
+    "duration_ms": 17548,
+    "topicId": "linear_equations_basic",
+    "requested_phase": 1
+  }
+}

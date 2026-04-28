@@ -1,0 +1,41 @@
+{
+  "phase": {
+    "problem": "Solve: 2x + 5 = 15",
+    "steps": [
+      {
+        "sub_step": 1,
+        "instruction": "Subtract 5 from both sides of the equation to isolate the term with x.",
+        "expected_input_type": "answer",
+        "expected_value": 10,
+        "hint": "Remember to perform the same operation on both sides to keep the equation balanced."
+      },
+      {
+        "sub_step": 2,
+        "instruction": "Divide the result from Step 1 by 2 to find the value of x.",
+        "expected_input_type": "answer",
+        "expected_value": 5,
+        "hint": "This will give you the final solution for x."
+      },
+      {
+        "sub_step": 3,
+        "instruction": "State the final value of x.",
+        "expected_input_type": "answer",
+        "expected_value": 5,
+        "hint": "Check your work to ensure that 2(5) + 5 equals 15."
+      }
+    ],
+    "final_answer": 5,
+    "phase": 4
+  },
+  "verifier": {
+    "passed": true,
+    "reason": "",
+    "severity": "ok"
+  },
+  "meta": {
+    "model": "gemma4:e2b",
+    "duration_ms": 16692,
+    "topicId": "linear_equations_basic",
+    "requested_phase": 4
+  }
+}

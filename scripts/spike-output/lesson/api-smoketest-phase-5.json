@@ -1,0 +1,31 @@
+{
+  "phase": {
+    "topic": "linear_equations_basic",
+    "questions": [
+      {
+        "problem": "x + 7 = 15",
+        "final_answer": 8
+      },
+      {
+        "problem": "4x = 20",
+        "final_answer": 5
+      },
+      {
+        "problem": "2x - 3 = 9",
+        "final_answer": 6
+      }
+    ],
+    "phase": 5
+  },
+  "verifier": {
+    "passed": true,
+    "reason": "",
+    "severity": "ok"
+  },
+  "meta": {
+    "model": "gemma4:e2b",
+    "duration_ms": 11010,
+    "topicId": "linear_equations_basic",
+    "requested_phase": 5
+  }
+}
