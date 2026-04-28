@@ -22,16 +22,32 @@ export interface AnalogyPhaseContent {
   feedback_incorrect: string;
 }
 
-// Add other phase types in 2c/d/e — keep this file growing.
+export interface MathSegment {
+  text: string;
+  highlight?: boolean;
+}
+
+export interface ExampleStep {
+  math: string | MathSegment[];
+  explanation: string;
+}
+
+export interface ExamplePhaseContent {
+  title: string;
+  problem: string;
+  steps: ExampleStep[];
+}
+
+// Add other phase types in 2d/e — keep this file growing.
 // For now we also need a discriminator so the page can detect stubs.
 export type TopicPhases =
   | { stub: true }
   | {
       concept: ConceptPhaseContent;
       analogy?: AnalogyPhaseContent;
+      example?: ExamplePhaseContent;
       // Other phases will be added in subsequent steps; for now treat them
       // as unknown so reading topic.phases doesn't break TS:
-      example?: unknown;
       guided?: unknown;
       independent?: unknown;
     };

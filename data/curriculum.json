@@ -374,7 +374,15 @@
           "problem": "x + 5 = 12",
           "steps": [
             { "math": "x + 5 = 12", "explanation": "We need to get x alone. Since 5 is added to x, we undo it by subtracting 5." },
-            { "math": "x + 5 - 5 = 12 - 5", "explanation": "Subtract 5 from BOTH sides to keep the balance." },
+            {
+              "math": [
+                { "text": "x + 5 " },
+                { "text": "- 5", "highlight": true },
+                { "text": " = 12 " },
+                { "text": "- 5", "highlight": true }
+              ],
+              "explanation": "Subtract 5 from BOTH sides to keep the balance."
+            },
             { "math": "x = 7", "explanation": "Done! x equals 7. We can check: 7 + 5 = 12 ✓" }
           ]
         },
