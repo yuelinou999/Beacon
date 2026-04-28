@@ -11,15 +11,26 @@ export interface ConceptPhaseContent {
   main_equation?: string;
 }
 
-// Add other phase types in 2b/c/d/e — keep this file growing.
+export interface AnalogyPhaseContent {
+  title: string;
+  scenario: string;
+  illustration_hint: string;
+  question: string;
+  options: [number, number, number];
+  correct: number;
+  feedback_correct: string;
+  feedback_incorrect: string;
+}
+
+// Add other phase types in 2c/d/e — keep this file growing.
 // For now we also need a discriminator so the page can detect stubs.
 export type TopicPhases =
   | { stub: true }
   | {
       concept: ConceptPhaseContent;
+      analogy?: AnalogyPhaseContent;
       // Other phases will be added in subsequent steps; for now treat them
       // as unknown so reading topic.phases doesn't break TS:
-      analogy?: unknown;
       example?: unknown;
       guided?: unknown;
       independent?: unknown;

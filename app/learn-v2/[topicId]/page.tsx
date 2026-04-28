@@ -12,6 +12,7 @@ import {
 import { useAIContext } from "@/components/ai-context";
 import PhaseProgress from "../_components/phase-progress";
 import ConceptPhaseView from "../_components/concept-phase";
+import AnalogyPhaseView from "../_components/analogy-phase";
 
 type PhaseState = 1 | 2 | 3 | 4 | 5 | "complete";
 
@@ -172,7 +173,22 @@ export default function LearnV2TopicPage() {
           onComplete={() => setCurrentPhase(2)}
         />
       )}
-      {currentPhase !== 1 && (
+      {currentPhase === 2 && phases.analogy && (
+        <AnalogyPhaseView
+          analogy={phases.analogy}
+          onComplete={() => setCurrentPhase(3)}
+        />
+      )}
+      {currentPhase === 2 && !phases.analogy && (
+        <PhasePlaceholder
+          phase={2}
+          onBack={() => setCurrentPhase(1)}
+        />
+      )}
+      {(currentPhase === 3 ||
+        currentPhase === 4 ||
+        currentPhase === 5 ||
+        currentPhase === "complete") && (
         <PhasePlaceholder
           phase={currentPhase}
           onBack={() => setCurrentPhase(1)}
