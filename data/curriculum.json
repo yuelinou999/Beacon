@@ -9,294 +9,774 @@
       "title": { "en": "What is a scale drawing?", "zh": "什么是比例图？" },
       "prerequisite": null,
       "difficulty_base": 1,
-      "unit_id": "unit_1_scale_drawings"
+      "unit_id": "unit_1_scale_drawings",
+      "phases": { "stub": true }
     },
     {
       "id": "scale_factor",
       "title": { "en": "Understanding scale factors", "zh": "理解比例因子" },
       "prerequisite": "what_is_scale",
       "difficulty_base": 1,
-      "unit_id": "unit_1_scale_drawings"
+      "unit_id": "unit_1_scale_drawings",
+      "phases": { "stub": true }
     },
     {
       "id": "using_scale",
       "title": { "en": "Using scale to find actual sizes", "zh": "用比例求实际大小" },
       "prerequisite": "scale_factor",
       "difficulty_base": 2,
-      "unit_id": "unit_1_scale_drawings"
+      "unit_id": "unit_1_scale_drawings",
+      "phases": { "stub": true }
     },
     {
       "id": "creating_scale",
       "title": { "en": "Creating your own scale drawings", "zh": "绘制自己的比例图" },
       "prerequisite": "using_scale",
       "difficulty_base": 2,
-      "unit_id": "unit_1_scale_drawings"
+      "unit_id": "unit_1_scale_drawings",
+      "phases": { "stub": true }
     },
     {
       "id": "what_is_ratio",
       "title": { "en": "What is a ratio?", "zh": "什么是比？" },
       "prerequisite": null,
       "difficulty_base": 1,
-      "unit_id": "unit_2_proportional"
+      "unit_id": "unit_2_proportional",
+      "phases": { "stub": true }
     },
     {
       "id": "unit_rate",
       "title": { "en": "Finding unit rates", "zh": "求单位比率" },
       "prerequisite": "what_is_ratio",
       "difficulty_base": 1,
-      "unit_id": "unit_2_proportional"
+      "unit_id": "unit_2_proportional",
+      "phases": { "stub": true }
     },
     {
       "id": "proportional_tables",
       "title": { "en": "Proportional relationships in tables", "zh": "表格中的比例关系" },
       "prerequisite": "unit_rate",
       "difficulty_base": 2,
-      "unit_id": "unit_2_proportional"
+      "unit_id": "unit_2_proportional",
+      "phases": { "stub": true }
     },
     {
       "id": "proportional_graphs",
       "title": { "en": "Proportional relationships in graphs", "zh": "图表中的比例关系" },
       "prerequisite": "proportional_tables",
       "difficulty_base": 2,
-      "unit_id": "unit_2_proportional"
+      "unit_id": "unit_2_proportional",
+      "phases": { "stub": true }
     },
     {
       "id": "constant_proportionality",
       "title": { "en": "The constant of proportionality", "zh": "比例常数" },
       "prerequisite": "proportional_graphs",
       "difficulty_base": 3,
-      "unit_id": "unit_2_proportional"
+      "unit_id": "unit_2_proportional",
+      "phases": { "stub": true }
     },
     {
       "id": "proportional_equations",
       "title": { "en": "Writing proportional equations", "zh": "写比例方程" },
       "prerequisite": "constant_proportionality",
       "difficulty_base": 3,
-      "unit_id": "unit_2_proportional"
+      "unit_id": "unit_2_proportional",
+      "phases": { "stub": true }
     },
     {
       "id": "parts_of_circle",
       "title": { "en": "Parts of a circle", "zh": "圆的各部分" },
       "prerequisite": null,
       "difficulty_base": 1,
-      "unit_id": "unit_3_circles"
+      "unit_id": "unit_3_circles",
+      "phases": { "stub": true }
     },
     {
       "id": "circumference",
       "title": { "en": "Circumference and pi", "zh": "周长与圆周率" },
       "prerequisite": "parts_of_circle",
       "difficulty_base": 2,
-      "unit_id": "unit_3_circles"
+      "unit_id": "unit_3_circles",
+      "phases": { "stub": true }
     },
     {
       "id": "area_circle",
       "title": { "en": "Area of a circle", "zh": "圆的面积" },
       "prerequisite": "circumference",
       "difficulty_base": 2,
-      "unit_id": "unit_3_circles"
+      "unit_id": "unit_3_circles",
+      "phases": { "stub": true }
     },
     {
       "id": "circle_problems",
       "title": { "en": "Solving circle problems", "zh": "解决圆的问题" },
       "prerequisite": "area_circle",
       "difficulty_base": 3,
-      "unit_id": "unit_3_circles"
+      "unit_id": "unit_3_circles",
+      "phases": { "stub": true }
     },
     {
       "id": "percent_basics",
       "title": { "en": "What is a percentage?", "zh": "什么是百分比？" },
       "prerequisite": null,
       "difficulty_base": 1,
-      "unit_id": "unit_4_percentages"
+      "unit_id": "unit_4_percentages",
+      "phases": { "stub": true }
     },
     {
       "id": "percent_of_number",
       "title": { "en": "Finding a percent of a number", "zh": "求一个数的百分之几" },
       "prerequisite": "percent_basics",
       "difficulty_base": 2,
-      "unit_id": "unit_4_percentages"
+      "unit_id": "unit_4_percentages",
+      "phases": { "stub": true }
     },
     {
       "id": "discount_tax",
       "title": { "en": "Discounts and tax", "zh": "折扣与税" },
       "prerequisite": "percent_of_number",
       "difficulty_base": 2,
-      "unit_id": "unit_4_percentages"
+      "unit_id": "unit_4_percentages",
+      "phases": { "stub": true }
     },
     {
       "id": "percent_change",
       "title": { "en": "Percent increase and decrease", "zh": "百分比增减" },
       "prerequisite": "discount_tax",
       "difficulty_base": 3,
-      "unit_id": "unit_4_percentages"
+      "unit_id": "unit_4_percentages",
+      "phases": { "stub": true }
     },
     {
       "id": "multi_step_percent",
       "title": { "en": "Multi-step percent problems", "zh": "多步百分比问题" },
       "prerequisite": "percent_change",
       "difficulty_base": 3,
-      "unit_id": "unit_4_percentages"
+      "unit_id": "unit_4_percentages",
+      "phases": { "stub": true }
     },
     {
       "id": "negative_numbers",
       "title": { "en": "Understanding negative numbers", "zh": "理解负数" },
       "prerequisite": null,
       "difficulty_base": 1,
-      "unit_id": "unit_5_rational"
+      "unit_id": "unit_5_rational",
+      "phases": { "stub": true }
     },
     {
       "id": "adding_integers",
       "title": { "en": "Adding and subtracting integers", "zh": "整数加减法" },
       "prerequisite": "negative_numbers",
       "difficulty_base": 2,
-      "unit_id": "unit_5_rational"
+      "unit_id": "unit_5_rational",
+      "phases": { "stub": true }
     },
     {
       "id": "multiplying_integers",
       "title": { "en": "Multiplying and dividing integers", "zh": "整数乘除法" },
       "prerequisite": "adding_integers",
       "difficulty_base": 2,
-      "unit_id": "unit_5_rational"
+      "unit_id": "unit_5_rational",
+      "phases": { "stub": true }
     },
     {
       "id": "fraction_operations",
       "title": { "en": "Operations with fractions", "zh": "分数运算" },
       "prerequisite": "multiplying_integers",
       "difficulty_base": 3,
-      "unit_id": "unit_5_rational"
+      "unit_id": "unit_5_rational",
+      "phases": { "stub": true }
     },
     {
       "id": "decimal_operations",
       "title": { "en": "Operations with decimals", "zh": "小数运算" },
       "prerequisite": "fraction_operations",
       "difficulty_base": 3,
-      "unit_id": "unit_5_rational"
+      "unit_id": "unit_5_rational",
+      "phases": { "stub": true }
     },
     {
       "id": "rational_word_problems",
       "title": { "en": "Rational number word problems", "zh": "有理数应用题" },
       "prerequisite": "decimal_operations",
       "difficulty_base": 4,
-      "unit_id": "unit_5_rational"
+      "unit_id": "unit_5_rational",
+      "phases": { "stub": true }
     },
     {
       "id": "what_is_variable",
       "title": { "en": "What is a variable?", "zh": "什么是变量？" },
       "prerequisite": null,
       "difficulty_base": 1,
-      "unit_id": "unit_6_equations"
+      "unit_id": "unit_6_equations",
+      "phases": {
+        "concept": {
+          "title": "What is a variable?",
+          "explanation": "A variable is a letter that stands in for a number we don't know yet. Once we have enough information, we can figure out what number the variable represents.",
+          "key_idea": "A variable is just a placeholder for a number — like a name tag for an unknown.",
+          "visual": { "type": "none" }
+        },
+        "analogy": {
+          "title": "Think about it this way",
+          "scenario": "Imagine a jar labeled n that holds some marbles. You don't know yet how many are inside, but the label n is just a name for that count. Once you peek inside and count, n becomes a real number.",
+          "illustration_hint": "jar_labeled_n_with_marbles",
+          "question": "If n is the number of marbles in the jar and the jar holds 6 marbles, what is n?",
+          "options": [3, 6, 12],
+          "correct": 6,
+          "feedback_correct": "Right — n = 6, because n is just a name for that count.",
+          "feedback_incorrect": "n is just a name for the count of marbles. Six marbles means n = 6."
+        },
+        "example": {
+          "title": "Spotting variables in expressions",
+          "problem": "What is the variable in 3a + 4?",
+          "steps": [
+            { "math": "3a + 4", "explanation": "We're looking for the letter that stands in for an unknown number." },
+            { "math": "3a", "explanation": "The letter a is the variable. The 3 next to it means 3 times a." },
+            { "math": "variable = a", "explanation": "So a is the variable. The 3 and 4 are constants — fixed numbers that don't change." }
+          ]
+        },
+        "guided": {
+          "title": "Find and use the variable",
+          "problem": "In 5y - 2, identify the variable and evaluate when y = 4.",
+          "sub_steps": [
+            {
+              "question": "Which symbol stands for an unknown number?",
+              "type": "choice",
+              "options": ["5", "y", "2"],
+              "correct": "y",
+              "feedback_correct": "Right — letters stand for unknowns.",
+              "feedback_wrong": "Numbers like 5 and 2 are fixed. Look for a letter."
+            },
+            {
+              "question": "If y = 4, what is 5y?",
+              "type": "number",
+              "correct": 20,
+              "feedback_correct": "Yes — 5 times 4 is 20.",
+              "feedback_wrong": "5y means 5 times y. Try 5 × 4."
+            },
+            {
+              "question": "If y = 4, what is 5y - 2?",
+              "type": "number",
+              "correct": 18,
+              "feedback_correct": "Right — 20 minus 2 is 18.",
+              "feedback_wrong": "We had 5y = 20. Now subtract 2."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Evaluate on your own",
+          "questions": [
+            { "equation": "If x = 5, what is x + 3?", "answer": 8 },
+            { "equation": "If n = 7, what is 2n?", "answer": 14 },
+            { "equation": "If a = 10, what is a - 4?", "answer": 6 }
+          ]
+        }
+      }
     },
     {
       "id": "expressions_vs_equations",
       "title": { "en": "Expressions vs. equations", "zh": "表达式与方程的区别" },
       "prerequisite": "what_is_variable",
       "difficulty_base": 1,
-      "unit_id": "unit_6_equations"
+      "unit_id": "unit_6_equations",
+      "phases": {
+        "concept": {
+          "title": "Expressions vs. equations",
+          "explanation": "An expression is a math phrase like 3x + 5 — it represents a value but has no equals sign. An equation is two expressions set equal to each other, like 3x + 5 = 11. Equations can be solved; expressions can only be evaluated or simplified.",
+          "key_idea": "If you see an equals sign, it's an equation. No equals sign? It's an expression.",
+          "visual": { "type": "none" },
+          "main_equation": "3x + 5 = 11"
+        },
+        "analogy": {
+          "title": "A list vs. a recipe",
+          "scenario": "Think of an expression as a list of ingredients — flour, sugar, eggs. It describes something but doesn't tell you what it makes. An equation is the recipe itself: ingredients = cake. The equals sign turns the list into a complete idea.",
+          "illustration_hint": "ingredients_list_versus_complete_recipe",
+          "question": "Out of '5x + 2', '7 = 7', and '3x = 9', how many are equations?",
+          "options": [1, 2, 3],
+          "correct": 2,
+          "feedback_correct": "Right — '7 = 7' and '3x = 9' both have an equals sign, so they're equations.",
+          "feedback_incorrect": "Look for the equals sign — anything with one is an equation."
+        },
+        "example": {
+          "title": "Spotting the difference",
+          "problem": "Is 4n + 7 an expression or an equation?",
+          "steps": [
+            { "math": "4n + 7", "explanation": "We see two terms — 4n and 7 — joined by a plus sign. Look for an equals sign." },
+            { "math": "4n + 7   (no = sign)", "explanation": "There's no equals sign, so this is just an expression. We can simplify or evaluate it, but not solve it." },
+            { "math": "4n + 7 = 19", "explanation": "Adding '= 19' makes it an equation. Now we can solve for n." }
+          ]
+        },
+        "guided": {
+          "title": "You classify",
+          "problem": "Classify each: '6x', '6x = 30', '5 + 2'.",
+          "sub_steps": [
+            {
+              "question": "Is '6x' an equation or an expression?",
+              "type": "choice",
+              "options": ["Equation", "Expression", "Neither"],
+              "correct": "Expression",
+              "feedback_correct": "Yes — no equals sign means expression.",
+              "feedback_wrong": "Look for an equals sign. There isn't one in '6x'."
+            },
+            {
+              "question": "How many equals signs are in '6x = 30'?",
+              "type": "number",
+              "correct": 1,
+              "feedback_correct": "Right — one equals sign, so it's an equation.",
+              "feedback_wrong": "Count the '=' symbols in '6x = 30'."
+            },
+            {
+              "question": "Of the three ('6x', '6x = 30', '5 + 2'), how many are expressions?",
+              "type": "number",
+              "correct": 2,
+              "feedback_correct": "Right — '6x' and '5 + 2' have no equals sign.",
+              "feedback_wrong": "Expressions have no equals sign. Count those."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Spot the equations",
+          "questions": [
+            { "equation": "How many equations: 'x + 1', 'x + 1 = 5', '3 = 3'?", "answer": 2 },
+            { "equation": "How many expressions: '2y', '2y = 8', '4 + 1', '7 = 7'?", "answer": 2 },
+            { "equation": "How many equations: '5', '5 = 5', '5 + 1', '5 + 1 = 6'?", "answer": 2 }
+          ]
+        }
+      }
     },
     {
       "id": "solving_one_step",
       "title": { "en": "Solving one-step equations", "zh": "一步方程求解" },
       "prerequisite": "expressions_vs_equations",
       "difficulty_base": 2,
-      "unit_id": "unit_6_equations"
+      "unit_id": "unit_6_equations",
+      "phases": {
+        "concept": {
+          "title": "Equations are about balance",
+          "explanation": "An equation is like a balance scale — whatever you do to one side, you must do to the other to keep it equal. The goal is to get the variable (the unknown) all by itself on one side.",
+          "key_idea": "To solve an equation, isolate the variable by undoing the operation.",
+          "visual": { "type": "balance_scale", "left": "x + 5", "right": "12" },
+          "main_equation": "x + 5 = 12"
+        },
+        "analogy": {
+          "title": "Think about it this way",
+          "scenario": "You have some apples in a bag, plus 5 loose apples on the table. You count everything and get 12 total. How many apples are in the bag?",
+          "illustration_hint": "bag_with_apples",
+          "question": "How many apples are in the bag?",
+          "options": [5, 7, 12],
+          "correct": 7,
+          "feedback_correct": "That's right! The bag has 7 apples — just like x = 7.",
+          "feedback_incorrect": "Not quite — remember, the bag plus 5 equals 12."
+        },
+        "example": {
+          "title": "Let's solve this step by step",
+          "problem": "x + 5 = 12",
+          "steps": [
+            { "math": "x + 5 = 12", "explanation": "We need to get x alone. Since 5 is added to x, we undo it by subtracting 5." },
+            { "math": "x + 5 - 5 = 12 - 5", "explanation": "Subtract 5 from BOTH sides to keep the balance." },
+            { "math": "x = 7", "explanation": "Done! x equals 7. We can check: 7 + 5 = 12 ✓" }
+          ]
+        },
+        "guided": {
+          "title": "Now solve this one",
+          "problem": "n + 8 = 15",
+          "sub_steps": [
+            {
+              "question": "What operation do we need to undo?",
+              "type": "choice",
+              "options": ["Addition", "Subtraction", "Multiplication"],
+              "correct": "Addition",
+              "feedback_correct": "Right! We need to undo the +8.",
+              "feedback_wrong": "Look at the equation — what's being done to n?"
+            },
+            {
+              "question": "What should we subtract from both sides?",
+              "type": "number",
+              "correct": 8,
+              "feedback_correct": "Exactly! Subtract 8 from both sides.",
+              "feedback_wrong": "Not quite — look at what number is added to n."
+            },
+            {
+              "question": "What is n?",
+              "type": "number",
+              "correct": 7,
+              "feedback_correct": "n = 7! You solved it by undoing the addition. Great work.",
+              "feedback_wrong": "Try again — what is 15 - 8?"
+            }
+          ]
+        },
+        "independent": {
+          "title": "Solve these on your own",
+          "questions": [
+            { "equation": "x + 3 = 10", "answer": 7 },
+            { "equation": "x + 12 = 25", "answer": 13 },
+            { "equation": "x + 1 = 6", "answer": 5 }
+          ]
+        }
+      }
     },
     {
       "id": "inverse_operations",
       "title": { "en": "Why inverse operations work", "zh": "为什么逆运算有效？" },
       "prerequisite": "solving_one_step",
       "difficulty_base": 2,
-      "unit_id": "unit_6_equations"
+      "unit_id": "unit_6_equations",
+      "phases": {
+        "concept": {
+          "title": "Why inverse operations work",
+          "explanation": "Every operation has an opposite. Addition and subtraction undo each other. Multiplication and division undo each other. To get a variable alone, apply the inverse of whatever was done to it — and apply it to BOTH sides to keep the equation balanced.",
+          "key_idea": "To undo an operation, apply its inverse to both sides.",
+          "visual": { "type": "none" }
+        },
+        "analogy": {
+          "title": "Putting on, taking off",
+          "scenario": "Putting on shoes is undone by taking them off. Adding 7 to a number is undone by subtracting 7. The inverse undoes exactly what was done — no more, no less.",
+          "illustration_hint": "shoes_on_shoes_off_inverse_pair",
+          "question": "If x + 7 = 10, what number do you subtract from both sides to undo the +7?",
+          "options": [3, 7, 10],
+          "correct": 7,
+          "feedback_correct": "Right — subtracting 7 undoes adding 7.",
+          "feedback_incorrect": "To undo +7, apply its inverse: subtract 7."
+        },
+        "example": {
+          "title": "Choosing the right inverse",
+          "problem": "Solve 4x = 20",
+          "steps": [
+            { "math": "4x = 20", "explanation": "x is being multiplied by 4. The inverse of multiplication is division." },
+            { "math": "4x ÷ 4 = 20 ÷ 4", "explanation": "Divide BOTH sides by 4 — that's the inverse of multiplying by 4." },
+            { "math": "x = 5", "explanation": "Done. Check: 4 × 5 = 20 ✓" }
+          ]
+        },
+        "guided": {
+          "title": "Pick the inverse",
+          "problem": "Solve y - 3 = 8",
+          "sub_steps": [
+            {
+              "question": "What's being done to y?",
+              "type": "choice",
+              "options": ["Adding 3", "Subtracting 3", "Multiplying by 3"],
+              "correct": "Subtracting 3",
+              "feedback_correct": "Right — y has 3 subtracted from it.",
+              "feedback_wrong": "Look at the equation: y - 3 means 3 is subtracted from y."
+            },
+            {
+              "question": "What number do we add to both sides to undo subtracting 3?",
+              "type": "number",
+              "correct": 3,
+              "feedback_correct": "Yes — adding 3 undoes subtracting 3.",
+              "feedback_wrong": "The inverse of subtracting 3 is adding 3."
+            },
+            {
+              "question": "What is y?",
+              "type": "number",
+              "correct": 11,
+              "feedback_correct": "Right — y = 8 + 3 = 11.",
+              "feedback_wrong": "y - 3 = 8, so y = 8 + 3."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Apply the inverse",
+          "questions": [
+            { "equation": "x - 4 = 9 (find x)", "answer": 13 },
+            { "equation": "5x = 35 (find x)", "answer": 7 },
+            { "equation": "x ÷ 2 = 6 (find x)", "answer": 12 }
+          ]
+        }
+      }
     },
     {
       "id": "solving_two_step",
       "title": { "en": "Solving two-step equations", "zh": "两步方程求解" },
       "prerequisite": "inverse_operations",
       "difficulty_base": 3,
-      "unit_id": "unit_6_equations"
+      "unit_id": "unit_6_equations",
+      "phases": {
+        "concept": {
+          "title": "Two operations to undo",
+          "explanation": "When two operations are done to a variable, undo them in reverse order. If something was multiplied first and then added, undo the addition first, then the multiplication. This works because we're peeling off operations one layer at a time.",
+          "key_idea": "Undo operations in the reverse order they were applied — peel back layer by layer.",
+          "visual": { "type": "none" },
+          "main_equation": "2x + 3 = 11"
+        },
+        "analogy": {
+          "title": "Socks first, then shoes",
+          "scenario": "To get ready you put on socks, then shoes. To get unready, you take off shoes first, then socks. Equations work the same way — the operation that was done LAST is undone FIRST.",
+          "illustration_hint": "socks_then_shoes_reverse_order",
+          "question": "If we subtract 3 from both sides of 2x + 3 = 11, what's on the right side?",
+          "options": [5, 8, 11],
+          "correct": 8,
+          "feedback_correct": "Right — 11 minus 3 is 8, so 2x = 8.",
+          "feedback_incorrect": "Subtract 3 from 11. That's the new right side."
+        },
+        "example": {
+          "title": "Two-step in action",
+          "problem": "Solve 2x + 3 = 11",
+          "steps": [
+            { "math": "2x + 3 = 11", "explanation": "Two things happen to x: it's multiplied by 2, then 3 is added. Undo the addition first." },
+            { "math": "2x + 3 - 3 = 11 - 3   →   2x = 8", "explanation": "Subtract 3 from both sides. Now x is only multiplied by 2." },
+            { "math": "2x ÷ 2 = 8 ÷ 2   →   x = 4", "explanation": "Divide both sides by 2. Check: 2 × 4 + 3 = 11 ✓" }
+          ]
+        },
+        "guided": {
+          "title": "Try one yourself",
+          "problem": "Solve 3y - 4 = 11",
+          "sub_steps": [
+            {
+              "question": "Which operation should we undo first?",
+              "type": "choice",
+              "options": ["Subtracting 4", "Multiplying by 3", "Adding 11"],
+              "correct": "Subtracting 4",
+              "feedback_correct": "Right — undo the LAST operation first.",
+              "feedback_wrong": "We undo in reverse order. The last thing done was subtracting 4."
+            },
+            {
+              "question": "After adding 4 to both sides, what does 3y equal?",
+              "type": "number",
+              "correct": 15,
+              "feedback_correct": "Yes — 11 + 4 = 15, so 3y = 15.",
+              "feedback_wrong": "11 + 4 = 15."
+            },
+            {
+              "question": "What is y?",
+              "type": "number",
+              "correct": 5,
+              "feedback_correct": "Perfect — 3y = 15, so y = 5.",
+              "feedback_wrong": "Divide both sides by 3: 15 ÷ 3."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Solve these on your own",
+          "questions": [
+            { "equation": "2x + 5 = 13", "answer": 4 },
+            { "equation": "3x - 2 = 13", "answer": 5 },
+            { "equation": "4x + 1 = 21", "answer": 5 }
+          ]
+        }
+      }
     },
     {
       "id": "variables_both_sides",
       "title": { "en": "Variables on both sides", "zh": "两边都有变量的方程" },
       "prerequisite": "solving_two_step",
       "difficulty_base": 4,
-      "unit_id": "unit_6_equations"
+      "unit_id": "unit_6_equations",
+      "phases": {
+        "concept": {
+          "title": "Variables on both sides",
+          "explanation": "When variables appear on both sides of an equation, the first move is to get all variables onto ONE side. Subtract the smaller variable term from both sides, then solve the remaining one-step or two-step equation.",
+          "key_idea": "Move all variables to one side first — then solve as usual.",
+          "visual": { "type": "balance_scale", "left": "3x + 2", "right": "x + 8" },
+          "main_equation": "3x + 2 = x + 8"
+        },
+        "analogy": {
+          "title": "Apples on both pans",
+          "scenario": "Imagine a balance scale with apples on both sides. To compare, take the same number of apples off both sides until only one side has any. Then you can count what's left and figure out the unknown.",
+          "illustration_hint": "balance_with_apples_on_both_sides",
+          "question": "In 3x + 2 = x + 8, if we subtract x from both sides, how many x's are left on the left side?",
+          "options": [1, 2, 3],
+          "correct": 2,
+          "feedback_correct": "Right — 3x minus x leaves 2x.",
+          "feedback_incorrect": "3x minus 1x equals 2x."
+        },
+        "example": {
+          "title": "Two sides, one variable",
+          "problem": "Solve 3x + 2 = x + 8",
+          "steps": [
+            { "math": "3x + 2 = x + 8", "explanation": "Variables are on both sides. Move them to one side — subtract x from both." },
+            { "math": "3x - x + 2 = x - x + 8   →   2x + 2 = 8", "explanation": "Now variables are only on the left. This is a regular two-step equation." },
+            { "math": "2x = 6   →   x = 3", "explanation": "Subtract 2, then divide by 2. Check: 3(3) + 2 = 11 and 3 + 8 = 11 ✓" }
+          ]
+        },
+        "guided": {
+          "title": "Move and solve",
+          "problem": "Solve 5y = 2y + 9",
+          "sub_steps": [
+            {
+              "question": "What should we do first?",
+              "type": "choice",
+              "options": ["Subtract 2y from both sides", "Divide by 5", "Add 9 to both sides"],
+              "correct": "Subtract 2y from both sides",
+              "feedback_correct": "Right — get all variables on one side first.",
+              "feedback_wrong": "Always get variables on one side first by subtracting the smaller variable term."
+            },
+            {
+              "question": "After subtracting 2y from both sides, the left side becomes how many y's? (just the coefficient)",
+              "type": "number",
+              "correct": 3,
+              "feedback_correct": "Yes — 5y - 2y = 3y.",
+              "feedback_wrong": "5y minus 2y equals 3y."
+            },
+            {
+              "question": "What is y?",
+              "type": "number",
+              "correct": 3,
+              "feedback_correct": "Right — 3y = 9 means y = 3.",
+              "feedback_wrong": "If 3y = 9, divide both sides by 3."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Solve these on your own",
+          "questions": [
+            { "equation": "4x = x + 9", "answer": 3 },
+            { "equation": "5x + 1 = 2x + 10", "answer": 3 },
+            { "equation": "6x - 4 = 4x + 6", "answer": 5 }
+          ]
+        }
+      }
     },
     {
       "id": "equation_word_problems",
       "title": { "en": "Word problems with equations", "zh": "方程应用题" },
       "prerequisite": "solving_two_step",
       "difficulty_base": 4,
-      "unit_id": "unit_6_equations"
+      "unit_id": "unit_6_equations",
+      "phases": {
+        "concept": {
+          "title": "Words to equations",
+          "explanation": "Word problems are stories that hide an equation. The trick is to translate the words into math: pick a variable for the unknown, write what's known, and connect them with an equation. Then solve like any other equation.",
+          "key_idea": "Read carefully, name the unknown, and turn the sentence into an equation.",
+          "visual": { "type": "none" }
+        },
+        "analogy": {
+          "title": "An equation in disguise",
+          "scenario": "A word problem is just an equation in disguise. If someone tells you, 'I'm thinking of a number. When I add 4 to it, I get 10,' that's just n + 4 = 10 dressed up as a story.",
+          "illustration_hint": "speech_bubble_translating_to_equation",
+          "question": "If 'twice a number plus 3 equals 11' becomes the equation 2x + 3 = ?, what number replaces the question mark?",
+          "options": [8, 11, 14],
+          "correct": 11,
+          "feedback_correct": "Right — 'equals 11' tells you the right side is 11.",
+          "feedback_incorrect": "The phrase 'equals 11' tells you what comes after the = sign."
+        },
+        "example": {
+          "title": "From words to equation",
+          "problem": "Sara has some marbles. After her brother gives her 6 more, she has 14. How many did she start with?",
+          "steps": [
+            { "math": "let m = marbles she had at start", "explanation": "Pick a variable for the unknown — m for marbles." },
+            { "math": "m + 6 = 14", "explanation": "She gained 6 and ended with 14. So m + 6 = 14." },
+            { "math": "m = 8", "explanation": "Subtract 6 from both sides. Sara started with 8 marbles." }
+          ]
+        },
+        "guided": {
+          "title": "Translate and solve",
+          "problem": "A bag holds n cookies. After 5 are eaten, 12 are left. How many cookies were in the bag?",
+          "sub_steps": [
+            {
+              "question": "Which equation matches the story?",
+              "type": "choice",
+              "options": ["n + 5 = 12", "n - 5 = 12", "5n = 12"],
+              "correct": "n - 5 = 12",
+              "feedback_correct": "Right — 5 were eaten (subtracted), leaving 12.",
+              "feedback_wrong": "Eating 5 means 5 are taken away from n. That's subtraction."
+            },
+            {
+              "question": "What do we add to both sides to undo the -5?",
+              "type": "number",
+              "correct": 5,
+              "feedback_correct": "Yes — adding 5 undoes subtracting 5.",
+              "feedback_wrong": "The inverse of -5 is +5."
+            },
+            {
+              "question": "How many cookies were in the bag at the start?",
+              "type": "number",
+              "correct": 17,
+              "feedback_correct": "Right — n = 12 + 5 = 17.",
+              "feedback_wrong": "n - 5 = 12, so n = 12 + 5."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Solve these on your own",
+          "questions": [
+            { "equation": "Tom has x stickers. He gets 9 more and now has 21. Find x.", "answer": 12 },
+            { "equation": "A box held n apples. After 4 were eaten, 11 remain. Find n.", "answer": 15 },
+            { "equation": "Twice a number minus 5 is 13. Find the number.", "answer": 9 }
+          ]
+        }
+      }
     },
     {
       "id": "angle_relationships",
       "title": { "en": "Angle relationships", "zh": "角的关系" },
       "prerequisite": null,
       "difficulty_base": 1,
-      "unit_id": "unit_7_geometry"
+      "unit_id": "unit_7_geometry",
+      "phases": { "stub": true }
     },
     {
       "id": "triangle_properties",
       "title": { "en": "Triangle properties", "zh": "三角形的性质" },
       "prerequisite": "angle_relationships",
       "difficulty_base": 2,
-      "unit_id": "unit_7_geometry"
+      "unit_id": "unit_7_geometry",
+      "phases": { "stub": true }
     },
     {
       "id": "triangle_inequality",
       "title": { "en": "The triangle inequality", "zh": "三角不等式" },
       "prerequisite": "triangle_properties",
       "difficulty_base": 2,
-      "unit_id": "unit_7_geometry"
+      "unit_id": "unit_7_geometry",
+      "phases": { "stub": true }
     },
     {
       "id": "surface_area",
       "title": { "en": "Surface area of prisms", "zh": "棱柱的表面积" },
       "prerequisite": "triangle_inequality",
       "difficulty_base": 3,
-      "unit_id": "unit_7_geometry"
+      "unit_id": "unit_7_geometry",
+      "phases": { "stub": true }
     },
     {
       "id": "volume_prisms",
       "title": { "en": "Volume of prisms", "zh": "棱柱的体积" },
       "prerequisite": "surface_area",
       "difficulty_base": 3,
-      "unit_id": "unit_7_geometry"
+      "unit_id": "unit_7_geometry",
+      "phases": { "stub": true }
     },
     {
       "id": "intro_probability",
       "title": { "en": "What is probability?", "zh": "什么是概率？" },
       "prerequisite": null,
       "difficulty_base": 1,
-      "unit_id": "unit_8_probability"
+      "unit_id": "unit_8_probability",
+      "phases": { "stub": true }
     },
     {
       "id": "experimental_prob",
       "title": { "en": "Experimental probability", "zh": "实验概率" },
       "prerequisite": "intro_probability",
       "difficulty_base": 2,
-      "unit_id": "unit_8_probability"
+      "unit_id": "unit_8_probability",
+      "phases": { "stub": true }
     },
     {
       "id": "probability_models",
       "title": { "en": "Probability models", "zh": "概率模型" },
       "prerequisite": "experimental_prob",
       "difficulty_base": 2,
-      "unit_id": "unit_8_probability"
+      "unit_id": "unit_8_probability",
+      "phases": { "stub": true }
     },
     {
       "id": "sampling_methods",
       "title": { "en": "Sampling methods", "zh": "抽样方法" },
       "prerequisite": "probability_models",
       "difficulty_base": 3,
-      "unit_id": "unit_8_probability"
+      "unit_id": "unit_8_probability",
+      "phases": { "stub": true }
     },
     {
       "id": "population_inference",
       "title": { "en": "Making inferences about populations", "zh": "关于总体的推断" },
       "prerequisite": "sampling_methods",
       "difficulty_base": 3,
-      "unit_id": "unit_8_probability"
+      "unit_id": "unit_8_probability",
+      "phases": { "stub": true }
     }
   ],
   "grades": {
