@@ -63,8 +63,17 @@ export interface GuidedPhaseContent {
   sub_steps: [GuidedSubStep, GuidedSubStep, GuidedSubStep];
 }
 
-// Add other phase types in 2e — keep this file growing.
-// For now we also need a discriminator so the page can detect stubs.
+export interface IndependentQuestion {
+  equation: string;
+  answer: number;
+}
+
+export interface IndependentPhaseContent {
+  title: string;
+  questions: [IndependentQuestion, IndependentQuestion, IndependentQuestion];
+}
+
+// All five phase content types are now defined.
 export type TopicPhases =
   | { stub: true }
   | {
@@ -72,9 +81,7 @@ export type TopicPhases =
       analogy?: AnalogyPhaseContent;
       example?: ExamplePhaseContent;
       guided?: GuidedPhaseContent;
-      // Other phases will be added in subsequent steps; for now treat them
-      // as unknown so reading topic.phases doesn't break TS:
-      independent?: unknown;
+      independent?: IndependentPhaseContent;
     };
 
 export interface TopicWithPhases {
