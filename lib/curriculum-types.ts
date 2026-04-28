@@ -38,7 +38,32 @@ export interface ExamplePhaseContent {
   steps: ExampleStep[];
 }
 
-// Add other phase types in 2d/e — keep this file growing.
+export interface GuidedSubStepChoice {
+  question: string;
+  type: "choice";
+  options: [string, string, string];
+  correct: string;
+  feedback_correct: string;
+  feedback_wrong: string;
+}
+
+export interface GuidedSubStepNumber {
+  question: string;
+  type: "number";
+  correct: number;
+  feedback_correct: string;
+  feedback_wrong: string;
+}
+
+export type GuidedSubStep = GuidedSubStepChoice | GuidedSubStepNumber;
+
+export interface GuidedPhaseContent {
+  title: string;
+  problem: string;
+  sub_steps: [GuidedSubStep, GuidedSubStep, GuidedSubStep];
+}
+
+// Add other phase types in 2e — keep this file growing.
 // For now we also need a discriminator so the page can detect stubs.
 export type TopicPhases =
   | { stub: true }
@@ -46,9 +71,9 @@ export type TopicPhases =
       concept: ConceptPhaseContent;
       analogy?: AnalogyPhaseContent;
       example?: ExamplePhaseContent;
+      guided?: GuidedPhaseContent;
       // Other phases will be added in subsequent steps; for now treat them
       // as unknown so reading topic.phases doesn't break TS:
-      guided?: unknown;
       independent?: unknown;
     };
 

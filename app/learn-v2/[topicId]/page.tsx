@@ -14,6 +14,7 @@ import PhaseProgress from "../_components/phase-progress";
 import ConceptPhaseView from "../_components/concept-phase";
 import AnalogyPhaseView from "../_components/analogy-phase";
 import ExamplePhaseView from "../_components/example-phase";
+import GuidedPhaseView from "../_components/guided-phase";
 
 type PhaseState = 1 | 2 | 3 | 4 | 5 | "complete";
 
@@ -198,9 +199,19 @@ export default function LearnV2TopicPage() {
           onBack={() => setCurrentPhase(1)}
         />
       )}
-      {(currentPhase === 4 ||
-        currentPhase === 5 ||
-        currentPhase === "complete") && (
+      {currentPhase === 4 && phases.guided && (
+        <GuidedPhaseView
+          guided={phases.guided}
+          onComplete={() => setCurrentPhase(5)}
+        />
+      )}
+      {currentPhase === 4 && !phases.guided && (
+        <PhasePlaceholder
+          phase={4}
+          onBack={() => setCurrentPhase(1)}
+        />
+      )}
+      {(currentPhase === 5 || currentPhase === "complete") && (
         <PhasePlaceholder
           phase={currentPhase}
           onBack={() => setCurrentPhase(1)}
