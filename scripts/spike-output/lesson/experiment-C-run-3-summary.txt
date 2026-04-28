@@ -1,0 +1,37 @@
+Experiment C run 3
+status: request OK
+duration_sec: 16.58
+model_returned: gemma4:e2b
+content_length: 1025
+parse_ok: true
+schema_ok: true
+overall: PASS
+
+parsed value:
+{
+  "problem": "Solve: 2x + 5 = 15",
+  "steps": [
+    {
+      "sub_step": 1,
+      "instruction": "To isolate the term 2x, what operation should you perform on both sides of the equation to eliminate the +5?",
+      "expected_input_type": "operation",
+      "expected_value": "subtract",
+      "hint": "We want to get 2x by itself, so we need to undo the addition of 5."
+    },
+    {
+      "sub_step": 2,
+      "instruction": "Perform the operation from Step 1 on both sides. What is the result after calculating 15 - 5 on both sides?",
+      "expected_input_type": "answer",
+      "expected_value": "10",
+      "hint": "Remember that the equation becomes 2x = 10."
+    },
+    {
+      "sub_step": 3,
+      "instruction": "To find the value of x, what operation must you perform next on both sides of the equation (2x = 10)?",
+      "expected_input_type": "operation",
+      "expected_value": "divide",
+      "hint": "The 2 is multiplying x, so we need to undo the multiplication to find x."
+    }
+  ],
+  "final_answer": 2.5
+}

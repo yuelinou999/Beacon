@@ -1,0 +1,21 @@
+Experiment B run 2
+status: request OK
+duration_sec: 11.16
+model_returned: gemma4:e2b
+content_length: 665
+parse_ok: true
+schema_ok: true
+overall: PASS
+
+parsed value:
+{
+  "scenario": "Sarah buys 3 apples at $0.50 each and some oranges at $0.75 each. If her total bill was $3.00, how can we represent this situation as a linear equation?",
+  "question": "Which equation correctly represents the cost scenario, where 'a' is the number of apples and 'b' is the number of oranges?",
+  "options": [
+    "0.50a + 0.75b = 3.00",
+    "3a + 0.75b = 3.00",
+    "a + b = 3.00"
+  ],
+  "correct_index": 0,
+  "explanation": "The cost of apples is 0.50 multiplied by the number of apples (a), and the cost of oranges is 0.75 multiplied by the number of oranges (b). The total cost must equal $3.00, leading to the equation 0.50a + 0.75b = 3.00."
+}

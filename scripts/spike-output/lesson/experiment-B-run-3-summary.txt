@@ -1,0 +1,21 @@
+Experiment B run 3
+status: request OK
+duration_sec: 12.11
+model_returned: gemma4:e2b
+content_length: 590
+parse_ok: true
+schema_ok: true
+overall: PASS
+
+parsed value:
+{
+  "scenario": "Sarah has 7 stickers, and she wants to have exactly 10 stickers to complete her collection. How many more stickers does she need?",
+  "question": "If Sarah currently has 7 stickers and wants 10, what equation represents the stickers she needs to find, and what is the answer?",
+  "options": [
+    "7 + 3 = 10",
+    "10 - 7 = 3",
+    "7 + 10 = 17"
+  ],
+  "correct_index": 1,
+  "explanation": "The problem asks for the difference between the target (10) and the current amount (7), which is represented by the equation 10 - 7 = 3. This shows the amount Sarah needs to add."
+}

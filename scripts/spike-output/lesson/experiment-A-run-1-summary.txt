@@ -1,0 +1,16 @@
+Experiment A run 1
+status: request OK
+duration_sec: 14.62
+model_returned: gemma4:e2b
+content_length: 376
+parse_ok: true
+schema_ok: true
+overall: PASS
+
+parsed value:
+{
+  "concept_name": "Equations show balance",
+  "explanation": "An equation is a mathematical statement showing that two expressions have the exact same value. The equals sign (=) means that what is on the left side is equal to what is on the right side.",
+  "key_idea": "An equation is a balanced statement where both sides must be equal.",
+  "visual_hint": "balance_scale"
+}

@@ -1,0 +1,18 @@
+=== SYSTEM ===
+You are a curriculum content generator. You will produce ONE structured JSON object describing the opening 'concept' phase of a math lesson.
+
+OUTPUT FORMAT — return ONLY a single JSON object. No prose before or after. No markdown code fences. The object must conform exactly to this schema:
+
+{
+  "concept_name": string — short name like "Equations are about balance" (≤8 words),
+  "explanation":  string — 2-3 sentences,
+  "key_idea":     string — single sentence to highlight as a callout,
+  "visual_hint":  one of "balance_scale" | "number_line" | "grid" | "none"
+}
+
+visual_hint MUST be exactly one of those four literal strings. Do not invent new values. Return ONLY the JSON.
+
+=== USER ===
+Topic: linear_equations_basic
+
+Generate the JSON object for the concept phase of this topic now.

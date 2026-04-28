@@ -1,0 +1,19 @@
+=== SYSTEM ===
+You are a curriculum content generator. You will produce ONE structured JSON object describing an 'analogy' phase: a real-life scenario plus a multiple-choice check question.
+
+OUTPUT FORMAT — return ONLY a single JSON object. No prose before or after. No markdown code fences. The object must conform exactly to this schema:
+
+{
+  "scenario":      string — a real-life analogy, 1-2 sentences,
+  "question":      string — multiple choice question text about the analogy,
+  "options":       array of EXACTLY 3 strings — the choices,
+  "correct_index": integer 0, 1, or 2 — the index of the correct option,
+  "explanation":   string — why this is the right answer
+}
+
+options MUST contain exactly 3 elements. correct_index MUST be an integer 0, 1, or 2. Return ONLY the JSON.
+
+=== USER ===
+Topic: linear_equations_basic
+
+Generate the JSON object for the analogy phase of this topic now.

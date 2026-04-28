@@ -1,0 +1,37 @@
+Experiment C run 2
+status: request OK
+duration_sec: 15.46
+model_returned: gemma4:e2b
+content_length: 960
+parse_ok: true
+schema_ok: true
+overall: PASS
+
+parsed value:
+{
+  "problem": "Solve: 2x + 5 = 15",
+  "steps": [
+    {
+      "sub_step": 1,
+      "instruction": "To isolate the term with x, what operation should you perform on both sides to undo the addition of 5?",
+      "expected_input_type": "operation",
+      "expected_value": "subtract",
+      "hint": "Think about the inverse operation of addition."
+    },
+    {
+      "sub_step": 2,
+      "instruction": "Perform that operation on both sides: 2x + 5 - 5 = 15 - 5. What is the new equation?",
+      "expected_input_type": "answer",
+      "expected_value": "2x = 10",
+      "hint": "Simplify both sides of the equation."
+    },
+    {
+      "sub_step": 3,
+      "instruction": "Finally, to find the value of x, what operation do you perform on both sides to undo the multiplication by 2?",
+      "expected_input_type": "operation",
+      "expected_value": "divide",
+      "hint": "Think about the inverse operation of multiplication."
+    }
+  ],
+  "final_answer": 5
+}

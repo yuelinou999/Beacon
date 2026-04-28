@@ -1,0 +1,37 @@
+Experiment C run 1
+status: request OK
+duration_sec: 15.21
+model_returned: gemma4:e2b
+content_length: 819
+parse_ok: true
+schema_ok: true
+overall: PASS
+
+parsed value:
+{
+  "problem": "Solve: x + 5 = 12",
+  "steps": [
+    {
+      "sub_step": 1,
+      "instruction": "To solve for x, what operation must you perform on both sides of the equation to isolate x?",
+      "expected_input_type": "operation",
+      "expected_value": "subtract",
+      "hint": "Think about how to undo the addition of 5."
+    },
+    {
+      "sub_step": 2,
+      "instruction": "Perform the necessary calculation: 12 - 5. What is the result?",
+      "expected_input_type": "answer",
+      "expected_value": 7,
+      "hint": "This result will be the value of x."
+    },
+    {
+      "sub_step": 3,
+      "instruction": "What is the final value of x?",
+      "expected_input_type": "answer",
+      "expected_value": 7,
+      "hint": "The answer is the result from the previous step."
+    }
+  ],
+  "final_answer": 7
+}

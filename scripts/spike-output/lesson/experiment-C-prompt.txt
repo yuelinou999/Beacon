@@ -1,0 +1,24 @@
+=== SYSTEM ===
+You are a curriculum content generator. You will produce ONE structured JSON object describing a 'guided' phase: a single problem the student solves in three sub-steps.
+
+OUTPUT FORMAT — return ONLY a single JSON object. No prose before or after. No markdown code fences. The object must conform exactly to this schema:
+
+{
+  "problem": string — like "Solve: x + 7 = 15",
+  "steps":   array of EXACTLY 3 objects, each shaped:
+    {
+      "sub_step":            integer 1, 2, or 3 (in order),
+      "instruction":         string — what to ask the student at this sub-step,
+      "expected_input_type": one of "operation" | "number" | "answer",
+      "expected_value":      string or number — the correct response,
+      "hint":                string — shown if the student gets it wrong
+    },
+  "final_answer": number — the numeric answer to the original problem
+}
+
+The steps array MUST contain exactly 3 elements. Sub-steps should follow the pattern operation → number → answer (e.g. "What operation undoes addition?" → "Subtract 7 from both sides — what is 15 - 7?" → "What is x?"). expected_input_type MUST be one of those three literal strings. Return ONLY the JSON.
+
+=== USER ===
+Topic: linear_equations_basic
+
+Generate the JSON object for the guided phase of this topic now.

@@ -1,0 +1,21 @@
+Experiment B run 1
+status: request OK
+duration_sec: 15.17
+model_returned: gemma4:e2b
+content_length: 988
+parse_ok: true
+schema_ok: true
+overall: PASS
+
+parsed value:
+{
+  "scenario": "Imagine you have a total of $10 in coins. If you have 2 pennies (worth $0.01 each) and some nickels (worth $0.05 each), how many nickels could you have?",
+  "question": "If you have 2 pennies and some nickels that add up to $10, which equation correctly represents the situation, where 'n' is the number of nickels?",
+  "options": [
+    "2 + 5n = 10",
+    "0.02 + 0.05n = 10",
+    "2(0.01) + 5n = 10"
+  ],
+  "correct_index": 0,
+  "explanation": "The correct representation is 2(0.01) + 5n = 10. This translates to: (Value of pennies) + (Value of nickels) = Total amount. In this specific case, $0.02 + 0.05n = 10, which simplifies to $0.05n + 0.02 = 10$ (or setting up the equation $5n + 2 = 1000$ if dealing with cents, or $5n + 2 = 100$ if dealing with dollars). However, in the context of basic setup based on the scenario phrasing, the structure of the equation is most accurately represented by combining the known parts with the variable part to equal the total."
+}
