@@ -1,0 +1,14 @@
+=== L2-pre verifier replay ===
+
+Experiment A1: schema=pass  semantic=ok   expected=ok   [MATCH]
+Experiment A2: schema=pass  semantic=ok   expected=ok   [MATCH]
+Experiment A3: schema=pass  semantic=ok   expected=ok   [MATCH]
+Experiment B1: schema=pass  semantic=warn expected=warn [MATCH] reason="explanation may not describe the marked correct option (correct_index=0, fragment "2 + 5n =" not found in explanation)"
+Experiment B2: schema=pass  semantic=ok   expected=ok   [MATCH]
+Experiment B3: schema=pass  semantic=ok   expected=ok   [MATCH]
+Experiment C1: schema=pass  semantic=ok   expected=ok   [MATCH]
+Experiment C2: schema=pass  semantic=ok   expected=ok   [MATCH]
+Experiment C3: schema=pass  semantic=fail expected=fail [MATCH] reason="Substituting x=2.5 into "Solve: 2x + 5 = 15" gives 10 != 15"
+
+Counts: 7 ok, 1 warn, 1 fail (expected: 7 ok, 1 warn, 1 fail)
+Matches: 9/9
