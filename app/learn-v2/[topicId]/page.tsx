@@ -16,6 +16,7 @@ import AnalogyPhaseView from "../_components/analogy-phase";
 import ExamplePhaseView from "../_components/example-phase";
 import GuidedPhaseView from "../_components/guided-phase";
 import IndependentPhaseView from "../_components/independent-phase";
+import CompletePhaseView from "../_components/complete-phase";
 
 type PhaseState = 1 | 2 | 3 | 4 | 5 | "complete";
 
@@ -225,10 +226,7 @@ export default function LearnV2TopicPage() {
         />
       )}
       {currentPhase === "complete" && (
-        <PhasePlaceholder
-          phase="complete"
-          onBack={() => setCurrentPhase(1)}
-        />
+        <CompletePhaseView topicId={topic.id} />
       )}
     </div>
   );

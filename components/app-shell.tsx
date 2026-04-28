@@ -10,6 +10,7 @@ import AIPanel from "@/components/ai-panel";
 import { AIContextProvider, useAIContext } from "@/components/ai-context";
 import { loadProfile } from "@/lib/progress";
 import type { StudentProfile } from "@/lib/types";
+import curriculum from "@/data/curriculum.json";
 
 function getBreadcrumbs(pathname: string) {
   if (pathname === "/") {
@@ -59,6 +60,22 @@ function getBreadcrumbs(pathname: string) {
       breadcrumbs: [
         { label: "Home", href: "/" },
         { label: "Dashboard" },
+      ],
+    };
+  }
+  if (pathname.startsWith("/learn-v2/")) {
+    const topicId = pathname.replace("/learn-v2/", "");
+    const topic = (
+      curriculum.topics as Array<{ id: string; title: { en: string } }>
+    ).find((t) => t.id === topicId);
+    const topicLabel = topic?.title.en ?? "Lesson";
+    return {
+      title: topicLabel,
+      breadcrumbs: [
+        { label: "Home", href: "/" },
+        { label: "Mathematics", href: "/subject/math" },
+        { label: "Learn" },
+        { label: topicLabel },
       ],
     };
   }
