@@ -18,7 +18,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: "home", href: "/", label: "Home", status: "ready" },
-  { id: "learn", href: "/learn", label: "Learn", status: "ready" },
+  { id: "learn", href: "/learn-v2/solving_one_step", label: "Learn", status: "ready" },
   { id: "practice", href: "/practice", label: "Practice", status: "ready" },
   { id: "quiz", href: "/quiz", label: "Quiz", status: "soon" },
   { id: "review", href: "/review", label: "Review", status: "soon" },

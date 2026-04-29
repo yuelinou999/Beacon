@@ -154,7 +154,7 @@ export default function Home() {
             Your next lesson is ready. Pick up where you left off.
           </p>
           <Link
-            href={`/learn?topic=${continueTopic.topic.id}`}
+            href={`/learn-v2/${continueTopic.topic.id}`}
             className="inline-block transition-opacity hover:opacity-90"
             style={{
               backgroundColor: "#0F2A4A",

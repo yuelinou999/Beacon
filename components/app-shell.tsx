@@ -25,16 +25,6 @@ function getBreadcrumbs(pathname: string) {
       ],
     };
   }
-  if (pathname === "/learn") {
-    return {
-      title: "Learn",
-      breadcrumbs: [
-        { label: "Home", href: "/" },
-        { label: "Mathematics", href: "/subject/math" },
-        { label: "Learn" },
-      ],
-    };
-  }
   if (pathname === "/practice") {
     return {
       title: "Practice",

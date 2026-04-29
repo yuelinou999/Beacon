@@ -212,7 +212,7 @@ function MathSubjectDetail({
                   : "Not started yet"}
               </p>
               <Link
-                href={`/learn?topic=${continueTopic.topic.id}`}
+                href={`/learn-v2/${continueTopic.topic.id}`}
                 className="inline-block text-white rounded-lg px-5 py-2.5 text-sm font-medium hover:opacity-90 transition"
                 style={{ backgroundColor: subjectDef.color }}
               >
@@ -289,7 +289,7 @@ function MathSubjectDetail({
                       {prereqMet ? (
                         <div className="flex gap-2 shrink-0">
                           <Link
-                            href={`/learn?topic=${topic.id}`}
+                            href={`/learn-v2/${topic.id}`}
                             className="text-xs px-3.5 py-1.5 rounded-lg text-white hover:opacity-90 transition font-medium"
                             style={{ backgroundColor: subjectDef.color }}
                           >
