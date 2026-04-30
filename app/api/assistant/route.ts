@@ -5,7 +5,7 @@ interface AssistantRequest {
   message: string;
   history: Array<{ role: "user" | "assistant"; content: string }>;
   context: {
-    page: "home" | "learn" | "practice" | "general";
+    page: "home" | "learn" | "practice" | "general" | "quiz";
     topicId?: string;
     topicTitle?: string;
     mastery?: number;

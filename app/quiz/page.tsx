@@ -6,8 +6,10 @@ import { useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import curriculum from "@/data/curriculum.json";
 import type { TopicWithPhases } from "@/lib/curriculum-types";
+import type { QuizAttempt } from "@/lib/types";
 import { useAIContext } from "@/components/ai-context";
 import StartPhaseView from "./_components/start-phase";
+import InProgressPhaseView from "./_components/in-progress-phase";
 
 type QuizState = "start" | "in-progress" | "results";
 
@@ -28,9 +30,10 @@ function QuizContent() {
   const topic = topics.find((t) => t.id === topicId);
 
   const [quizState, setQuizState] = useState<QuizState>("start");
+  const [completedAttempt, setCompletedAttempt] = useState<QuizAttempt | null>(null);
 
   useEffect(() => {
-    setContext({ page: "general" });
+    setContext({ page: "quiz" });
   }, [setContext]);
 
   // ── No topic in URL ─────────────────────────────────────
@@ -57,16 +60,24 @@ function QuizContent() {
           onStart={() => setQuizState("in-progress")}
         />
       )}
-      {quizState === "in-progress" && (
-        <PlaceholderPhase
-          label="Quiz in progress — coming in Step 2b"
-          onBack={() => setQuizState("start")}
+      {quizState === "in-progress" && topic.quiz && (
+        <InProgressPhaseView
+          quiz={topic.quiz}
+          topic={topic}
+          onComplete={(attempt) => {
+            setCompletedAttempt(attempt);
+            setQuizState("results");
+          }}
+          onExit={() => setQuizState("start")}
         />
       )}
-      {quizState === "results" && (
+      {quizState === "results" && completedAttempt && (
         <PlaceholderPhase
-          label="Quiz results — coming in Step 2c"
-          onBack={() => setQuizState("start")}
+          label={`Quiz results — coming in Step 2c. Score: ${completedAttempt.score}/${completedAttempt.total}`}
+          onBack={() => {
+            setQuizState("start");
+            setCompletedAttempt(null);
+          }}
         />
       )}
     </>

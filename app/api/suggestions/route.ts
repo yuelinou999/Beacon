@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { OLLAMA_URL, OLLAMA_MODEL } from "@/lib/config";
 
 interface SuggestionsRequest {
-  page: "home" | "learn" | "practice" | "general";
+  page: "home" | "learn" | "practice" | "general" | "quiz";
   currentTopicName?: string;
   topicMasteries?: Array<{ name: string; mastery: number }>;
   recentWrongAnswers?: string[];
