@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { usePathname } from "next/navigation";
+import { Suspense, useState, useEffect, useCallback } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Topbar from "@/components/topbar";
 import SettingsModal from "@/components/settings-modal";
@@ -12,7 +12,7 @@ import { loadProfile } from "@/lib/progress";
 import type { StudentProfile } from "@/lib/types";
 import curriculum from "@/data/curriculum.json";
 
-function getBreadcrumbs(pathname: string) {
+function getBreadcrumbs(pathname: string, quizTopicId: string | null) {
   if (pathname === "/") {
     return { title: "Beacon", breadcrumbs: [{ label: "Home" }] };
   }
@@ -32,6 +32,32 @@ function getBreadcrumbs(pathname: string) {
         { label: "Home", href: "/" },
         { label: "Mathematics", href: "/subject/math" },
         { label: "Practice" },
+      ],
+    };
+  }
+  if (pathname === "/quiz") {
+    if (quizTopicId) {
+      const topic = (
+        curriculum.topics as Array<{ id: string; title: { en: string } }>
+      ).find((t) => t.id === quizTopicId);
+      if (topic?.title?.en) {
+        return {
+          title: topic.title.en,
+          breadcrumbs: [
+            { label: "Home", href: "/" },
+            { label: "Mathematics", href: "/subject/math" },
+            { label: "Quiz" },
+            { label: topic.title.en },
+          ],
+        };
+      }
+    }
+    return {
+      title: "Quiz",
+      breadcrumbs: [
+        { label: "Home", href: "/" },
+        { label: "Mathematics", href: "/subject/math" },
+        { label: "Quiz" },
       ],
     };
   }
@@ -103,6 +129,75 @@ function ExpandButton({ target }: { target: "center" | "panel" }) {
   );
 }
 
+function RenderedTopbar({
+  pathname,
+  subtitle,
+  quizTopicId,
+}: {
+  pathname: string;
+  subtitle?: string;
+  quizTopicId: string | null;
+}) {
+  const { title, breadcrumbs } = getBreadcrumbs(pathname, quizTopicId);
+  return (
+    <Topbar
+      title={title}
+      subtitle={subtitle}
+      breadcrumbs={breadcrumbs}
+      rightContent={<ExpandButton target="center" />}
+    />
+  );
+}
+
+function QuizTopbarLoader({
+  pathname,
+  subtitle,
+}: {
+  pathname: string;
+  subtitle?: string;
+}) {
+  const searchParams = useSearchParams();
+  const quizTopicId = searchParams.get("topic");
+  return (
+    <RenderedTopbar
+      pathname={pathname}
+      subtitle={subtitle}
+      quizTopicId={quizTopicId}
+    />
+  );
+}
+
+function ShellTopbar({
+  pathname,
+  subtitle,
+}: {
+  pathname: string;
+  subtitle?: string;
+}) {
+  if (pathname === "/quiz") {
+    return (
+      <Suspense
+        fallback={
+          <RenderedTopbar
+            pathname={pathname}
+            subtitle={subtitle}
+            quizTopicId={null}
+          />
+        }
+      >
+        <QuizTopbarLoader pathname={pathname} subtitle={subtitle} />
+      </Suspense>
+    );
+  }
+  return (
+    <RenderedTopbar
+      pathname={pathname}
+      subtitle={subtitle}
+      quizTopicId={null}
+    />
+  );
+}
+
 function ShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { expanded, toggleExpand: toggle } = useAIContext();
@@ -137,7 +232,6 @@ function ShellInner({ children }: { children: React.ReactNode }) {
     refreshProfile();
   }, [pathname, refreshProfile]);
 
-  const { title, breadcrumbs } = getBreadcrumbs(pathname);
   const studentName = typeof window !== "undefined" ? getStudentName() : "";
   const subtitle = pathname === "/" && studentName ? `Welcome back, ${studentName}` : undefined;
 
@@ -168,12 +262,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           </div>
         ) : (
           <div className="flex flex-col flex-1 min-w-[380px]">
-            <Topbar
-              title={title}
-              subtitle={subtitle}
-              breadcrumbs={breadcrumbs}
-              rightContent={<ExpandButton target="center" />}
-            />
+            <ShellTopbar pathname={pathname} subtitle={subtitle} />
             <main className="flex-1 overflow-y-auto">
               {children}
             </main>
