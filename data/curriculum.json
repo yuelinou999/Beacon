@@ -422,6 +422,84 @@
             { "equation": "x + 1 = 6", "answer": 5 }
           ]
         }
+      },
+      "quiz": {
+        "title": "Solving one-step equations — quiz",
+        "description": "10 questions covering everything you've learned about one-step equations.",
+        "estimated_minutes": 15,
+        "difficulty_label": "Mixed difficulty",
+        "questions": [
+          {
+            "id": "q1",
+            "question": "What value of x makes this equation true?",
+            "equation": "x + 7 = 12",
+            "answer": 5,
+            "skill": "inverse_ops"
+          },
+          {
+            "id": "q2",
+            "question": "Maya had some stickers. After she got 6 more, she had 14 stickers. Let x be the number she had at the start. Find x.",
+            "equation": "x + 6 = 14",
+            "answer": 8,
+            "skill": "setting_up"
+          },
+          {
+            "id": "q3",
+            "question": "A student claims x = 8 solves the equation below. Verify by computing x yourself and entering the actual solution.",
+            "equation": "x - 3 = 6",
+            "answer": 9,
+            "skill": "verification"
+          },
+          {
+            "id": "q4",
+            "question": "Combine the constants on the left side first, then solve for x.",
+            "equation": "x + 2 + 5 = 16",
+            "answer": 9,
+            "skill": "simplification"
+          },
+          {
+            "id": "q5",
+            "question": "Solve for x.",
+            "equation": "x - 11 = 4",
+            "answer": 15,
+            "skill": "inverse_ops"
+          },
+          {
+            "id": "q6",
+            "question": "A game score was reduced by 7 points and became 18. Let x be the original score. Find x.",
+            "equation": "x - 7 = 18",
+            "answer": 25,
+            "skill": "setting_up"
+          },
+          {
+            "id": "q7",
+            "question": "Simplify the left side first, then solve for x.",
+            "equation": "x + 9 - 4 = 13",
+            "answer": 8,
+            "skill": "simplification"
+          },
+          {
+            "id": "q8",
+            "question": "Solve for x. Watch the sign carefully.",
+            "equation": "x - 12 = -5",
+            "answer": 7,
+            "skill": "inverse_ops"
+          },
+          {
+            "id": "q9",
+            "question": "The temperature dropped 9 degrees and ended at -4 degrees. Let x be the starting temperature. Find x.",
+            "equation": "x - 9 = -4",
+            "answer": 5,
+            "skill": "setting_up"
+          },
+          {
+            "id": "q10",
+            "question": "A classmate claims x = -10 solves the equation below. Verify by computing x yourself and entering the actual solution.",
+            "equation": "x + 8 = 2",
+            "answer": -6,
+            "skill": "verification"
+          }
+        ]
       }
     },
     {

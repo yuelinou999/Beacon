@@ -73,6 +73,37 @@ export interface IndependentPhaseContent {
   questions: [IndependentQuestion, IndependentQuestion, IndependentQuestion];
 }
 
+// Quiz bank — fixed, hardcoded assessment per topic. Distinct from Practice
+// (AI-generated, per-question feedback) and from the Lesson independent phase
+// (3-question mini-set inside the lesson flow).
+//
+// NOTE: there is also a `QuizQuestion` interface in lib/types.ts used by
+// Practice (shape: { question, correct_answer, difficulty }). They live in
+// separate modules and are never imported into the same file, but the
+// duplicate name is intentional — flagged for future rename if it bites.
+
+export type QuizSkill =
+  | "setting_up"
+  | "inverse_ops"
+  | "simplification"
+  | "verification";
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  equation: string;
+  answer: number;
+  skill: QuizSkill;
+}
+
+export interface QuizBank {
+  title: string;
+  description: string;
+  estimated_minutes: number;
+  difficulty_label: string;
+  questions: QuizQuestion[];
+}
+
 // All five phase content types are now defined.
 export type TopicPhases =
   | { stub: true }
@@ -91,6 +122,7 @@ export interface TopicWithPhases {
   difficulty_base: number;
   unit_id: string;
   phases?: TopicPhases;
+  quiz?: QuizBank;
 }
 
 export function isTopicStub(

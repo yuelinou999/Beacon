@@ -98,7 +98,7 @@ export interface StudentProfile {
   answer_history: AnswerRecord[];
   wrong_answers: WrongAnswer[];
   session_logs: SessionLog[];
-  quiz_results: unknown[];
+  quiz_results: QuizAttempt[];
   total_study_time_minutes: number;
   streak_days: number;
   last_active_date: string;
@@ -126,6 +126,30 @@ export interface QuizQuestion {
   question: string;
   correct_answer: string;
   difficulty: "easy" | "medium" | "hard";
+}
+
+// ── Quiz attempt (assessment) ──────────────────────────
+// Distinct from Practice's per-question QuizQuestion above. A QuizAttempt is
+// one full pass through a topic's hardcoded quiz bank — recorded atomically
+// at quiz completion. See lib/curriculum-types.ts for the bank shape.
+
+export interface QuizAttemptAnswer {
+  question_id: string;
+  student_answer: string;
+  parsed_answer: number | null;
+  correct: boolean;
+  time_seconds: number;
+}
+
+export interface QuizAttempt {
+  attempt_id: string;
+  topic_id: string;
+  started_at: string;
+  finished_at: string;
+  total_seconds: number;
+  score: number;
+  total: number;
+  answers: QuizAttemptAnswer[];
 }
 
 export interface GradeResult {

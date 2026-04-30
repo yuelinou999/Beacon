@@ -6,6 +6,7 @@ import type {
   SessionLog,
   ErrorType,
   LegacyTopicArchive,
+  QuizAttempt,
 } from "./types";
 import seedData from "../data/student.json";
 import curriculumData from "../data/curriculum.json";
@@ -354,6 +355,60 @@ export function updateMasteryAfterPractice(
     };
     newProfile.wrong_answers = [...profile.wrong_answers, entry];
   }
+
+  saveProfile(newProfile);
+  return newProfile;
+}
+
+// Quiz mastery rule: ratchet up only. mastery = max(existing, score/total).
+// A failed quiz attempt is treated as learning, not regression — Beacon's
+// stance is that taking the quiz at all is an act of effort and shouldn't
+// be punished. Practice handles the per-question up-and-down adjustment.
+export function recordQuizAttempt(
+  profile: StudentProfile,
+  attempt: QuizAttempt
+): StudentProfile {
+  const tp = { ...getTopicProgress(profile, attempt.topic_id) };
+  const ratio = attempt.total > 0 ? attempt.score / attempt.total : 0;
+
+  tp.mastery = Math.max(tp.mastery, +ratio.toFixed(2));
+  tp.attempts += 1;
+  tp.last_seen = attempt.finished_at;
+  tp.status = deriveTopicStatus(tp);
+
+  const sessionMinutes = Math.max(1, Math.round(attempt.total_seconds / 60));
+  const startHour = new Date(attempt.started_at).getHours();
+  const time_of_day: SessionLog["time_of_day"] =
+    startHour >= 5 && startHour < 12
+      ? "morning"
+      : startHour >= 12 && startHour < 17
+        ? "afternoon"
+        : startHour >= 17 && startHour < 21
+          ? "evening"
+          : "night";
+
+  const sessionLog: SessionLog = {
+    id: "sess_" + Date.now(),
+    date: attempt.started_at.slice(0, 10),
+    start_time: attempt.started_at,
+    end_time: attempt.finished_at,
+    duration_minutes: sessionMinutes,
+    time_of_day,
+    module: "quiz",
+    topic: attempt.topic_id,
+    questions_attempted: attempt.total,
+    questions_correct: attempt.score,
+    hints_used: 0,
+    explain_differently_used: 0,
+  };
+
+  const newProfile: StudentProfile = {
+    ...profile,
+    topics: { ...profile.topics, [attempt.topic_id]: tp },
+    quiz_results: [...profile.quiz_results, attempt],
+    session_logs: [...profile.session_logs, sessionLog],
+    total_study_time_minutes: profile.total_study_time_minutes + sessionMinutes,
+  };
 
   saveProfile(newProfile);
   return newProfile;
