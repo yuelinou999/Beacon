@@ -368,6 +368,12 @@ export function recordQuizAttempt(
   profile: StudentProfile,
   attempt: QuizAttempt
 ): StudentProfile {
+  // Idempotent on attempt_id — Strict Mode double-mount, hot reload, or any
+  // re-fire of the on-mount persist effect can't double-write.
+  if (profile.quiz_results.some((a) => a.attempt_id === attempt.attempt_id)) {
+    return profile;
+  }
+
   const tp = { ...getTopicProgress(profile, attempt.topic_id) };
   const ratio = attempt.total > 0 ? attempt.score / attempt.total : 0;
 

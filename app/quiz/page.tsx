@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import curriculum from "@/data/curriculum.json";
 import type { TopicWithPhases } from "@/lib/curriculum-types";
@@ -10,6 +10,7 @@ import type { QuizAttempt } from "@/lib/types";
 import { useAIContext } from "@/components/ai-context";
 import StartPhaseView from "./_components/start-phase";
 import InProgressPhaseView from "./_components/in-progress-phase";
+import ResultsPhaseView from "./_components/results-phase";
 
 type QuizState = "start" | "in-progress" | "results";
 
@@ -22,6 +23,7 @@ export default function QuizPage() {
 }
 
 function QuizContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const topicId = searchParams.get("topic") ?? "";
   const { setContext } = useAIContext();
@@ -71,12 +73,21 @@ function QuizContent() {
           onExit={() => setQuizState("start")}
         />
       )}
-      {quizState === "results" && completedAttempt && (
-        <PlaceholderPhase
-          label={`Quiz results — coming in Step 2c. Score: ${completedAttempt.score}/${completedAttempt.total}`}
+      {quizState === "results" && completedAttempt && topic.quiz && (
+        <ResultsPhaseView
+          attempt={completedAttempt}
+          quiz={topic.quiz}
+          topic={topic}
           onBack={() => {
             setQuizState("start");
             setCompletedAttempt(null);
+          }}
+          onRetake={() => {
+            setQuizState("in-progress");
+            setCompletedAttempt(null);
+          }}
+          onMoveToNext={() => {
+            router.push("/subject/math");
           }}
         />
       )}
@@ -103,28 +114,6 @@ function FallbackCard({ heading, body }: { heading: string; body: string }) {
           {heading}
         </h2>
         <p style={{ fontSize: "14px", color: "#6B7280", lineHeight: 1.6 }}>{body}</p>
-      </div>
-    </div>
-  );
-}
-
-function PlaceholderPhase({ label, onBack }: { label: string; onBack: () => void }) {
-  return (
-    <div className="max-w-2xl mx-auto px-8 py-12">
-      <div
-        className="rounded-xl p-8 text-center"
-        style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
-      >
-        <p style={{ fontSize: "15px", color: "#1F2937", lineHeight: 1.6, marginBottom: "20px" }}>
-          {label}
-        </p>
-        <button
-          onClick={onBack}
-          className="px-8 py-3 rounded-lg transition-colors"
-          style={{ backgroundColor: "#0F2A4A", color: "#FFFFFF", fontSize: "15px" }}
-        >
-          Back to start
-        </button>
       </div>
     </div>
   );
