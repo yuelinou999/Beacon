@@ -20,7 +20,7 @@ const navItems: NavItem[] = [
   { id: "home", href: "/", label: "Home", status: "ready" },
   { id: "learn", href: "/learn-v2/solving_one_step", label: "Learn", status: "ready" },
   { id: "practice", href: "/practice", label: "Practice", status: "ready" },
-  { id: "quiz", href: "/quiz", label: "Quiz", status: "soon" },
+  { id: "quiz", href: "/quiz?topic=solving_one_step", label: "Quiz", status: "ready" },
   { id: "review", href: "/review", label: "Review", status: "soon" },
   { id: "dashboard", href: "/dashboard", label: "Dashboard", status: "ready" },
 ];
@@ -125,10 +125,15 @@ function SidebarInner({
 
   const isNavActive = (href: string) => {
     if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
+    const path = href.split("?")[0];
+    return pathname.startsWith(path);
   };
 
-  const mathActive = pathname.startsWith("/subject/math") || pathname === "/learn" || pathname === "/practice";
+  const mathActive =
+    pathname.startsWith("/subject/math") ||
+    pathname === "/learn" ||
+    pathname === "/practice" ||
+    pathname === "/quiz";
 
   return (
     <aside

@@ -399,7 +399,7 @@ function MathSubjectDetail({
                   <div className="w-6 h-6 rounded bg-warning-bg flex items-center justify-center text-warning text-xs mb-1.5">&#10007;</div>
                   <p className="text-[12px] font-medium text-body group-hover:text-blue transition">Review ({totalWrong})</p>
                 </Link>
-                <Link href="/quiz" className="bg-card rounded-lg border border-border p-3 hover:border-blue transition group" style={{ borderWidth: "0.5px" }}>
+                <Link href={`/quiz?topic=${continueTopic.topic.id}`} className="bg-card rounded-lg border border-border p-3 hover:border-blue transition group" style={{ borderWidth: "0.5px" }}>
                   <div className="w-6 h-6 rounded bg-blue-soft flex items-center justify-center text-blue text-xs mb-1.5">&#9719;</div>
                   <p className="text-[12px] font-medium text-body group-hover:text-blue transition">Quiz</p>
                 </Link>

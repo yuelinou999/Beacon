@@ -26,7 +26,7 @@ function QuizContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const topicId = searchParams.get("topic") ?? "";
-  const { setContext } = useAIContext();
+  const { setContext, setQuizActive } = useAIContext();
 
   const topics = curriculum.topics as unknown as TopicWithPhases[];
   const topic = topics.find((t) => t.id === topicId);
@@ -37,6 +37,11 @@ function QuizContent() {
   useEffect(() => {
     setContext({ page: "quiz" });
   }, [setContext]);
+
+  useEffect(() => {
+    setQuizActive(quizState === "in-progress");
+    return () => setQuizActive(false);
+  }, [quizState, setQuizActive]);
 
   // ── No topic in URL ─────────────────────────────────────
   if (!topicId) {

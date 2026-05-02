@@ -93,7 +93,7 @@ function ExpandIcon({ expanded }: { expanded: boolean }) {
 }
 
 export default function AIPanel() {
-  const { context, expanded, toggleExpand } = useAIContext();
+  const { context, expanded, toggleExpand, quizActive } = useAIContext();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState("");
@@ -360,6 +360,14 @@ export default function AIPanel() {
         </div>
       </div>
 
+      {quizActive ? (
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+          <p className="text-[14px] text-muted leading-relaxed max-w-[280px]">
+            Beacon AI is paused while you take the quiz. It&apos;ll be back when you finish.
+          </p>
+        </div>
+      ) : (
+      <>
       {/* Messages area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
 
@@ -502,6 +510,8 @@ export default function AIPanel() {
           Snap a printed problem or type your question &middot; 100% offline &middot; Powered by Gemma 4
         </p>
       </div>
+      </>
+      )}
     </div>
   );
 }
