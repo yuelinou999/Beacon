@@ -579,6 +579,16 @@ function MathCourseCatalog({
 // Always-visible, status-driven primary action. Independent of the chevron
 // expansion: clicking the CTA navigates; clicking the chevron toggles the
 // lesson list. The two affordances are siblings in the DOM, not nested.
+//
+// CTA copy divergence vs. design reference:
+// - Reference (CourseCatalogScreen.tsx) labels the eligible state "Register"
+//   and the in-progress state "Resume".
+// - This port labels them "Start Unit" and "Continue" instead.
+// - Reason: Beacon has no enrollment model. The reference's EnrollmentPanel
+//   and Withdraw flow were deliberately omitted from this port, so "Register"
+//   would imply a step (enrollment) that doesn't exist in the product and
+//   would mislead users. "Start Unit" / "Continue" map the copy directly to
+//   what the click actually does — navigate into the lesson flow.
 
 function UnitFooterCta({
   status,
@@ -615,7 +625,15 @@ function UnitFooterCta({
   }
 
   if (status === "completed" && firstTopicId) {
-    // Mastered — practice maintains the skill; the lesson is already learned.
+    // Routing divergence vs. design reference:
+    // - Reference (CourseCatalogScreen.tsx) navigates the completed state via
+    //   `onNavigate('learn')` — a prototype-level navigation abstraction with
+    //   no literal route attached.
+    // - This port routes to `/practice?topic=<firstTopicId>` instead.
+    // - Reason: `onNavigate('learn')` doesn't map to a real route in this
+    //   codebase. Practice is the more product-correct destination because
+    //   mastered lessons are maintained through retrieval (answering questions),
+    //   not re-exposure to instruction the student already knows.
     return (
       <Link
         href={`/practice?topic=${firstTopicId}`}
