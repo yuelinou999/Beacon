@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Clock, Check, Lock, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronLeft, Clock, Check, Lock, ChevronDown, ChevronRight, TrendingUp } from "lucide-react";
 import { loadProfile, getTopicProgress } from "@/lib/progress";
 import { getBilingual } from "@/components/settings-modal";
 import { useAIContext } from "@/components/ai-context";
@@ -279,9 +279,10 @@ function MathCourseCatalog({
             <div className="flex items-center gap-2">
               <Clock size={14} style={{ color: "#6B7280" }} />
               <span style={{ fontSize: "13px", color: "#6B7280" }}>
-                {units.length} units &middot; {totalTopics} topics &middot; ~{grade.estimated_hours} hours total
+                {units.length} units &middot; {totalTopics} lessons &middot; ~{grade.estimated_hours} hours total
               </span>
             </div>
+            {/* Intentional addition vs. design reference: surfaces real student progress. */}
             <div style={{ fontSize: "13px", color: "#6B7280" }}>
               Mastered:{" "}
               <span style={{ color: "#1F2937", fontWeight: 500 }}>
@@ -305,7 +306,7 @@ function MathCourseCatalog({
             className="rounded-lg p-4 mb-8 flex items-center gap-3"
             style={{ backgroundColor: "#EFF6FF", border: "1px solid #BFDBFE" }}
           >
-            <ChevronRight size={18} style={{ color: "#2563EB" }} />
+            <TrendingUp size={18} style={{ color: "#2563EB" }} />
             <div>
               <span style={{ fontSize: "14px", color: "#1E40AF", fontWeight: 500 }}>
                 Beacon recommends:{" "}
@@ -337,13 +338,9 @@ function MathCourseCatalog({
                 className="rounded-xl"
                 style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
               >
-                {/* Card body (clickable to toggle expand) */}
-                <button
-                  type="button"
-                  onClick={() => setExpandedUnitId(isExpanded ? null : unit.id)}
-                  className="w-full text-left p-6 transition-colors hover:bg-gray-50 rounded-xl"
-                  aria-expanded={isExpanded}
-                >
+                {/* Card body — informational. The chevron toggles the expansion;
+                    the footer CTA navigates. Two independent affordances. */}
+                <div className="p-6">
                   {/* Top Row */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -388,11 +385,19 @@ function MathCourseCatalog({
                         )}
                         {STATUS_LABEL[status]}
                       </div>
-                      {isExpanded ? (
-                        <ChevronDown size={16} style={{ color: "#9CA3AF" }} />
-                      ) : (
-                        <ChevronRight size={16} style={{ color: "#9CA3AF" }} />
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedUnitId(isExpanded ? null : unit.id)}
+                        aria-expanded={isExpanded}
+                        aria-label={isExpanded ? "Collapse lesson list" : "Expand lesson list"}
+                        className="p-1 -m-1 rounded-md transition-colors hover:bg-gray-100"
+                      >
+                        {isExpanded ? (
+                          <ChevronDown size={16} style={{ color: "#9CA3AF" }} />
+                        ) : (
+                          <ChevronRight size={16} style={{ color: "#9CA3AF" }} />
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -414,12 +419,13 @@ function MathCourseCatalog({
                     ))}
                   </div>
 
-                  {/* Bottom Row */}
+                  {/* Bottom Row — meta on the left, primary CTA on the right.
+                      The CTA is always visible (no expansion required). */}
                   <div
-                    className="flex items-center justify-between pt-4 border-t"
+                    className="flex items-center justify-between gap-4 pt-4 border-t"
                     style={{ borderColor: "#F0F3F7" }}
                   >
-                    <div className="flex items-center gap-6 flex-wrap">
+                    <div className="flex items-center gap-6 flex-wrap min-w-0">
                       <div className="flex items-center gap-2">
                         <Clock size={14} style={{ color: "#9CA3AF" }} />
                         <span style={{ fontSize: "12px", color: "#6B7280" }}>
@@ -432,12 +438,13 @@ function MathCourseCatalog({
                       </div>
                       {status === "in-progress" && (
                         <div style={{ fontSize: "12px", color: "#2563EB", fontWeight: 500 }}>
-                          {completedTopics}/{topics.length} topics &middot; {Math.round(avgMastery * 100)}% mastery
+                          {completedTopics}/{topics.length} lessons &middot; {Math.round(avgMastery * 100)}% mastery
                         </div>
                       )}
                     </div>
+                    <UnitFooterCta status={status} resumeTopicId={resumeTopicId} firstTopicId={topics[0]?.id ?? null} />
                   </div>
-                </button>
+                </div>
 
                 {/* Expanded topic list */}
                 {isExpanded && (
@@ -449,7 +456,7 @@ function MathCourseCatalog({
                       className="text-label uppercase mb-3"
                       style={{ fontSize: "11px", color: "#9CA3AF", fontWeight: 500, letterSpacing: "0.5px" }}
                     >
-                      TOPICS
+                      LESSONS
                     </p>
                     <div className="space-y-2">
                       {topics.map((topic, idx) => {
@@ -557,30 +564,6 @@ function MathCourseCatalog({
                       })}
                     </div>
 
-                    {/* Unit-level CTA matches the design-reference action buttons */}
-                    {!isLockedUnit(status) && resumeTopicId && (
-                      <div className="mt-4 flex items-center justify-end">
-                        <Link
-                          href={`/learn-v2/${resumeTopicId}`}
-                          className="rounded-lg transition-opacity hover:opacity-90"
-                          style={{
-                            backgroundColor:
-                              status === "completed" ? "transparent" : "#0F2A4A",
-                            color: status === "completed" ? "#6B7280" : "#FFFFFF",
-                            border: status === "completed" ? "1px solid #E2E5EA" : "none",
-                            fontSize: "13px",
-                            padding: "8px 20px",
-                            textDecoration: "none",
-                          }}
-                        >
-                          {status === "completed"
-                            ? "Review unit"
-                            : status === "in-progress"
-                              ? "Resume →"
-                              : "Start unit →"}
-                        </Link>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -592,6 +575,101 @@ function MathCourseCatalog({
   );
 }
 
-function isLockedUnit(s: UnitStatus): boolean {
-  return s === "locked";
+// ── Unit footer CTA ──────────────────────────────────
+// Always-visible, status-driven primary action. Independent of the chevron
+// expansion: clicking the CTA navigates; clicking the chevron toggles the
+// lesson list. The two affordances are siblings in the DOM, not nested.
+
+function UnitFooterCta({
+  status,
+  resumeTopicId,
+  firstTopicId,
+}: {
+  status: UnitStatus;
+  resumeTopicId: string | null;
+  firstTopicId: string | null;
+}) {
+  if (status === "locked") {
+    // Intentional addition vs. design reference: reference renders a "Preview"
+    // link to a UnitDetailScreen which is not ported. A disabled <button> keeps
+    // the affordance row balanced and is the right element semantically — locked
+    // is an actionable state the user can't currently take, not non-interactive
+    // text.
+    return (
+      <button
+        type="button"
+        disabled
+        aria-disabled="true"
+        className="rounded-lg shrink-0 inline-flex items-center"
+        style={{
+          fontSize: "13px",
+          padding: "8px 20px",
+          color: "#9CA3AF",
+          backgroundColor: "#F5F6F8",
+          cursor: "not-allowed",
+        }}
+      >
+        Locked
+      </button>
+    );
+  }
+
+  if (status === "completed" && firstTopicId) {
+    // Mastered — practice maintains the skill; the lesson is already learned.
+    return (
+      <Link
+        href={`/practice?topic=${firstTopicId}`}
+        className="rounded-lg shrink-0 transition-colors hover:border-blue-500"
+        style={{
+          fontSize: "13px",
+          padding: "8px 20px",
+          color: "#6B7280",
+          backgroundColor: "transparent",
+          border: "1px solid #E2E5EA",
+          textDecoration: "none",
+        }}
+      >
+        Review
+      </Link>
+    );
+  }
+
+  if (status === "in-progress" && resumeTopicId) {
+    return (
+      <Link
+        href={`/learn-v2/${resumeTopicId}`}
+        className="rounded-lg shrink-0 transition-opacity hover:opacity-90"
+        style={{
+          fontSize: "13px",
+          padding: "8px 20px",
+          color: "#FFFFFF",
+          backgroundColor: "#0F2A4A",
+          textDecoration: "none",
+        }}
+      >
+        Continue
+      </Link>
+    );
+  }
+
+  // Eligible / not-started — start at the unit's first lesson.
+  if (firstTopicId) {
+    return (
+      <Link
+        href={`/learn-v2/${firstTopicId}`}
+        className="rounded-lg shrink-0 transition-opacity hover:opacity-90"
+        style={{
+          fontSize: "13px",
+          padding: "8px 20px",
+          color: "#FFFFFF",
+          backgroundColor: "#0F2A4A",
+          textDecoration: "none",
+        }}
+      >
+        Start Unit
+      </Link>
+    );
+  }
+
+  return null;
 }
