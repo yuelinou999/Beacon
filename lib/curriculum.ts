@@ -1,30 +1,13 @@
-import type { CurriculumTopic } from "./types";
+import type {
+  CurriculumTopic,
+  CurriculumUnit,
+  CurriculumGrade,
+} from "./types";
 import curriculumData from "@/data/curriculum.json";
 
-// ── Types for the new nested curriculum structure ──────
-
-export interface CurriculumUnit {
-  id: string;
-  number: number;
-  title: string;
-  description: string;
-  skills: string[];
-  estimated_lessons: number;
-  estimated_hours: number;
-  prerequisites: string[];
-  topics: string[]; // topic IDs
-}
-
-export interface GradeCurriculum {
-  id: string;
-  title: string;
-  summary: string;
-  description: string;
-  estimated_lessons: number;
-  estimated_hours: number;
-  who_its_for: string;
-  units: CurriculumUnit[];
-}
+// Legacy alias — older imports referred to `GradeCurriculum`.
+export type GradeCurriculum = CurriculumGrade;
+export type { CurriculumUnit };
 
 // ── Access helpers ────────────────────────────────────
 

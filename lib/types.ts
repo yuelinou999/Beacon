@@ -141,6 +141,31 @@ export interface CurriculumTopic {
   quiz?: QuizBank; // Only `solving_one_step` carries a quiz bank today.
 }
 
+// ── Curriculum: units and grade ───────────────────────
+
+export interface CurriculumUnit {
+  id: string;
+  number: number;
+  title: string;
+  description: string;
+  skills: string[];
+  estimated_lessons: number;
+  estimated_hours: number;
+  prerequisites: string[]; // Other unit ids
+  topics: string[];        // Topic ids — FK into CurriculumTopic.id
+}
+
+export interface CurriculumGrade {
+  id: string;
+  title: string;
+  summary: string;
+  description: string;
+  estimated_lessons: number;
+  estimated_hours: number;
+  who_its_for: string;
+  units: CurriculumUnit[];
+}
+
 // ── Curriculum: top-level shape (not currently consumed) ─
 
 export interface Curriculum {
@@ -248,7 +273,7 @@ export interface StudentProfile {
   session_logs?: SessionLog[]; // TODO: backfill in JSON
   quiz_results?: QuizAttempt[]; // TODO: backfill in JSON
   total_study_time_minutes?: number; // TODO: backfill in JSON
-  streak_days?: number; // TODO: backfill in JSON  (read at render: app/page.tsx)
+  streak_days: number;
   last_active_date?: string; // TODO: backfill in JSON
 
   legacy_topics?: LegacyTopicArchive[];

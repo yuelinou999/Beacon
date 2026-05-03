@@ -2,6 +2,7 @@
   "student_id": "local_001",
   "language": "en",
   "current_unit": "unit_6_equations",
+  "streak_days": 0,
   "topics": {
     "what_is_variable": { "mastery": 0.0, "attempts": 0, "last_seen": null },
     "expressions_vs_equations": { "mastery": 0.0, "attempts": 0, "last_seen": null },

@@ -533,7 +533,7 @@ export function updateStreak(): void {
   const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
   if (profile.last_active_date === yesterdayStr) {
-    profile.streak_days = (profile.streak_days ?? 0) + 1;
+    profile.streak_days += 1;
   } else {
     profile.streak_days = 1;
   }

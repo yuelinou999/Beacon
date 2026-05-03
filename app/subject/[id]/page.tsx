@@ -3,67 +3,75 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { ChevronLeft, Clock, Check, Lock, ChevronDown, ChevronRight } from "lucide-react";
 import { loadProfile, getTopicProgress } from "@/lib/progress";
 import { getBilingual } from "@/components/settings-modal";
 import { useAIContext } from "@/components/ai-context";
-import type { StudentProfile, CurriculumTopic } from "@/lib/types";
-import curriculum from "@/data/curriculum.json";
+import { getAllTopics, getGrade7 } from "@/lib/curriculum";
+import type {
+  StudentProfile,
+  CurriculumTopic,
+  CurriculumUnit,
+} from "@/lib/types";
 import subjects from "@/data/subjects";
 
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+// ── Mastery thresholds ────────────────────────────────
+// Mirrors lib/progress.ts:deriveTopicStatus and the home page semantics.
+const MASTERY_PRACTICING = 0.3; // counts as "started"
+const MASTERY_STRONG = 0.7;     // counts as "mastered" for unit-completion
 
 function masteryBarColor(m: number): string {
-  if (m >= 0.7) return "bg-success";
+  if (m >= MASTERY_STRONG) return "bg-success";
   if (m >= 0.4) return "bg-warning";
   if (m > 0) return "bg-danger";
   return "bg-border";
 }
 
-function memoryStrength(lastSeen: string | null): { label: string; color: string; barPct: number } | null {
-  if (!lastSeen) return null;
-  const now = new Date();
-  const seen = new Date(lastSeen);
-  const daysDiff = Math.floor((now.getTime() - seen.getTime()) / (1000 * 60 * 60 * 24));
-  if (daysDiff <= 0) return { label: "Recent", color: "blue", barPct: 85 };
-  if (daysDiff <= 3) return { label: "Strong", color: "success", barPct: 70 };
-  return { label: "Fading", color: "warning", barPct: 35 };
+// ── Unit status derivation ────────────────────────────
+// Status drives the pill, the action button, and the lock state.
+
+type UnitStatus = "completed" | "in-progress" | "eligible" | "locked";
+
+interface UnitView {
+  unit: CurriculumUnit;
+  topics: CurriculumTopic[];
+  topicProgress: Map<string, { mastery: number; attempts: number; last_seen: string | null }>;
+  status: UnitStatus;
+  startedTopics: number;
+  completedTopics: number;
+  avgMastery: number;
+  resumeTopicId: string | null;
 }
 
-interface WeekDay {
-  label: string;
-  status: "completed" | "current" | "upcoming";
-  isToday: boolean;
+function isUnitCompleted(view: Omit<UnitView, "status" | "resumeTopicId">): boolean {
+  return view.topics.length > 0 && view.completedTopics === view.topics.length;
 }
 
-function buildWeekPlan(
-  topicData: Array<{ topic: CurriculumTopic; mastery: number; attempts: number; last_seen: string | null }>
-): WeekDay[] {
-  const today = new Date().getDay();
-  const todayIdx = today >= 1 && today <= 5 ? today - 1 : 0;
-  const plan: WeekDay[] = [];
-  let topicIdx = 0;
-
-  for (let d = 0; d < 5; d++) {
-    const isToday = d === todayIdx;
-    if (topicIdx < topicData.length) {
-      const td = topicData[topicIdx];
-      const completed = td.mastery >= 0.3;
-      if (completed && d <= todayIdx) {
-        plan.push({ label: td.topic.title.en, status: "completed", isToday });
-      } else if (isToday) {
-        plan.push({ label: td.topic.title.en, status: completed ? "completed" : "current", isToday: true });
-      } else if (d < todayIdx) {
-        plan.push({ label: td.topic.title.en, status: "completed", isToday });
-      } else {
-        plan.push({ label: td.topic.title.en, status: "upcoming", isToday });
-      }
-      topicIdx++;
-    } else {
-      plan.push({ label: "Review + Practice", status: "upcoming", isToday });
-    }
-  }
-  return plan;
+function deriveUnitStatus(
+  unit: CurriculumUnit,
+  view: Omit<UnitView, "status" | "resumeTopicId">,
+  unitCompletion: Map<string, boolean>,
+): UnitStatus {
+  if (isUnitCompleted(view)) return "completed";
+  if (view.startedTopics > 0) return "in-progress";
+  // Has the prerequisite unit been completed?
+  const prereqsMet = unit.prerequisites.every((pid) => unitCompletion.get(pid) === true);
+  return prereqsMet ? "eligible" : "locked";
 }
+
+const STATUS_LABEL: Record<UnitStatus, string> = {
+  completed: "Completed",
+  "in-progress": "In progress",
+  eligible: "Eligible",
+  locked: "Needs prerequisite",
+};
+
+const STATUS_COLOR: Record<UnitStatus, { fg: string; bg: string }> = {
+  completed: { fg: "#059669", bg: "#ECFDF5" },
+  "in-progress": { fg: "#2563EB", bg: "#EFF6FF" },
+  eligible: { fg: "#6B7280", bg: "#F3F4F6" },
+  locked: { fg: "#D97706", bg: "#FEF3C7" },
+};
 
 export default function SubjectDetailPage() {
   const params = useParams();
@@ -125,293 +133,465 @@ export default function SubjectDetailPage() {
   }
 
   // ── Active subject (math) ──
-  return <MathSubjectDetail profile={profile} bilingual={bilingual} subjectDef={subjectDef} setContext={setContext} />;
+  return <MathCourseCatalog profile={profile} bilingual={bilingual} setContext={setContext} />;
 }
 
-function MathSubjectDetail({
+function MathCourseCatalog({
   profile,
   bilingual,
-  subjectDef,
   setContext,
 }: {
   profile: StudentProfile | null;
   bilingual: boolean;
-  subjectDef: (typeof subjects)[number];
   setContext: ReturnType<typeof useAIContext>["setContext"];
 }) {
-  const topics = curriculum.topics as CurriculumTopic[];
+  const allTopics = getAllTopics();
+  const grade = getGrade7();
+  const units = grade?.units ?? [];
 
-  const topicData = topics.map((t) => {
-    const tp = profile ? getTopicProgress(profile, t.id) : { mastery: 0, attempts: 0, last_seen: null };
-    return { topic: t, ...tp };
-  });
+  // Build per-unit views (data layer).
+  const unitCompletion = new Map<string, boolean>();
+  const unitViews: UnitView[] = [];
 
-  const completedTopics = topicData.filter((t) => t.mastery >= 0.3).length;
-  const avgMastery = topicData.reduce((sum, t) => sum + t.mastery, 0) / topics.length;
-  const totalWrong = profile?.wrong_answers?.length || 0;
+  for (const unit of units) {
+    const topics = unit.topics
+      .map((tid) => allTopics.find((t) => t.id === tid))
+      .filter((t): t is CurriculumTopic => t !== undefined);
 
-  const continueTopic = topicData.find((t) => t.mastery > 0 && t.mastery < 0.7)
-    || topicData.find((t) => t.mastery === 0)
-    || topicData[0];
+    const topicProgress = new Map<
+      string,
+      { mastery: number; attempts: number; last_seen: string | null }
+    >();
+    let startedTopics = 0;
+    let completedTopics = 0;
+    let masterySum = 0;
 
-  const weakestTopic = topics.reduce((weakest, t) => {
-    const m = profile?.topics[t.id]?.mastery || 0;
-    const wm = profile?.topics[weakest.id]?.mastery || 0;
-    return m < wm ? t : weakest;
-  }, topics[0]);
+    for (const t of topics) {
+      const tp = profile
+        ? getTopicProgress(profile, t.id)
+        : { mastery: 0, attempts: 0, last_seen: null };
+      topicProgress.set(t.id, {
+        mastery: tp.mastery,
+        attempts: tp.attempts,
+        last_seen: tp.last_seen,
+      });
+      if (tp.mastery > 0) startedTopics += 1;
+      if (tp.mastery >= MASTERY_STRONG) completedTopics += 1;
+      masterySum += tp.mastery;
+    }
 
-  const weekPlan = buildWeekPlan(topicData);
+    const avgMastery = topics.length > 0 ? masterySum / topics.length : 0;
 
-  const isPrereqMet = (topic: CurriculumTopic): boolean => {
-    if (!topic.prerequisite) return true;
-    const tp = profile?.topics[topic.prerequisite];
-    return (tp?.mastery || 0) >= 0.3;
-  };
+    // First-pass partial view, then status derivation needs unitCompletion map
+    // built progressively (units are listed in dependency order in the JSON).
+    const partial = {
+      unit,
+      topics,
+      topicProgress,
+      startedTopics,
+      completedTopics,
+      avgMastery,
+    };
+
+    const status = deriveUnitStatus(unit, partial, unitCompletion);
+    unitCompletion.set(unit.id, status === "completed");
+
+    // Resume target: first started-but-not-mastered, else first not-started, else first.
+    const resumeTopicId =
+      topics.find((t) => {
+        const m = topicProgress.get(t.id)?.mastery ?? 0;
+        return m > 0 && m < MASTERY_STRONG;
+      })?.id ??
+      topics.find((t) => (topicProgress.get(t.id)?.mastery ?? 0) === 0)?.id ??
+      topics[0]?.id ??
+      null;
+
+    unitViews.push({ ...partial, status, resumeTopicId });
+  }
+
+  const totalTopics = allTopics.length;
+  const overallCompleted = unitViews.reduce((s, v) => s + v.completedTopics, 0);
+  const overallMastery =
+    totalTopics > 0
+      ? unitViews.reduce((s, v) => s + v.avgMastery * v.topics.length, 0) / totalTopics
+      : 0;
+
+  // Recommendation: first in-progress unit, else first eligible.
+  const recommendUnit =
+    unitViews.find((v) => v.status === "in-progress") ??
+    unitViews.find((v) => v.status === "eligible") ??
+    null;
+
+  // ── Expand state: which unit's topic list is open ──
+  const [expandedUnitId, setExpandedUnitId] = useState<string | null>(
+    recommendUnit?.unit.id ?? null,
+  );
 
   useEffect(() => {
     setContext({
       page: "home",
-      completedTopics,
-      totalTopics: topics.length,
-      weakestTopic: weakestTopic.title.en,
+      completedTopics: overallCompleted,
+      totalTopics,
+      weakestTopic: recommendUnit?.unit.title ?? "",
     });
-  }, [completedTopics, topics.length, weakestTopic.title.en, setContext]);
+  }, [overallCompleted, totalTopics, recommendUnit?.unit.title, setContext]);
+
+  if (!grade) {
+    return (
+      <div className="px-8 py-12 text-center text-muted text-sm">
+        Grade 7 curriculum is missing from data/curriculum.json.
+      </div>
+    );
+  }
 
   return (
     <div className="h-full overflow-y-auto">
-      {/* Subject header */}
-      <div className="flex items-center gap-3 px-8 py-3 border-b border-border/60 bg-card shrink-0">
-        <Link href="/" className="text-muted hover:text-navy text-sm">&larr; Home</Link>
-        <span className="text-border">|</span>
-        <div
-          className="w-6 h-6 rounded flex items-center justify-center text-xs font-semibold shrink-0"
-          style={{ backgroundColor: subjectDef.bgLight, color: subjectDef.color }}
+      <div className="max-w-5xl mx-auto px-8 py-8">
+        {/* Back link */}
+        <Link
+          href="/"
+          className="flex items-center gap-2 mb-8 transition-colors hover:opacity-70"
+          style={{ color: "#2563EB" }}
         >
-          {subjectDef.icon}
+          <ChevronLeft size={16} />
+          <span style={{ fontSize: "14px" }}>Home</span>
+        </Link>
+
+        {/* SECTION 1: Grade Hero */}
+        <div
+          className="rounded-xl p-8 mb-6"
+          style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
+        >
+          <h1 style={{ fontSize: "24px", fontWeight: 500, color: "#0F2A4A", marginBottom: "12px" }}>
+            {grade.title}
+          </h1>
+          <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "16px" }}>
+            {grade.summary}
+          </p>
+          <p style={{ fontSize: "15px", color: "#1F2937", lineHeight: 1.7, marginBottom: "20px" }}>
+            {grade.description}
+          </p>
+
+          <div
+            className="flex items-center gap-6 mb-4 pb-4 border-b"
+            style={{ borderColor: "#F0F3F7" }}
+          >
+            <div className="flex items-center gap-2">
+              <Clock size={14} style={{ color: "#6B7280" }} />
+              <span style={{ fontSize: "13px", color: "#6B7280" }}>
+                {units.length} units &middot; {totalTopics} topics &middot; ~{grade.estimated_hours} hours total
+              </span>
+            </div>
+            <div style={{ fontSize: "13px", color: "#6B7280" }}>
+              Mastered:{" "}
+              <span style={{ color: "#1F2937", fontWeight: 500 }}>
+                {overallCompleted} of {totalTopics}
+              </span>
+              {" · "}
+              <span style={{ color: "#1F2937", fontWeight: 500 }}>
+                {Math.round(overallMastery * 100)}%
+              </span>
+            </div>
+          </div>
+
+          <p style={{ fontSize: "13px", color: "#6B7280", fontStyle: "italic" }}>
+            {grade.who_its_for}
+          </p>
         </div>
-        <span className="text-sm font-medium text-navy">{subjectDef.name}</span>
-        <span className="text-xs text-muted">{subjectDef.subtitle}</span>
-      </div>
 
-      <div className="px-8 py-6">
-        <div className="flex gap-6 max-w-[1100px]">
-
-          {/* LEFT COLUMN */}
-          <div className="flex-1 min-w-0 space-y-5">
-
-            {/* SUBJECT HERO */}
-            <div
-              className="bg-card rounded-xl border p-5"
-              style={{ borderWidth: "0.5px", borderColor: "#E8EBF0", borderLeftWidth: "4px", borderLeftColor: subjectDef.color }}
-            >
-              <p className="text-label uppercase text-muted mb-2">CURRENT TOPIC</p>
-              <h2 className="text-[18px] font-medium text-navy mb-1">{continueTopic.topic.title.en}</h2>
-              <p className="text-[13px] text-muted mb-4">
-                {continueTopic.mastery > 0
-                  ? `Mastery ${(continueTopic.mastery * 100).toFixed(0)}% \u00b7 ${continueTopic.attempts} attempts`
-                  : "Not started yet"}
-              </p>
-              <Link
-                href={`/learn-v2/${continueTopic.topic.id}`}
-                className="inline-block text-white rounded-lg px-5 py-2.5 text-sm font-medium hover:opacity-90 transition"
-                style={{ backgroundColor: subjectDef.color }}
-              >
-                {continueTopic.mastery > 0 ? "Continue lesson \u2192" : "Start lesson \u2192"}
-              </Link>
-            </div>
-
-            {/* WEEKLY PLAN */}
-            <div className="bg-card rounded-xl border border-border p-5" style={{ borderWidth: "0.5px" }}>
-              <p className="text-label uppercase text-muted mb-3">WEEKLY PLAN</p>
-              <div className="space-y-0">
-                {weekPlan.map((day, i) => (
-                  <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg ${day.isToday ? "bg-blue-soft" : ""}`}>
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{
-                        backgroundColor:
-                          day.status === "completed" ? "#059669" : day.status === "current" ? subjectDef.color : "#E8EBF0",
-                      }}
-                    />
-                    <span className={`text-xs w-8 shrink-0 ${day.isToday ? "font-semibold text-body" : "text-muted"}`}>{WEEKDAYS[i]}</span>
-                    <span className={`text-[13px] flex-1 truncate ${
-                      day.isToday ? "font-medium text-body" : day.status === "completed" ? "text-muted opacity-60" : "text-body"
-                    }`}>{day.label}</span>
-                    {day.status === "completed" && <span className="text-[10px] text-success font-medium">Completed</span>}
-                    {day.status === "current" && (
-                      <span className="text-[10px] font-medium" style={{ color: subjectDef.color }}>In progress</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ALL TOPICS */}
+        {/* AI Recommendation Banner */}
+        {recommendUnit && (
+          <div
+            className="rounded-lg p-4 mb-8 flex items-center gap-3"
+            style={{ backgroundColor: "#EFF6FF", border: "1px solid #BFDBFE" }}
+          >
+            <ChevronRight size={18} style={{ color: "#2563EB" }} />
             <div>
-              <p className="text-label uppercase text-muted mb-3">ALL TOPICS</p>
-              <div className="space-y-3">
-                {topics.map((topic, idx) => {
-                  const tp = profile ? getTopicProgress(profile, topic.id) : { mastery: 0, attempts: 0, last_seen: null };
-                  const mastery = tp.mastery;
-                  const prereqMet = isPrereqMet(topic);
-                  const done = mastery >= 0.7;
+              <span style={{ fontSize: "14px", color: "#1E40AF", fontWeight: 500 }}>
+                Beacon recommends:{" "}
+              </span>
+              <span style={{ fontSize: "14px", color: "#1E3A8A" }}>
+                {recommendUnit.status === "in-progress" ? "Continue " : "Start "}
+                Unit {recommendUnit.unit.number} &mdash; {recommendUnit.unit.title}
+              </span>
+            </div>
+          </div>
+        )}
 
-                  return (
-                    <div
-                      key={topic.id}
-                      className={`bg-card rounded-xl border border-border px-5 py-4 flex items-center gap-4 transition ${
-                        !prereqMet ? "opacity-50" : ""
-                      }`}
-                      style={{ borderWidth: "0.5px" }}
-                    >
+        {/* SECTION 2: Unit Cards */}
+        <div className="space-y-4">
+          {unitViews.map((view) => {
+            const { unit, status, topics, topicProgress, completedTopics, avgMastery, resumeTopicId } = view;
+            const isExpanded = expandedUnitId === unit.id;
+            const colors = STATUS_COLOR[status];
+            const prereqLabel =
+              unit.prerequisites.length === 0
+                ? "None"
+                : unit.prerequisites
+                    .map((pid) => units.find((u) => u.id === pid)?.title ?? pid)
+                    .join(", ");
+
+            return (
+              <div
+                key={unit.id}
+                className="rounded-xl"
+                style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
+              >
+                {/* Card body (clickable to toggle expand) */}
+                <button
+                  type="button"
+                  onClick={() => setExpandedUnitId(isExpanded ? null : unit.id)}
+                  className="w-full text-left p-6 transition-colors hover:bg-gray-50 rounded-xl"
+                  aria-expanded={isExpanded}
+                >
+                  {/* Top Row */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div
-                        className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold shrink-0 text-white"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{
-                          backgroundColor: done ? "#059669" : prereqMet ? subjectDef.color : "#E8EBF0",
-                          color: done || prereqMet ? "#FFFFFF" : "#6B7280",
+                          backgroundColor: "#EFF6FF",
+                          color: "#2563EB",
+                          fontSize: "14px",
+                          fontWeight: 500,
                         }}
                       >
-                        {idx + 1}
+                        {unit.number}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-navy truncate">{topic.title.en}</p>
-                        {bilingual && <p className="text-xs text-muted truncate">{topic.title.zh}</p>}
-                        <div className="w-full h-1.5 bg-surface rounded-full mt-2">
+                      <h3
+                        style={{
+                          fontSize: "16px",
+                          fontWeight: 500,
+                          color: "#1F2937",
+                        }}
+                      >
+                        {unit.title}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {status === "locked" && <Lock size={14} style={{ color: "#D97706" }} />}
+                      {status === "completed" && <Check size={14} style={{ color: "#059669" }} />}
+                      <div
+                        className="px-3 py-1 rounded-full flex items-center gap-1.5"
+                        style={{
+                          backgroundColor: colors.bg,
+                          color: colors.fg,
+                          fontSize: "12px",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {status === "in-progress" && (
                           <div
-                            className={`h-1.5 rounded-full transition-all ${masteryBarColor(mastery)}`}
-                            style={{ width: `${Math.max(mastery * 100, 0)}%` }}
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ backgroundColor: colors.fg }}
                           />
-                        </div>
+                        )}
+                        {STATUS_LABEL[status]}
                       </div>
-                      <span className="text-sm text-muted w-12 text-right shrink-0">
-                        {mastery > 0 ? `${(mastery * 100).toFixed(0)}%` : "\u2014"}
-                      </span>
-                      {prereqMet ? (
-                        <div className="flex gap-2 shrink-0">
-                          <Link
-                            href={`/learn-v2/${topic.id}`}
-                            className="text-xs px-3.5 py-1.5 rounded-lg text-white hover:opacity-90 transition font-medium"
-                            style={{ backgroundColor: subjectDef.color }}
-                          >
-                            Learn
-                          </Link>
-                          <Link
-                            href={`/practice?topic=${topic.id}`}
-                            className="text-xs px-3.5 py-1.5 rounded-lg border text-muted hover:text-blue transition font-medium"
-                            style={{ borderColor: "#E8EBF0" }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = subjectDef.color;
-                              e.currentTarget.style.color = subjectDef.color;
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "#E8EBF0";
-                              e.currentTarget.style.color = "#6B7280";
-                            }}
-                          >
-                            Practice
-                          </Link>
-                        </div>
+                      {isExpanded ? (
+                        <ChevronDown size={16} style={{ color: "#9CA3AF" }} />
                       ) : (
-                        <span className="text-[10px] text-muted shrink-0">Complete prerequisite first</span>
+                        <ChevronRight size={16} style={{ color: "#9CA3AF" }} />
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div className="w-[300px] shrink-0 space-y-5">
-
-            {/* TOPIC MASTERY */}
-            <div className="bg-card rounded-xl border border-border p-5" style={{ borderWidth: "0.5px" }}>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-label uppercase text-muted">TOPIC MASTERY</p>
-                <span className="text-[12px] font-medium" style={{ color: subjectDef.color }}>
-                  {(avgMastery * 100).toFixed(0)}%
-                </span>
-              </div>
-              <div className="space-y-2.5">
-                {topicData.map((td) => (
-                  <div key={td.topic.id} className="flex items-center gap-2.5">
-                    <span className="text-[12px] text-body flex-1 truncate">{td.topic.title.en}</span>
-                    <div className="w-[72px] h-1.5 bg-surface rounded-full shrink-0">
-                      <div
-                        className={`h-1.5 rounded-full transition-all ${masteryBarColor(td.mastery)}`}
-                        style={{ width: `${Math.max(td.mastery * 100, 0)}%` }}
-                      />
-                    </div>
-                    <span className="text-[11px] text-muted w-8 text-right shrink-0">
-                      {td.mastery > 0 ? `${(td.mastery * 100).toFixed(0)}%` : "\u2014"}
-                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* MEMORY STRENGTH */}
-            {(() => {
-              const active = topicData.filter((td) => td.mastery > 0 && td.last_seen);
-              if (active.length === 0) return null;
-              return (
-                <div className="bg-card rounded-xl border border-border p-5" style={{ borderWidth: "0.5px" }}>
-                  <p className="text-label uppercase text-muted mb-1">MEMORY STRENGTH</p>
-                  <p className="text-[11px] text-muted mb-3">Topics that may need review soon</p>
-                  <div className="space-y-3">
-                    {active.map((td) => {
-                      const mem = memoryStrength(td.last_seen);
-                      if (!mem) return null;
-                      const tagColors: Record<string, string> = {
-                        blue: "text-blue bg-blue-soft",
-                        success: "text-success bg-success-bg",
-                        warning: "text-warning bg-warning-bg",
-                      };
-                      const barColors: Record<string, string> = {
-                        blue: "bg-blue", success: "bg-success", warning: "bg-warning",
-                      };
-                      return (
-                        <div key={td.topic.id}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[12px] text-body truncate flex-1">{td.topic.title.en}</span>
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${tagColors[mem.color]}`}>{mem.label}</span>
-                          </div>
-                          <div className="w-full h-1.5 bg-surface rounded-full">
-                            <div className={`h-1.5 rounded-full ${barColors[mem.color]}`} style={{ width: `${mem.barPct}%` }} />
-                          </div>
+                  {/* Description */}
+                  <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "12px", lineHeight: 1.6 }}>
+                    {unit.description}
+                  </p>
+
+                  {/* Skills */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {unit.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="px-3 py-1 rounded-md"
+                        style={{ backgroundColor: "#F3F4F6", color: "#4B5563", fontSize: "11px" }}
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Bottom Row */}
+                  <div
+                    className="flex items-center justify-between pt-4 border-t"
+                    style={{ borderColor: "#F0F3F7" }}
+                  >
+                    <div className="flex items-center gap-6 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} style={{ color: "#9CA3AF" }} />
+                        <span style={{ fontSize: "12px", color: "#6B7280" }}>
+                          {unit.estimated_lessons} lessons &middot; ~{unit.estimated_hours} hours
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#6B7280" }}>
+                        Prerequisite:{" "}
+                        <span style={{ color: "#1F2937" }}>{prereqLabel}</span>
+                      </div>
+                      {status === "in-progress" && (
+                        <div style={{ fontSize: "12px", color: "#2563EB", fontWeight: 500 }}>
+                          {completedTopics}/{topics.length} topics &middot; {Math.round(avgMastery * 100)}% mastery
                         </div>
-                      );
-                    })}
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                </button>
 
-            {/* QUICK ACCESS */}
-            <div>
-              <p className="text-label uppercase text-muted mb-3">QUICK ACCESS</p>
-              <div className="grid grid-cols-2 gap-2">
-                <Link href={`/practice?topic=${continueTopic.topic.id}`} className="bg-card rounded-lg border border-border p-3 hover:border-blue transition group" style={{ borderWidth: "0.5px" }}>
-                  <div className="w-6 h-6 rounded bg-success-bg flex items-center justify-center text-success text-xs mb-1.5">&#9998;</div>
-                  <p className="text-[12px] font-medium text-body group-hover:text-blue transition">Practice</p>
-                </Link>
-                <Link href="/review" className="bg-card rounded-lg border border-border p-3 hover:border-blue transition group" style={{ borderWidth: "0.5px" }}>
-                  <div className="w-6 h-6 rounded bg-warning-bg flex items-center justify-center text-warning text-xs mb-1.5">&#10007;</div>
-                  <p className="text-[12px] font-medium text-body group-hover:text-blue transition">Review ({totalWrong})</p>
-                </Link>
-                <Link href={`/quiz?topic=${continueTopic.topic.id}`} className="bg-card rounded-lg border border-border p-3 hover:border-blue transition group" style={{ borderWidth: "0.5px" }}>
-                  <div className="w-6 h-6 rounded bg-blue-soft flex items-center justify-center text-blue text-xs mb-1.5">&#9719;</div>
-                  <p className="text-[12px] font-medium text-body group-hover:text-blue transition">Quiz</p>
-                </Link>
-                <Link href="/dashboard" className="bg-card rounded-lg border border-border p-3 hover:border-blue transition group" style={{ borderWidth: "0.5px" }}>
-                  <div className="w-6 h-6 rounded bg-mathbg flex items-center justify-center text-muted text-xs mb-1.5">&#128202;</div>
-                  <p className="text-[12px] font-medium text-body group-hover:text-blue transition">Dashboard</p>
-                </Link>
+                {/* Expanded topic list */}
+                {isExpanded && (
+                  <div
+                    className="border-t px-6 pb-5 pt-4"
+                    style={{ borderColor: "#F0F3F7" }}
+                  >
+                    <p
+                      className="text-label uppercase mb-3"
+                      style={{ fontSize: "11px", color: "#9CA3AF", fontWeight: 500, letterSpacing: "0.5px" }}
+                    >
+                      TOPICS
+                    </p>
+                    <div className="space-y-2">
+                      {topics.map((topic, idx) => {
+                        const tp = topicProgress.get(topic.id) ?? {
+                          mastery: 0,
+                          attempts: 0,
+                          last_seen: null,
+                        };
+                        const mastery = tp.mastery;
+                        const isLocked = status === "locked";
+                        // Within-unit prereq enforcement: a topic's prerequisite
+                        // is another topic id; we let the user open any topic
+                        // whose unit is unlocked (the unit gate is the primary
+                        // lock). This matches the existing learn-v2 routing.
+                        const startAction =
+                          status === "completed"
+                            ? "Review"
+                            : mastery > 0
+                              ? "Continue"
+                              : "Start";
+
+                        return (
+                          <div
+                            key={topic.id}
+                            className="flex items-center gap-4 px-4 py-3 rounded-lg"
+                            style={{
+                              backgroundColor: "#FAFBFC",
+                              border: "0.5px solid #E8EBF0",
+                              opacity: isLocked ? 0.55 : 1,
+                            }}
+                          >
+                            <div
+                              className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-medium shrink-0"
+                              style={{
+                                backgroundColor: mastery >= MASTERY_STRONG ? "#059669" : "#EFF6FF",
+                                color: mastery >= MASTERY_STRONG ? "#FFFFFF" : "#2563EB",
+                              }}
+                            >
+                              {idx + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className="truncate"
+                                style={{ fontSize: "13px", fontWeight: 500, color: "#1F2937" }}
+                              >
+                                {topic.title.en}
+                              </p>
+                              {bilingual && (
+                                <p
+                                  className="truncate"
+                                  style={{ fontSize: "11px", color: "#6B7280" }}
+                                >
+                                  {topic.title.zh}
+                                </p>
+                              )}
+                              <div className="w-full h-1 rounded-full mt-2" style={{ backgroundColor: "#E5E7EB" }}>
+                                <div
+                                  className={`h-1 rounded-full transition-all ${masteryBarColor(mastery)}`}
+                                  style={{ width: `${Math.max(mastery * 100, 0)}%` }}
+                                />
+                              </div>
+                            </div>
+                            <span
+                              className="w-10 text-right shrink-0"
+                              style={{ fontSize: "11px", color: "#6B7280" }}
+                            >
+                              {mastery > 0 ? `${Math.round(mastery * 100)}%` : "—"}
+                            </span>
+                            {isLocked ? (
+                              <span style={{ fontSize: "11px", color: "#D97706" }} className="shrink-0">
+                                Locked
+                              </span>
+                            ) : (
+                              <div className="flex gap-2 shrink-0">
+                                <Link
+                                  href={`/learn-v2/${topic.id}`}
+                                  className="rounded-md transition-opacity hover:opacity-90"
+                                  style={{
+                                    backgroundColor: "#0F2A4A",
+                                    color: "#FFFFFF",
+                                    fontSize: "12px",
+                                    padding: "6px 12px",
+                                    textDecoration: "none",
+                                  }}
+                                >
+                                  {startAction}
+                                </Link>
+                                <Link
+                                  href={`/practice?topic=${topic.id}`}
+                                  className="rounded-md border transition-colors"
+                                  style={{
+                                    borderColor: "#E2E5EA",
+                                    color: "#6B7280",
+                                    fontSize: "12px",
+                                    padding: "6px 12px",
+                                    textDecoration: "none",
+                                  }}
+                                >
+                                  Practice
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Unit-level CTA matches the design-reference action buttons */}
+                    {!isLockedUnit(status) && resumeTopicId && (
+                      <div className="mt-4 flex items-center justify-end">
+                        <Link
+                          href={`/learn-v2/${resumeTopicId}`}
+                          className="rounded-lg transition-opacity hover:opacity-90"
+                          style={{
+                            backgroundColor:
+                              status === "completed" ? "transparent" : "#0F2A4A",
+                            color: status === "completed" ? "#6B7280" : "#FFFFFF",
+                            border: status === "completed" ? "1px solid #E2E5EA" : "none",
+                            fontSize: "13px",
+                            padding: "8px 20px",
+                            textDecoration: "none",
+                          }}
+                        >
+                          {status === "completed"
+                            ? "Review unit"
+                            : status === "in-progress"
+                              ? "Resume →"
+                              : "Start unit →"}
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
+}
+
+function isLockedUnit(s: UnitStatus): boolean {
+  return s === "locked";
 }
