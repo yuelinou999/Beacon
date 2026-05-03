@@ -73,6 +73,56 @@ const STATUS_COLOR: Record<UnitStatus, { fg: string; bg: string }> = {
   locked: { fg: "#D97706", bg: "#FEF3C7" },
 };
 
+// ── Grade selector ───────────────────────────────────
+// Only Grade 7 has real curriculum data in curriculum.json today. Other grades
+// render a coming-soon placeholder. Reference renders the same six buttons
+// regardless of which grade is selected so the user can switch back.
+//
+// Shared across both branches in MathCourseCatalog: the grade-7 catalog view
+// AND the non-7 coming-soon view. Keep this component standalone — do not
+// inline it back into either branch, otherwise the two copies drift.
+
+const GRADES_AVAILABLE = [5, 6, 7, 8, 9, 10] as const;
+const REAL_GRADE = 7;
+
+function GradeSelector({
+  selected,
+  onSelect,
+}: {
+  selected: number;
+  onSelect: (grade: number) => void;
+}) {
+  return (
+    <div className="flex gap-2 mb-8">
+      {GRADES_AVAILABLE.map((g) => {
+        const isSelected = selected === g;
+        return (
+          <button
+            key={g}
+            type="button"
+            onClick={() => onSelect(g)}
+            aria-pressed={isSelected}
+            className="px-5 py-2 rounded-full transition-all"
+            style={{
+              backgroundColor: isSelected ? "#0F2A4A" : "transparent",
+              color: isSelected ? "#FFFFFF" : "#6B7280",
+              border: isSelected ? "none" : "0.5px solid #E2E5EA",
+              fontSize: "14px",
+            }}
+          >
+            Grade {g}
+            {g !== REAL_GRADE && (
+              <span style={{ fontSize: "11px", marginLeft: "6px", opacity: 0.7 }}>
+                Preview
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function SubjectDetailPage() {
   const params = useParams();
   const subjectId = params.id as string;
@@ -227,6 +277,11 @@ function MathCourseCatalog({
     recommendUnit?.unit.id ?? null,
   );
 
+  // ── Selected grade ───────────────────────────────────
+  // Only REAL_GRADE (7) has real curriculum data; other grades fall through
+  // to the coming-soon branch below.
+  const [selectedGrade, setSelectedGrade] = useState<number>(REAL_GRADE);
+
   useEffect(() => {
     setContext({
       page: "home",
@@ -240,6 +295,61 @@ function MathCourseCatalog({
     return (
       <div className="px-8 py-12 text-center text-muted text-sm">
         Grade 7 curriculum is missing from data/curriculum.json.
+      </div>
+    );
+  }
+
+  // ── Non-7 grades: coming-soon placeholder ────────────
+  // Matches design-reference/CourseCatalogScreen.tsx lines 184–233. Same
+  // GradeSelector renders so the user can switch back to 7.
+  if (selectedGrade !== REAL_GRADE) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-5xl mx-auto px-8 py-8">
+          <Link
+            href="/"
+            className="flex items-center gap-2 mb-8 transition-colors hover:opacity-70"
+            style={{ color: "#2563EB" }}
+          >
+            <ChevronLeft size={16} />
+            <span style={{ fontSize: "14px" }}>Home</span>
+          </Link>
+
+          <div
+            className="rounded-xl p-8 mb-8 text-center"
+            style={{ backgroundColor: "#EFF6FF", border: "2px solid #BFDBFE" }}
+          >
+            <div
+              style={{
+                fontSize: "20px",
+                fontWeight: 500,
+                color: "#2563EB",
+                marginBottom: "8px",
+              }}
+            >
+              Grade {selectedGrade} curriculum coming soon
+            </div>
+            <p style={{ fontSize: "14px", color: "#6B7280" }}>
+              We&apos;re developing comprehensive content for this grade.
+              Preview the planned structure below.
+            </p>
+          </div>
+
+          <GradeSelector selected={selectedGrade} onSelect={setSelectedGrade} />
+
+          <div style={{ opacity: 0.5 }}>
+            <p
+              style={{
+                fontSize: "14px",
+                color: "#9CA3AF",
+                textAlign: "center",
+                padding: "40px 0",
+              }}
+            >
+              Unit curriculum for Grade {selectedGrade} is in development
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -319,7 +429,10 @@ function MathCourseCatalog({
           </div>
         )}
 
-        {/* SECTION 2: Unit Cards */}
+        {/* SECTION 2: Grade Selector */}
+        <GradeSelector selected={selectedGrade} onSelect={setSelectedGrade} />
+
+        {/* SECTION 3: Unit Cards */}
         <div className="space-y-4">
           {unitViews.map((view) => {
             const { unit, status, topics, topicProgress, completedTopics, avgMastery, resumeTopicId } = view;
