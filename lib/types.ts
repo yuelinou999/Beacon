@@ -1,16 +1,147 @@
-// ── Curriculum ──────────────────────────────────────────
+// Single source of truth for shared types in Beacon.
+// Curriculum, student progress, quiz, practice, and Ollama types all live here.
+// `lib/curriculum-types.ts` is a re-export shim retained for legacy import paths.
+
+// ── Curriculum: phase content ──────────────────────────
+
+export type VisualHint = "balance_scale" | "number_line" | "grid" | "none";
+
+export interface ConceptPhaseContent {
+  title: string;
+  explanation: string;
+  key_idea: string;
+  visual: { type: VisualHint; left?: string; right?: string };
+  main_equation?: string;
+}
+
+export interface AnalogyPhaseContent {
+  title: string;
+  scenario: string;
+  illustration_hint: string;
+  question: string;
+  options: [number, number, number];
+  correct: number;
+  feedback_correct: string;
+  feedback_incorrect: string;
+}
+
+export interface MathSegment {
+  text: string;
+  highlight?: boolean;
+}
+
+export interface ExampleStep {
+  math: string | MathSegment[];
+  explanation: string;
+}
+
+export interface ExamplePhaseContent {
+  title: string;
+  problem: string;
+  steps: ExampleStep[];
+}
+
+export interface GuidedSubStepChoice {
+  question: string;
+  type: "choice";
+  options: [string, string, string];
+  correct: string;
+  feedback_correct: string;
+  feedback_wrong: string;
+}
+
+export interface GuidedSubStepNumber {
+  question: string;
+  type: "number";
+  correct: number;
+  feedback_correct: string;
+  feedback_wrong: string;
+}
+
+export type GuidedSubStep = GuidedSubStepChoice | GuidedSubStepNumber;
+
+export interface GuidedPhaseContent {
+  title: string;
+  problem: string;
+  sub_steps: [GuidedSubStep, GuidedSubStep, GuidedSubStep];
+}
+
+export interface IndependentQuestion {
+  equation: string;
+  answer: number;
+}
+
+export interface IndependentPhaseContent {
+  title: string;
+  questions: [IndependentQuestion, IndependentQuestion, IndependentQuestion];
+}
+
+// Tier-3 topics ship as { stub: true } and are gated out of the lesson flow.
+// Tier-1/2 topics carry a concept (required) and an optional analogy/example/
+// guided/independent phase. All current non-stub topics in JSON have all five.
+export type TopicPhases =
+  | { stub: true }
+  | {
+      concept: ConceptPhaseContent;
+      analogy?: AnalogyPhaseContent;
+      example?: ExamplePhaseContent;
+      guided?: GuidedPhaseContent;
+      independent?: IndependentPhaseContent;
+    };
+
+export function isTopicStub(
+  phases: TopicPhases | undefined,
+): phases is { stub: true } {
+  return phases !== undefined && "stub" in phases && phases.stub === true;
+}
+
+// ── Curriculum: quiz bank (static, hardcoded per topic) ─
+
+export type QuizSkill =
+  | "setting_up"
+  | "inverse_ops"
+  | "simplification"
+  | "verification";
+
+// Quiz-bank question. Distinct from PracticeQuestion (AI-generated, single,
+// has a difficulty rating). Quiz-bank questions are pre-authored, fixed in
+// curriculum.json, and have a numeric `answer` plus a `skill` tag.
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  equation: string;
+  answer: number;
+  skill: QuizSkill;
+}
+
+export interface QuizBank {
+  title: string;
+  description: string;
+  estimated_minutes: number;
+  difficulty_label: string;
+  questions: QuizQuestion[];
+}
+
+// ── Curriculum: topic ──────────────────────────────────
 
 export interface TopicTitle {
   en: string;
   zh: string;
 }
 
+// Merged from the legacy `CurriculumTopic` (4 fields) and `TopicWithPhases`
+// (full shape). Every topic in curriculum.json has all required fields below.
 export interface CurriculumTopic {
   id: string;
   title: TopicTitle;
   prerequisite: string | null;
   difficulty_base: number;
+  unit_id: string;
+  phases: TopicPhases;
+  quiz?: QuizBank; // Only `solving_one_step` carries a quiz bank today.
 }
+
+// ── Curriculum: top-level shape (not currently consumed) ─
 
 export interface Curriculum {
   unit: string;
@@ -19,19 +150,33 @@ export interface Curriculum {
   topics: CurriculumTopic[];
 }
 
+// ── Practice: per-question shape (AI-generated) ────────
+
+// Renamed from `QuizQuestion` to resolve the historical name collision with
+// the curriculum quiz-bank type above. Used by /api/practice and the practice
+// page's loop of one-at-a-time, Ollama-generated questions.
+export interface PracticeQuestion {
+  question: string;
+  correct_answer: string;
+  difficulty: "easy" | "medium" | "hard";
+}
+
 // ── Student progress ───────────────────────────────────
 
 export type ErrorType = "concept" | "calculation" | "rushing" | "careless" | null;
 
 export type TopicStatus = "not_started" | "learning" | "practicing" | "strong" | "mastered";
 
+// Fields not present in seed student.json are marked optional so the type
+// reflects the on-disk shape. lib/progress.ts:migrateProfile fills defaults
+// before the profile is consumed by the rest of the app.
 export interface TopicProgress {
   mastery: number;
-  status: TopicStatus;
   attempts: number;
   last_seen: string | null;
-  lesson_completed: boolean;
-  explain_differently_count: number;
+  status?: TopicStatus; // TODO: backfill in JSON
+  lesson_completed?: boolean; // TODO: backfill in JSON
+  explain_differently_count?: number; // TODO: backfill in JSON
 }
 
 export interface AnswerRecord {
@@ -88,20 +233,24 @@ export interface LegacyTopicArchive {
 }
 
 export interface StudentProfile {
+  // Present in seed student.json
   student_id: string;
-  name: string;
-  grade: string;
   language: "en" | "zh";
   current_unit: string;
-  settings: StudentSettings;
   topics: Record<string, TopicProgress>;
-  answer_history: AnswerRecord[];
   wrong_answers: WrongAnswer[];
-  session_logs: SessionLog[];
-  quiz_results: QuizAttempt[];
-  total_study_time_minutes: number;
-  streak_days: number;
-  last_active_date: string;
+
+  // Not in seed JSON — populated by lib/progress.ts:migrateProfile defaults.
+  name?: string; // TODO: backfill in JSON
+  grade?: string; // TODO: backfill in JSON
+  settings?: StudentSettings; // TODO: backfill in JSON
+  answer_history?: AnswerRecord[]; // TODO: backfill in JSON
+  session_logs?: SessionLog[]; // TODO: backfill in JSON
+  quiz_results?: QuizAttempt[]; // TODO: backfill in JSON
+  total_study_time_minutes?: number; // TODO: backfill in JSON
+  streak_days?: number; // TODO: backfill in JSON  (read at render: app/page.tsx)
+  last_active_date?: string; // TODO: backfill in JSON
+
   legacy_topics?: LegacyTopicArchive[];
   legacy_wrong_answers?: WrongAnswer[];
 }
@@ -120,18 +269,9 @@ export interface LearnRequest {
   history: LearnMessage[];
 }
 
-// ── Practice ───────────────────────────────────────────
-
-export interface QuizQuestion {
-  question: string;
-  correct_answer: string;
-  difficulty: "easy" | "medium" | "hard";
-}
-
 // ── Quiz attempt (assessment) ──────────────────────────
-// Distinct from Practice's per-question QuizQuestion above. A QuizAttempt is
-// one full pass through a topic's hardcoded quiz bank — recorded atomically
-// at quiz completion. See lib/curriculum-types.ts for the bank shape.
+// One full pass through a topic's quiz bank — recorded atomically at quiz
+// completion.
 
 export interface QuizAttemptAnswer {
   question_id: string;

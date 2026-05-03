@@ -15,7 +15,7 @@ import {
   endSession,
   updateStreak,
 } from "@/lib/progress";
-import type { StudentProfile, CurriculumTopic, QuizQuestion, GradeResult } from "@/lib/types";
+import type { StudentProfile, CurriculumTopic, PracticeQuestion, GradeResult } from "@/lib/types";
 import curriculum from "@/data/curriculum.json";
 
 type PracticeState = "loading" | "question" | "grading" | "result" | "error";
@@ -36,7 +36,7 @@ function PracticeContent() {
   const topic = (curriculum.topics as CurriculumTopic[]).find((t) => t.id === topicId);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [state, setState] = useState<PracticeState>("loading");
-  const [quiz, setQuiz] = useState<QuizQuestion | null>(null);
+  const [quiz, setQuiz] = useState<PracticeQuestion | null>(null);
   const [grade, setGrade] = useState<GradeResult | null>(null);
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
@@ -141,7 +141,7 @@ function PracticeContent() {
         throw new Error(data.error || `API ${res.status}`);
       }
 
-      const data: QuizQuestion = await res.json();
+      const data: PracticeQuestion = await res.json();
       setQuiz(data);
       setState("question");
       // Start timing when question is displayed

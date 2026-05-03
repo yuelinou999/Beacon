@@ -4,11 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import curriculum from "@/data/curriculum.json";
-import {
-  isTopicStub,
-  type TopicWithPhases,
-} from "@/lib/curriculum-types";
+import { getAllTopics } from "@/lib/curriculum";
+import { isTopicStub } from "@/lib/types";
 import { useAIContext } from "@/components/ai-context";
 import PhaseProgress from "../_components/phase-progress";
 import ConceptPhaseView from "../_components/concept-phase";
@@ -27,8 +24,7 @@ export default function LearnV2TopicPage() {
 
   const [currentPhase, setCurrentPhase] = useState<PhaseState>(1);
 
-  const topics = curriculum.topics as unknown as TopicWithPhases[];
-  const topic = topics.find((t) => t.id === topicId);
+  const topic = getAllTopics().find((t) => t.id === topicId);
 
   useEffect(() => {
     if (topic) {

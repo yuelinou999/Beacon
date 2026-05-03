@@ -4,8 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
-import curriculum from "@/data/curriculum.json";
-import type { TopicWithPhases } from "@/lib/curriculum-types";
+import { getAllTopics } from "@/lib/curriculum";
 import type { QuizAttempt } from "@/lib/types";
 import { useAIContext } from "@/components/ai-context";
 import StartPhaseView from "./_components/start-phase";
@@ -28,8 +27,7 @@ function QuizContent() {
   const topicId = searchParams.get("topic") ?? "";
   const { setContext, setQuizActive } = useAIContext();
 
-  const topics = curriculum.topics as unknown as TopicWithPhases[];
-  const topic = topics.find((t) => t.id === topicId);
+  const topic = getAllTopics().find((t) => t.id === topicId);
 
   const [quizState, setQuizState] = useState<QuizState>("start");
   const [completedAttempt, setCompletedAttempt] = useState<QuizAttempt | null>(null);

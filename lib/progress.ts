@@ -43,8 +43,8 @@ function mergeTopicProgress(a: TopicProgress, b: TopicProgress): TopicProgress {
   const mastery = Math.max(a.mastery, b.mastery);
   const attempts = a.attempts + b.attempts;
   const last_seen = pickLaterTimestamp(a.last_seen, b.last_seen);
-  const lesson_completed = a.lesson_completed || b.lesson_completed;
-  const explain_differently_count = a.explain_differently_count + b.explain_differently_count;
+  const lesson_completed = (a.lesson_completed ?? false) || (b.lesson_completed ?? false);
+  const explain_differently_count = (a.explain_differently_count ?? 0) + (b.explain_differently_count ?? 0);
   const base: TopicProgress = {
     mastery,
     status: "not_started",
@@ -335,7 +335,7 @@ export function updateMasteryAfterPractice(
       time_seconds: timeSeconds || 0,
       timestamp: now,
     };
-    newProfile.answer_history = [...profile.answer_history, record];
+    newProfile.answer_history = [...(profile.answer_history ?? []), record];
   }
 
   // Record to wrong_answers if incorrect
@@ -370,7 +370,7 @@ export function recordQuizAttempt(
 ): StudentProfile {
   // Idempotent on attempt_id — Strict Mode double-mount, hot reload, or any
   // re-fire of the on-mount persist effect can't double-write.
-  if (profile.quiz_results.some((a) => a.attempt_id === attempt.attempt_id)) {
+  if ((profile.quiz_results ?? []).some((a) => a.attempt_id === attempt.attempt_id)) {
     return profile;
   }
 
@@ -411,9 +411,9 @@ export function recordQuizAttempt(
   const newProfile: StudentProfile = {
     ...profile,
     topics: { ...profile.topics, [attempt.topic_id]: tp },
-    quiz_results: [...profile.quiz_results, attempt],
-    session_logs: [...profile.session_logs, sessionLog],
-    total_study_time_minutes: profile.total_study_time_minutes + sessionMinutes,
+    quiz_results: [...(profile.quiz_results ?? []), attempt],
+    session_logs: [...(profile.session_logs ?? []), sessionLog],
+    total_study_time_minutes: (profile.total_study_time_minutes ?? 0) + sessionMinutes,
   };
 
   saveProfile(newProfile);
@@ -479,7 +479,7 @@ export function startSession(
     explain_differently_used: 0,
   };
 
-  profile.session_logs = [...profile.session_logs, session];
+  profile.session_logs = [...(profile.session_logs ?? []), session];
   saveProfile(profile);
   return id;
 }
@@ -495,10 +495,11 @@ export function endSession(
 ): void {
   const profile = loadProfile();
   const now = new Date();
-  const idx = profile.session_logs.findIndex((s) => s.id === sessionId);
+  const sessionLogs = profile.session_logs ?? [];
+  const idx = sessionLogs.findIndex((s) => s.id === sessionId);
   if (idx === -1) return;
 
-  const session = { ...profile.session_logs[idx] };
+  const session = { ...sessionLogs[idx] };
   session.end_time = now.toISOString();
   const startMs = new Date(session.start_time).getTime();
   session.duration_minutes = Math.round((now.getTime() - startMs) / 60000);
@@ -507,12 +508,12 @@ export function endSession(
   session.hints_used = stats.hints_used ?? session.hints_used;
   session.explain_differently_used = stats.explain_differently_used ?? session.explain_differently_used;
 
-  const newLogs = [...profile.session_logs];
+  const newLogs = [...sessionLogs];
   newLogs[idx] = session;
   profile.session_logs = newLogs;
 
   // Update total study time
-  profile.total_study_time_minutes += session.duration_minutes;
+  profile.total_study_time_minutes = (profile.total_study_time_minutes ?? 0) + session.duration_minutes;
 
   saveProfile(profile);
 }
@@ -532,7 +533,7 @@ export function updateStreak(): void {
   const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
   if (profile.last_active_date === yesterdayStr) {
-    profile.streak_days += 1;
+    profile.streak_days = (profile.streak_days ?? 0) + 1;
   } else {
     profile.streak_days = 1;
   }
@@ -548,7 +549,7 @@ export function incrementExplainDifferently(
   topicId: string
 ): StudentProfile {
   const tp = { ...getTopicProgress(profile, topicId) };
-  tp.explain_differently_count += 1;
+  tp.explain_differently_count = (tp.explain_differently_count ?? 0) + 1;
 
   const newProfile: StudentProfile = {
     ...profile,

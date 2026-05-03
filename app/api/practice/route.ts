@@ -5,7 +5,7 @@ import type {
   PracticeGenerateRequest,
   PracticeGradeRequest,
   OllamaMessage,
-  QuizQuestion,
+  PracticeQuestion,
   GradeResult,
   ErrorType,
 } from "@/lib/types";
@@ -78,7 +78,7 @@ async function handleGenerate(req: NextRequest) {
   const toolCall = result.message.tool_calls?.[0];
   if (toolCall && toolCall.function.name === "generate_quiz") {
     const args = toolCall.function.arguments as { question: string; correct_answer: string };
-    const quiz: QuizQuestion = {
+    const quiz: PracticeQuestion = {
       question: args.question,
       correct_answer: args.correct_answer,
       difficulty,
@@ -155,7 +155,7 @@ function parseErrorType(raw: string | undefined, correct: boolean): ErrorType {
   return "concept"; // default for incorrect answers
 }
 
-function parseFallbackQuiz(text: string, difficulty: string): QuizQuestion | null {
+function parseFallbackQuiz(text: string, difficulty: string): PracticeQuestion | null {
   const lines = text.split("\n").filter((l) => l.trim());
   if (lines.length >= 1) {
     const answerMatch = text.match(/(?:answer|solution)[:\s]*(.+)/i);

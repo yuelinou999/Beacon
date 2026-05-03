@@ -28,9 +28,17 @@ export interface GradeCurriculum {
 
 // ── Access helpers ────────────────────────────────────
 
-/** Get the full flat topic list (backward compat — used by all existing pages) */
+/** Get the full flat topic list (backward compat — used by all existing pages).
+ *
+ * The `as unknown as CurriculumTopic[]` cast is unavoidable: TypeScript's
+ * `resolveJsonModule` widens literal types when reading curriculum.json
+ * (e.g. `stub: true` → `stub: boolean`, `visual.type: "balance_scale"` →
+ * `string`), so the inferred shape is not assignable to the discriminated
+ * union `TopicPhases`. The on-disk data IS valid `CurriculumTopic[]`; the
+ * cast just tells TS to trust it. Localized here so consumers don't repeat
+ * it. */
 export function getAllTopics(): CurriculumTopic[] {
-  return curriculumData.topics as CurriculumTopic[];
+  return curriculumData.topics as unknown as CurriculumTopic[];
 }
 
 /** Get the Grade 7 curriculum structure */
