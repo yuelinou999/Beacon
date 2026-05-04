@@ -112,6 +112,10 @@ export interface QuizQuestion {
   equation: string;
   answer: number;
   skill: QuizSkill;
+  // Optional pre-authored alternative explanation — see PracticeBankQuestion
+  // for the same field. Quiz currently doesn't write to wrong_answers, but
+  // the field is stamped here so /review can show it once that pipe is built.
+  alt_explanation?: string;
 }
 
 export interface QuizBank {
@@ -141,6 +145,12 @@ export interface PracticeBankQuestion {
   answer: string | number;
   difficulty: "easy" | "medium" | "hard";
   explanation: string;
+  // Optional pre-authored "different angle" explanation. Used by /review's
+  // "Show me a different way" — when present, the bank alt is shown by
+  // default and /api/explain is demoted to a tertiary "Another angle from
+  // Gemma" button. When absent (legacy mistakes, topics without bank
+  // coverage), /review falls back to /api/explain as the primary path.
+  alt_explanation?: string;
 }
 
 export interface PracticeBank {
@@ -260,6 +270,18 @@ export interface WrongAnswer {
   review_count: number;
   next_review_date: string;
   last_review_correct: boolean | null;
+  // ── Bank-backed lookup fields (added with the alt_explanation pivot) ──
+  // bank_question_id: the originating bank entry's `id` (e.g. "p3", "q7"),
+  //   stamped at write time by /practice or /quiz. /review's
+  //   resolveBankQuestion uses this to look up the bank entry directly,
+  //   avoiding fragile question-string matching across formatting tweaks.
+  // source: which bank the id lives in. Practice ids ("pN") and quiz ids
+  //   ("qN") happen not to collide today, but `source` makes the namespace
+  //   explicit and removes the dependency on that convention.
+  // Both optional — legacy WrongAnswers written before the pivot don't
+  // carry them and fall through to the normalized-string fallback.
+  bank_question_id?: string;
+  source?: "practice" | "quiz";
 }
 
 export interface SessionLog {
