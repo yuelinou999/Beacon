@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Plus, Maximize2, Minimize2 } from "lucide-react";
+import { Plus, Maximize2, Minimize2, Lock } from "lucide-react";
 import MathRenderer from "@/components/math-renderer";
 import { useAIContext, type AIContext } from "@/components/ai-context";
 import { loadProfile } from "@/lib/progress";
@@ -59,6 +59,23 @@ function placeholderText(ctx: AIContext): string {
     case "learn": return `Ask about ${ctx.topicTitle || "this topic"}...`;
     case "practice": return "Need help with a question?";
     default: return "Ask me anything...";
+  }
+}
+
+// Per codex review: surface that Beacon AI is context-aware, not a generic
+// chatbot. Each assistant message gets a small chip noting which signal the
+// model was given. Mapping mirrors what /api/assistant actually receives in
+// the `context` payload; if those keys change, update both sides.
+function sourceContextLabel(ctx: AIContext): string {
+  switch (ctx.page) {
+    case "learn":
+      return ctx.topicTitle ? `Using current lesson: ${ctx.topicTitle}` : "Using current lesson context";
+    case "practice":
+      return "Using current question context";
+    case "home":
+      return "Using your progress context";
+    default:
+      return "Using general context";
   }
 }
 
@@ -378,26 +395,64 @@ export default function AIPanel() {
       </div>
 
       {quizActive ? (
+        // Quiz lock card — figma 🔒 + 🍀. Lock icon + bold "Quiz in progress"
+        // headline so the pause state reads as deliberate, not broken.
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <p className="text-[14px] text-muted leading-relaxed max-w-[280px]">
-            Beacon AI is paused while you take the quiz. It&apos;ll be back when you finish.
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mb-6"
+            style={{ backgroundColor: "#F5F6F8" }}
+            aria-hidden="true"
+          >
+            <Lock size={32} style={{ color: "#9CA3AF" }} />
+          </div>
+          <h3 style={{ fontSize: "16px", fontWeight: 500, color: "#1F2937", marginBottom: "12px" }}>
+            Quiz in progress
+          </h3>
+          <p
+            style={{
+              fontSize: "13px",
+              color: "#6B7280",
+              lineHeight: 1.6,
+              maxWidth: "280px",
+              marginBottom: "8px",
+            }}
+          >
+            The AI assistant is paused while you take the quiz. You&apos;ll get detailed feedback when you&apos;re done.
           </p>
+          <p style={{ fontSize: "13px", color: "#6B7280" }}>Good luck! 🍀</p>
         </div>
       ) : (
       <>
       {/* Messages area */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
 
-        {/* Suggestion bubbles — loaded from API */}
+        {/* Empty state — H3 hero line + LLM-driven suggestion bubbles
+            (single column per figma; we keep our /api/suggestions feed). */}
         {showSuggestions && (
-          <div className="flex flex-col items-center justify-center h-full py-8">
-            <p className="text-sm text-muted mb-6">Ask Beacon AI anything about your lesson.</p>
-            <div className="grid grid-cols-2 gap-2 max-w-[340px] w-full">
+          <div className="flex flex-col">
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#1F2937",
+                fontWeight: 500,
+                marginBottom: "4px",
+              }}
+            >
+              Beacon AI · Local · Multilingual · Always available
+            </p>
+            <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "16px" }}>
+              Ask me anything about what you&apos;re learning.
+            </p>
+            <div className="space-y-3">
               {suggestionsLoading ? (
                 <>
                   {[1, 2, 3, 4].map((n) => (
-                    <div key={n} className="bg-mathbg rounded-xl px-4 py-3 animate-pulse">
-                      <div className="h-4 w-[80%] bg-border/40 rounded" />
+                    <div
+                      key={n}
+                      className="rounded-xl px-4 py-3 animate-pulse"
+                      style={{ backgroundColor: "#F5F6F8" }}
+                    >
+                      <div className="h-4 w-[80%] rounded" style={{ backgroundColor: "#E2E5EA" }} />
                     </div>
                   ))}
                 </>
@@ -406,7 +461,15 @@ export default function AIPanel() {
                   <button
                     key={i}
                     onClick={() => handleSuggestionClick(s)}
-                    className="text-left text-[13px] text-body bg-mathbg rounded-xl px-4 py-3 hover:border-blue border border-transparent transition leading-snug"
+                    className="w-full text-left rounded-xl transition-all hover:border-blue-500"
+                    style={{
+                      backgroundColor: "#F5F6F8",
+                      border: "1px solid transparent",
+                      fontSize: "13px",
+                      color: "#1F2937",
+                      lineHeight: 1.5,
+                      padding: "12px 16px",
+                    }}
                   >
                     {s}
                   </button>
@@ -420,18 +483,24 @@ export default function AIPanel() {
         {messages.map((msg, i) => (
           <div key={i}>
             <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[85%] px-3.5 py-2.5 text-[13px] leading-relaxed ${
-                msg.role === "user"
-                  ? "bg-navy text-white rounded-2xl rounded-br-md"
-                  : "bg-surface text-body rounded-2xl rounded-bl-md"
-              }`}>
+              <div
+                className="px-4 py-3 leading-relaxed"
+                style={{
+                  maxWidth: "85%",
+                  fontSize: "14px",
+                  backgroundColor: msg.role === "user" ? "#0F2A4A" : "#F5F6F8",
+                  color: msg.role === "user" ? "#FFFFFF" : "#1F2937",
+                  borderRadius: msg.role === "user" ? "12px 12px 0 12px" : "12px 12px 12px 0",
+                }}
+              >
                 {msg.image && (
                   <div className="mb-2">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={msg.image}
                       alt="Uploaded problem"
-                      className="max-w-full max-h-[200px] rounded-lg border border-blue/30"
+                      className="max-w-full max-h-[200px] rounded-lg"
+                      style={{ border: "1px solid rgba(37, 99, 235, 0.3)" }}
                     />
                   </div>
                 )}
@@ -442,28 +511,78 @@ export default function AIPanel() {
                 )}
               </div>
             </div>
-            {msg.role === "assistant" && msg.responseTime && (
-              <p className="text-[10px] text-muted mt-1 ml-1">
-                {(msg.responseTime / 1000).toFixed(1)}s &middot; 100% local
-              </p>
+            {/* H2 + codex add: assistant messages get a context chip on the
+                left (Beacon-aware framing) and a response-time chip on the
+                right (offline-speed framing). Both are decorative. */}
+            {msg.role === "assistant" && (
+              <div className="flex items-center justify-between gap-2 mt-1.5 ml-1 mr-1 flex-wrap">
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: "#EFF6FF",
+                    color: "#2563EB",
+                    fontSize: "10px",
+                    fontWeight: 500,
+                  }}
+                >
+                  {sourceContextLabel(context)}
+                </span>
+                {msg.responseTime && (
+                  <span
+                    className="inline-flex items-center px-2 py-0.5 rounded-full"
+                    style={{
+                      backgroundColor: "#ECFDF5",
+                      color: "#059669",
+                      fontSize: "10px",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {(msg.responseTime / 1000).toFixed(1)}s · 100% local
+                  </span>
+                )}
+              </div>
             )}
           </div>
         ))}
 
-        {/* Streaming */}
+        {/* Streaming — assistant bubble with the partial response so far */}
         {streaming && (
           <div className="flex justify-start">
-            <div className="max-w-[85%] px-3.5 py-2.5 text-[13px] leading-relaxed bg-surface text-body rounded-2xl rounded-bl-md">
+            <div
+              className="px-4 py-3 leading-relaxed"
+              style={{
+                maxWidth: "85%",
+                fontSize: "14px",
+                backgroundColor: "#F5F6F8",
+                color: "#1F2937",
+                borderRadius: "12px 12px 12px 0",
+              }}
+            >
               <MathRenderer content={streaming} className="math-display" />
             </div>
           </div>
         )}
 
+        {/* Pre-stream wait state — explicit "Gemma is responding" framing
+            instead of generic "Thinking..." so the local-model story is
+            consistent with the rest of the chrome. */}
         {isLoading && !streaming && (
           <div className="flex justify-start">
-            <div className="px-3.5 py-2.5 text-[13px] text-muted bg-surface rounded-2xl rounded-bl-md flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
-              Thinking...
+            <div
+              className="px-4 py-3 flex items-center gap-2"
+              style={{
+                fontSize: "13px",
+                color: "#6B7280",
+                backgroundColor: "#F5F6F8",
+                borderRadius: "12px 12px 12px 0",
+              }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full animate-pulse"
+                style={{ backgroundColor: "#D97706" }}
+                aria-hidden="true"
+              />
+              Gemma is responding…
             </div>
           </div>
         )}
