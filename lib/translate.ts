@@ -60,10 +60,16 @@ export function getCachedTranslation(
   return cache[key] ?? null;
 }
 
+// Note: NO AbortSignal parameter. The shared in-flight promise is reused by
+// every concurrent caller; if we let any one caller's signal kill the fetch,
+// it would also reject for every other component that joined the same
+// promise. Callers that need to ignore late results after unmount should do
+// so locally with a `cancelled` flag in their .then handler — the shared
+// fetch always runs to completion and writes to the cache, which benefits
+// the next caller anyway. Codex review (round-2) called this out.
 export async function translate(
   text: string,
   lang: TranslateTargetLanguage,
-  signal?: AbortSignal,
 ): Promise<string> {
   const trimmed = text.trim();
   if (!trimmed) return "";
@@ -82,7 +88,6 @@ export async function translate(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-      signal,
     });
     if (!res.ok) {
       const errText = await res.text().catch(() => "");

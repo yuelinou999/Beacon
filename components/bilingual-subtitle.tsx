@@ -6,6 +6,13 @@ import { onSettingsChanged } from "@/lib/settings-events";
 import { translate, getCachedTranslation } from "@/lib/translate";
 import type { TranslateTargetLanguage } from "@/lib/types";
 
+// Note on hydration safety: do NOT seed useState from getCachedTranslation()
+// at render time. localStorage is server-empty / client-populated, which
+// would diverge SSR HTML from the first client render and trip a hydration
+// mismatch. State always starts null; the effect below reads cache + runs
+// fetch after mount. Cost: a brief empty flash on warm-cache loads, which
+// is acceptable for a decorative subtitle.
+
 // <BilingualSubtitle/> — render a translated subtitle under an English label
 // when bilingual mode is on.
 //
@@ -68,40 +75,40 @@ export default function BilingualSubtitle({
 
   const lang: TranslateTargetLanguage | null = isValidLang(secondLang) ? secondLang : null;
 
-  // For non-zh languages, seed with cache hit synchronously to avoid a flash
-  // of empty on every render. Effect below handles the network case.
-  const cachedSync =
-    lang && lang !== "zh" && english ? getCachedTranslation(english, lang) : null;
-  const [translated, setTranslated] = useState<string | null>(cachedSync);
+  // Always start null — see hydration note at top of file.
+  const [translated, setTranslated] = useState<string | null>(null);
 
   useEffect(() => {
     if (!bilingual || !lang || lang === "zh" || !english) {
       setTranslated(null);
       return;
     }
-    // Sync cache lookup first (covers the case where settings refreshed
-    // after the initial useState ran).
+    // Cache hit paints next render synchronously without a network round
+    // trip. Cold path falls through to translate().
     const cached = getCachedTranslation(english, lang);
     if (cached) {
       setTranslated(cached);
       return;
     }
     setTranslated(null);
-    const controller = new AbortController();
+    // Local cancelled flag protects against late setState after unmount or
+    // dependency change. Note: we deliberately do NOT abort the underlying
+    // fetch — translate() shares a single promise across concurrent callers
+    // (in-flight dedup), and aborting here would cancel the request for
+    // every other component that joined it. The fetch runs to completion
+    // and warms the cache for next time.
     let cancelled = false;
-    translate(english, lang, controller.signal)
+    translate(english, lang)
       .then((t) => {
         if (!cancelled) setTranslated(t);
       })
       .catch((err) => {
         // Bilingual is decoration — fail silently in UI; surface tech
         // detail in console for diagnosis.
-        if (err instanceof Error && err.name === "AbortError") return;
         console.warn("[bilingual-subtitle] translate failed:", err);
       });
     return () => {
       cancelled = true;
-      controller.abort();
     };
   }, [bilingual, lang, english]);
 
