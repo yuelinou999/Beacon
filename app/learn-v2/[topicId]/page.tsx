@@ -9,6 +9,7 @@ import { isTopicStub } from "@/lib/types";
 import { getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
+import BilingualSubtitle from "@/components/bilingual-subtitle";
 import PhaseProgress from "../_components/phase-progress";
 import ConceptPhaseView from "../_components/concept-phase";
 import AnalogyPhaseView from "../_components/analogy-phase";
@@ -113,9 +114,11 @@ export default function LearnV2TopicPage() {
           >
             {topic.title.en}
           </h1>
-          {bilingual && (
-            <p style={{ fontSize: "14px", color: "#6B7280" }}>{topic.title.zh}</p>
-          )}
+          <BilingualSubtitle
+            english={topic.title.en}
+            fallbackZh={topic.title.zh}
+            style={{ display: "block", fontSize: "14px", color: "#6B7280" }}
+          />
         </div>
         <div
           className="max-w-2xl mx-auto rounded-xl p-8 text-center"
@@ -175,11 +178,11 @@ export default function LearnV2TopicPage() {
         >
           {topic.title.en}
         </h1>
-        {bilingual && (
-          <p style={{ fontSize: "14px", color: "#9CA3AF", marginBottom: "4px" }}>
-            {topic.title.zh}
-          </p>
-        )}
+        <BilingualSubtitle
+          english={topic.title.en}
+          fallbackZh={topic.title.zh}
+          style={{ display: "block", fontSize: "14px", color: "#9CA3AF", marginBottom: "4px" }}
+        />
         {subtitle && (
           <p style={{ fontSize: "14px", color: "#6B7280" }}>{subtitle}</p>
         )}

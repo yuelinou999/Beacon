@@ -8,6 +8,7 @@ import MathRenderer from "@/components/math-renderer";
 import { getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
+import BilingualSubtitle from "@/components/bilingual-subtitle";
 import {
   loadProfile,
   getTopicProgress,
@@ -454,11 +455,11 @@ function PracticeContent() {
               <h1 style={{ fontSize: "20px", fontWeight: 500, color: "#0F2A4A" }}>
                 Practice: {topic.title[language]}
               </h1>
-              {bilingual && language === "en" && (
-                <p style={{ fontSize: "13px", color: "#9CA3AF", marginTop: "2px" }}>
-                  {topic.title.zh}
-                </p>
-              )}
+              <BilingualSubtitle
+                english={topic.title.en}
+                fallbackZh={topic.title.zh}
+                style={{ display: "block", fontSize: "13px", color: "#9CA3AF", marginTop: "2px" }}
+              />
             </div>
             <div className="flex items-center gap-4">
               <span style={{ fontSize: "14px", color: "#6B7280" }}>

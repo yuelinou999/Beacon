@@ -7,6 +7,7 @@ import { getTopicsForUnit, getUnits, getUnit } from "@/lib/curriculum";
 import { getStudentName, getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
+import BilingualSubtitle from "@/components/bilingual-subtitle";
 import type { StudentProfile, CurriculumTopic, TopicTitle } from "@/lib/types";
 import curriculum from "@/data/curriculum.json";
 import subjects, { type SubjectDef } from "@/data/subjects";
@@ -178,9 +179,12 @@ export default function Home() {
           </Link>
           <div style={{ fontSize: 12, color: "#6B7280", marginTop: 12 }}>
             Mathematics · {continueTopic.topic.title.en}
-            {bilingual && (
-              <span style={{ color: "#9CA3AF" }}> · {continueTopic.topic.title.zh}</span>
-            )}
+            <BilingualSubtitle
+              english={continueTopic.topic.title.en}
+              fallbackZh={continueTopic.topic.title.zh}
+              prefix=" · "
+              style={{ color: "#9CA3AF" }}
+            />
           </div>
         </div>
 
@@ -461,10 +465,12 @@ function LearningMemory({
                   <span style={{ color: "#9CA3AF" }}> · {row.meta}</span>
                 )}
               </div>
-              {bilingual && row.title && (
-                <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
-                  {row.title.zh}
-                </div>
+              {row.title && (
+                <BilingualSubtitle
+                  english={row.title.en}
+                  fallbackZh={row.title.zh}
+                  style={{ display: "block", fontSize: 12, color: "#9CA3AF", marginTop: 2 }}
+                />
               )}
             </div>
           );
@@ -545,10 +551,12 @@ function HoveredDetail({
                 }}
               >
                 {currentTopicTitle?.en}
-                {bilingual && currentTopicTitle?.zh && (
-                  <span style={{ display: "block", color: "#9CA3AF", fontWeight: 400, fontSize: 11, marginTop: 2 }}>
-                    {currentTopicTitle.zh}
-                  </span>
+                {currentTopicTitle && (
+                  <BilingualSubtitle
+                    english={currentTopicTitle.en}
+                    fallbackZh={currentTopicTitle.zh}
+                    style={{ display: "block", color: "#9CA3AF", fontWeight: 400, fontSize: 11, marginTop: 2 }}
+                  />
                 )}
               </span>
             </div>
@@ -562,11 +570,11 @@ function HoveredDetail({
                     <span style={{ fontSize: 13, color: "#1F2937", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {t.name}
                     </span>
-                    {bilingual && t.titleZh && (
-                      <span style={{ fontSize: 11, color: "#9CA3AF", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {t.titleZh}
-                      </span>
-                    )}
+                    <BilingualSubtitle
+                      english={t.name}
+                      fallbackZh={t.titleZh ?? undefined}
+                      style={{ fontSize: 11, color: "#9CA3AF", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    />
                   </span>
                   <span style={{ fontSize: 11, color: ml.color, fontWeight: 500, flexShrink: 0 }}>
                     {ml.text}

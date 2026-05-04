@@ -8,6 +8,7 @@ import { loadProfile, getTopicProgress } from "@/lib/progress";
 import { getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
+import BilingualSubtitle from "@/components/bilingual-subtitle";
 import { getAllTopics, getGrade7 } from "@/lib/curriculum";
 import type {
   StudentProfile,
@@ -621,14 +622,12 @@ function MathCourseCatalog({
                               >
                                 {topic.title.en}
                               </p>
-                              {bilingual && (
-                                <p
-                                  className="truncate"
-                                  style={{ fontSize: "11px", color: "#6B7280" }}
-                                >
-                                  {topic.title.zh}
-                                </p>
-                              )}
+                              <BilingualSubtitle
+                                english={topic.title.en}
+                                fallbackZh={topic.title.zh}
+                                className="truncate"
+                                style={{ display: "block", fontSize: "11px", color: "#6B7280" }}
+                              />
                               <div className="w-full h-1 rounded-full mt-2" style={{ backgroundColor: "#E5E7EB" }}>
                                 <div
                                   className={`h-1 rounded-full transition-all ${masteryBarColor(mastery)}`}
