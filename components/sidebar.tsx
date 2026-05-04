@@ -249,28 +249,22 @@ function SidebarInner({
               backgroundColor: isCurrent ? "rgba(107,170,223,0.08)" : "transparent",
             };
 
-            if (isActive) {
-              return (
-                <Link
-                  key={subj.id}
-                  href={`/subject/${subj.id}`}
-                  className={`${baseCls} hover:bg-white/5`}
-                  style={style}
-                  title={collapsed ? subj.name : undefined}
-                >
-                  {row}
-                </Link>
-              );
-            }
+            // Both active and coming-soon subjects route to /subject/{id};
+            // the destination renders the appropriate state (active catalog
+            // for math, coming-soon shell with planned topics for science /
+            // english). Per codex round-1: an honest preview is better than
+            // a dead-end div — user can browse what's coming, "Soon" tag
+            // sets expectations for the disabled CTAs they'll see there.
             return (
-              <div
+              <Link
                 key={subj.id}
-                className={baseCls}
+                href={`/subject/${subj.id}`}
+                className={`${baseCls} hover:bg-white/5`}
                 style={style}
                 title={collapsed ? subj.name : undefined}
               >
                 {row}
-              </div>
+              </Link>
             );
           })}
         </div>
