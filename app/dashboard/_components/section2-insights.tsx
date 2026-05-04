@@ -2,20 +2,21 @@
 
 import { TrendingUp } from "lucide-react";
 import type { PortraitBody } from "@/lib/portrait";
-import type { ViewMode } from "./view-toggle";
 
 // Section 2 — Three visual insight cards in a grid.
 // Per codex spec E: each card hides itself if its optional data is missing
 // (breakdown / behavior_pattern / weekly_values). The outer grid adjusts
 // column count to render 1, 2, or 3 cards cleanly. If all three are missing,
 // the entire section returns null.
+//
+// No viewMode prop — none of the data this section reads has dual-mode
+// variants in PortraitBody. Add it back when a real consumer appears.
 
 interface Section2InsightsProps {
   portrait: PortraitBody;
-  viewMode: ViewMode;
 }
 
-export default function Section2Insights({ portrait, viewMode }: Section2InsightsProps) {
+export default function Section2Insights({ portrait }: Section2InsightsProps) {
   const { where_time_goes, under_difficulty, independence_trend } = portrait.insights;
 
   const cards: React.ReactNode[] = [];
@@ -36,7 +37,6 @@ export default function Section2Insights({ portrait, viewMode }: Section2Insight
         key="difficulty"
         observation={under_difficulty.observation}
         patterns={under_difficulty.behavior_pattern}
-        viewMode={viewMode}
       />,
     );
   }
@@ -172,11 +172,9 @@ function reactionColors(reaction: string): { fg: string; bg: string } {
 function DifficultyCard({
   observation,
   patterns,
-  viewMode: _viewMode,
 }: {
   observation: string;
   patterns: { trigger: string; reaction: string }[];
-  viewMode: ViewMode;
 }) {
   return (
     <div

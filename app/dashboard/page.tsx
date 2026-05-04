@@ -57,7 +57,7 @@ export default function DashboardPage() {
   }, [loadPortrait]);
 
   return (
-    <div className="h-full overflow-y-auto">
+    <main className="h-full overflow-y-auto">
       <div className="max-w-3xl mx-auto px-10 py-10">
         {/* Top bar — single inline row, no sticky chrome */}
         <div className="flex items-center justify-between mb-8">
@@ -66,7 +66,7 @@ export default function DashboardPage() {
             className="inline-flex items-center gap-2 transition-colors hover:opacity-70"
             style={{ color: "#2563EB" }}
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={16} aria-hidden="true" />
             <span style={{ fontSize: "14px" }}>Home</span>
           </Link>
           <ViewToggle value={viewMode} onChange={setViewMode} />
@@ -95,14 +95,14 @@ export default function DashboardPage() {
               viewMode={viewMode}
               onRegenerate={loadPortrait}
             />
-            <Section2Insights portrait={state.data.portrait} viewMode={viewMode} />
+            <Section2Insights portrait={state.data.portrait} />
             <Section3Profile portrait={state.data.portrait} />
             <Section4Suggestions portrait={state.data.portrait} viewMode={viewMode} />
             <Section5QuickFacts quickFacts={state.data.portrait.quick_facts} />
           </>
         )}
       </div>
-    </div>
+    </main>
   );
 }
 

@@ -8,6 +8,8 @@ import {
   AlertCircle,
   Calendar,
   Sun,
+  Moon,
+  GraduationCap,
   Sparkles,
 } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
@@ -40,7 +42,10 @@ const ICON_MAP: Record<string, IconCmp> = {
   sun: Sun,
   morning: Sun,
   afternoon: Sun,
+  evening: Moon,
+  night: Moon,
   book: BookOpen,
+  subject: GraduationCap,
   target: Target,
   alert: AlertCircle,
   warning: AlertCircle,
