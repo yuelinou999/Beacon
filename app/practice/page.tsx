@@ -13,27 +13,31 @@ import {
   loadProfile,
   getTopicProgress,
   updateMasteryAfterPractice,
-  getDifficulty,
   startSession,
   endSession,
   updateStreak,
   MASTERY_CORRECT_DELTA,
   MASTERY_INCORRECT_DELTA,
 } from "@/lib/progress";
-import type { StudentProfile, CurriculumTopic, PracticeQuestion, GradeResult } from "@/lib/types";
+import type {
+  StudentProfile,
+  CurriculumTopic,
+  PracticeBankQuestion,
+  GradeResult,
+  ErrorType,
+} from "@/lib/types";
 import curriculum from "@/data/curriculum.json";
 
-// Practice runs in fixed-size batches. 5 mirrors the design reference; if
-// adaptive sizing comes later, this becomes a per-mastery computed value.
-const BATCH_SIZE = 5;
+// Practice runs in fixed-size batches. 6 = 12 ÷ 2, so each topic's bank
+// covers exactly two clean batches before "Practice more" wraps.
+const BATCH_SIZE = 6;
 
 type PracticeState =
-  | "loading"   // generating next question (initial OR mid-batch)
+  | "loading"   // profile not yet hydrated
   | "question"  // question shown, awaiting answer
-  | "grading"   // submitted, waiting for /api/practice grade response
   | "result"    // graded, showing inline correct/incorrect feedback
   | "complete"  // BATCH_SIZE questions answered — show summary
-  | "error";
+  | "empty";    // topic exists but no practice bank authored yet
 
 // Per-question record kept for the completion summary's dot grid, mistake
 // count, and mastery-delta display.
@@ -67,18 +71,34 @@ export default function PracticePage() {
 }
 
 // Fallback topic used when /practice is loaded without a ?topic= query.
-// The previous fallback (curriculum.topics[0].id = "what_is_scale") landed
-// on a stub topic with no phase content, which made /api/practice generate
-// noise from a sparse prompt and stranded the user on the loading screen.
-// We pick the first topic with full phases instead — robust to curriculum
-// reordering — and fall through to solving_one_step (known-good demo) if
-// somehow no non-stub topic exists.
+// Prefers a topic that actually has a practice bank (post-bank-pivot — see
+// commit feat(practice): add static practice banks). The earlier fallback
+// chain (first non-stub → solving_one_step) is preserved beneath it for
+// safety if curriculum.json ever ships with no practice banks at all.
 const KNOWN_GOOD_DEMO_TOPIC = "solving_one_step";
 
 function defaultTopicId(): string {
-  const topics = curriculum.topics as Array<{ id: string; phases?: { stub?: boolean } }>;
+  const topics = curriculum.topics as Array<{
+    id: string;
+    phases?: { stub?: boolean };
+    practice?: unknown;
+  }>;
+  const firstWithBank = topics.find((t) => t.practice !== undefined);
+  if (firstWithBank) return firstWithBank.id;
   const firstReal = topics.find((t) => !t.phases?.stub);
   return firstReal?.id ?? KNOWN_GOOD_DEMO_TOPIC;
+}
+
+// Compare a student's free-text answer against the bank's authored answer.
+// Permissive on numeric formatting ("8.0" vs 8, "+8" vs 8) and case-/whitespace-
+// insensitive for word answers ("Expression " vs "expression"). The bank is
+// hand-authored, so we know what shapes to expect — no need to be smarter.
+function answersMatch(student: string, bankAnswer: string | number): boolean {
+  const norm = (v: unknown) => String(v).trim().toLowerCase();
+  if (norm(student) === norm(bankAnswer)) return true;
+  const sn = Number(student);
+  const an = Number(bankAnswer);
+  return !Number.isNaN(sn) && !Number.isNaN(an) && sn === an;
 }
 
 function PracticeContent() {
@@ -87,13 +107,18 @@ function PracticeContent() {
   const { setContext } = useAIContext();
 
   const topic = (curriculum.topics as CurriculumTopic[]).find((t) => t.id === topicId);
+  const bank: PracticeBankQuestion[] = topic?.practice?.questions ?? [];
+
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [state, setState] = useState<PracticeState>("loading");
-  const [quiz, setQuiz] = useState<PracticeQuestion | null>(null);
+  const [quiz, setQuiz] = useState<PracticeBankQuestion | null>(null);
   const [grade, setGrade] = useState<GradeResult | null>(null);
   const [answer, setAnswer] = useState("");
-  const [error, setError] = useState("");
   const [bilingual, setBilingual] = useState(false);
+
+  // Walks linearly through `bank`, wrapping with %. Persisted across batches
+  // so "Practice more" shows the next 6 questions instead of the same 6.
+  const [bankPosition, setBankPosition] = useState(0);
 
   // ── Batch state ────────────────────────────────────
   // currentIdx is 0..BATCH_SIZE-1, the slot the user is currently working on.
@@ -105,7 +130,6 @@ function PracticeContent() {
   const [results, setResults] = useState<QuestionResult[]>([]);
   const [streak, setStreak] = useState(0);
   const [masteryAtStart, setMasteryAtStart] = useState<number | null>(null);
-  const [quizDifficulty, setQuizDifficulty] = useState<"easy" | "medium" | "hard">("easy");
 
   // ── Retry tracking ─────────────────────────────────
   // Per codex review: a same-slot retry is a practice signal, not a fresh
@@ -207,126 +231,99 @@ function PracticeContent() {
     });
   }, [topicId, topic?.title.en, progress.mastery, correctCount, questionsAnswered, setContext]);
 
-  const generateQuiz = useCallback(async () => {
-    if (!topic || !profile) return;
-    setState("loading");
-    setError("");
+  // Pull next question from the bank. Sync — no API call. Empty bank lands
+  // on the "empty" state instead of crashing or stranding on a loading screen.
+  const pickNextQuestion = useCallback(() => {
+    if (!topic) return;
+    if (bank.length === 0) {
+      setState("empty");
+      return;
+    }
     setGrade(null);
     setAnswer("");
-
-    // Snapshot difficulty AT generation time. /api/practice picks difficulty
-    // from current mastery; we freeze it for display so the difficulty pill
-    // doesn't flicker mid-question as mastery shifts elsewhere.
-    const masteryNow = getTopicProgress(profile, topicId).mastery;
-    setQuizDifficulty(getDifficulty(masteryNow));
-
-    try {
-      const res = await fetch("/api/practice?action=generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topicId,
-          topicTitle: topic.title[language],
-          language,
-          mastery: masteryNow,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || `API ${res.status}`);
-      }
-
-      const data: PracticeQuestion = await res.json();
-      setQuiz(data);
-      setState("question");
-      // Start timing when question is displayed
-      questionStartRef.current = Date.now();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate quiz");
-      setState("error");
-    }
-  }, [topic, profile, topicId, language]);
+    const next = bank[bankPosition % bank.length];
+    setQuiz(next);
+    setBankPosition((p) => p + 1);
+    setState("question");
+    // Start timing when question is displayed.
+    questionStartRef.current = Date.now();
+  }, [topic, bank, bankPosition]);
 
   useEffect(() => {
     if (profile && state === "loading") {
-      generateQuiz();
+      pickNextQuestion();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
 
-  const submitAnswer = async () => {
+  const submitAnswer = () => {
     if (!answer.trim() || !quiz || !topic || !profile) return;
-    setState("grading");
 
-    // Calculate time spent on this question
     const timeSeconds = questionStartRef.current > 0
       ? (Date.now() - questionStartRef.current) / 1000
       : 0;
 
-    try {
-      const res = await fetch("/api/practice?action=grade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          topicId,
-          topicTitle: topic.title[language],
-          language,
-          question: quiz.question,
-          correctAnswer: quiz.correct_answer,
-          studentAnswer: answer.trim(),
-          timeSeconds,
-        }),
-      });
+    // Local grading — no API call. Compare against the bank's authored answer
+    // with a permissive numeric/string match. error_type is "calculation" by
+    // default for incorrect answers; bank doesn't classify errors today.
+    const correct = answersMatch(answer.trim(), quiz.answer);
+    const correctAnswerStr = String(quiz.answer);
+    const errorType: ErrorType = correct ? null : "calculation";
 
-      if (!res.ok) throw new Error(`API ${res.status}`);
+    const data: GradeResult = {
+      correct,
+      explanation: quiz.explanation,
+      correct_answer: correctAnswerStr,
+      error_type: errorType,
+    };
+    setGrade(data);
+    setState("result");
 
-      const data: GradeResult = await res.json();
-      setGrade(data);
-      setState("result");
+    // Question text saved to history combines `question` + `equation` when
+    // both exist, so the wrong-answer card in /review shows the full prompt
+    // the student actually saw — not just "Solve for x." with no equation.
+    const displayQuestion = quiz.equation
+      ? `${quiz.question} ${quiz.equation}`
+      : quiz.question;
 
-      const isRetrySubmit = retriedSlots.has(currentIdx);
+    const isRetrySubmit = retriedSlots.has(currentIdx);
 
-      if (isRetrySubmit) {
-        // Retry path — practice signal only. No mastery write, no second
-        // results entry (the slot already has its original outcome). Track
-        // the recovery if this attempt succeeded.
-        if (data.correct) {
-          setRecoveredCount((c) => c + 1);
-        }
-        // Streak only counts first-attempt correctness, so no update here
-        // either — keeping retry isolated from the streak rhythm.
-      } else {
-        setStreak((s) => (data.correct ? s + 1 : 0));
-
-        // Record this slot's outcome for the completion summary.
-        const result: QuestionResult = {
-          question: quiz.question,
-          correctAnswer: data.correct_answer,
-          studentAnswer: answer.trim(),
-          correct: data.correct,
-          difficulty: quizDifficulty,
-          timeSeconds,
-        };
-        setResults((prev) => [...prev, result]);
-
-        const updated = updateMasteryAfterPractice(
-          profile,
-          topicId,
-          data.correct,
-          quiz.question,
-          answer.trim(),
-          data.correct_answer,
-          data.error_type,
-          data.explanation,
-          timeSeconds
-        );
-        setProfile(updated);
+    if (isRetrySubmit) {
+      // Retry path — practice signal only. No mastery write, no second
+      // results entry (the slot already has its original outcome). Track
+      // the recovery if this attempt succeeded.
+      if (data.correct) {
+        setRecoveredCount((c) => c + 1);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to grade answer");
-      setState("error");
+      // Streak only counts first-attempt correctness, so no update here
+      // either — keeping retry isolated from the streak rhythm.
+      return;
     }
+
+    setStreak((s) => (data.correct ? s + 1 : 0));
+
+    const result: QuestionResult = {
+      question: displayQuestion,
+      correctAnswer: data.correct_answer,
+      studentAnswer: answer.trim(),
+      correct: data.correct,
+      difficulty: quiz.difficulty,
+      timeSeconds,
+    };
+    setResults((prev) => [...prev, result]);
+
+    const updated = updateMasteryAfterPractice(
+      profile,
+      topicId,
+      data.correct,
+      displayQuestion,
+      answer.trim(),
+      data.correct_answer,
+      data.error_type,
+      data.explanation,
+      timeSeconds,
+    );
+    setProfile(updated);
   };
 
   // Advance to next slot OR complete the batch. Wired to the result-phase
@@ -336,20 +333,23 @@ function PracticeContent() {
       setState("complete");
     } else {
       setCurrentIdx((i) => i + 1);
-      generateQuiz();
+      pickNextQuestion();
     }
   };
 
-  // "Try a similar one" — refetch a fresh question for the SAME slot. Marks
-  // the slot as retried so the button only renders once per slot. The next
-  // submitAnswer call branches on retriedSlots and doesn't write mastery.
+  // "Try a similar one" — pull the next bank question into the SAME slot.
+  // Marks the slot as retried so the button only renders once per slot. The
+  // next submitAnswer call branches on retriedSlots and doesn't write mastery.
+  // With a sequential bank walk, the "next" question is naturally adjacent in
+  // difficulty (each tier groups 4 consecutive questions), so this is similar-
+  // enough for the practice signal we want.
   const handleTrySimilar = () => {
     setRetriedSlots((prev) => {
       const next = new Set(prev);
       next.add(currentIdx);
       return next;
     });
-    generateQuiz();
+    pickNextQuestion();
   };
 
   // "Practice more" — reset batch-local state and start a fresh batch on the
@@ -372,7 +372,7 @@ function PracticeContent() {
     setRecoveredCount(0);
     setMasteryAtStart(getTopicProgress(profile, topicId).mastery);
     sessionIdRef.current = startSession("practice", topicId);
-    generateQuiz();
+    pickNextQuestion();
   };
 
   if (!topic) {
@@ -380,6 +380,45 @@ function PracticeContent() {
       <div className="flex flex-col items-center justify-center h-full">
         <p className="text-muted">Topic not found.</p>
         <Link href="/subject/math" className="text-blue text-sm mt-2 hover:underline">Back to subject</Link>
+      </div>
+    );
+  }
+
+  // Empty state — topic exists but no practice bank authored yet (stub topics
+  // outside unit_6_equations, plus any post-bank topic that ships without a
+  // `practice` block). Same pattern Learn uses for stubs: surface the gap
+  // instead of pretending to have content.
+  if (state === "empty") {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-8 py-8">
+          <Link
+            href="/subject/math"
+            className="inline-flex items-center gap-2 mb-8 transition-colors hover:opacity-70"
+            style={{ color: "#2563EB" }}
+          >
+            <ChevronLeft size={16} />
+            <span style={{ fontSize: "14px" }}>Back to course</span>
+          </Link>
+          <div
+            className="rounded-xl p-12 text-center"
+            style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
+          >
+            <h2 style={{ fontSize: "20px", fontWeight: 500, color: "#0F2A4A", marginBottom: "12px" }}>
+              Practice content coming soon
+            </h2>
+            <p style={{ fontSize: "14px", color: "#6B7280", lineHeight: 1.6, maxWidth: "440px", margin: "0 auto" }}>
+              We haven&rsquo;t written practice questions for &ldquo;{topic.title[language]}&rdquo; yet. Try learning the topic first, or pick a different topic from the course.
+            </p>
+            <Link
+              href="/subject/math"
+              className="inline-block mt-6 px-4 py-2 rounded-lg border transition-colors hover:border-blue-500"
+              style={{ borderColor: "#E2E5EA", color: "#1F2937", fontSize: "13px" }}
+            >
+              Back to course
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -491,7 +530,9 @@ function PracticeContent() {
           </div>
         </div>
 
-        {/* Loading state \u2014 initial OR mid-batch */}
+        {/* Loading state \u2014 only visible briefly while profile hydrates from
+            localStorage. With the bank, picking the next question is sync,
+            so this no longer flashes between questions. */}
         {state === "loading" && (
           <div
             className="rounded-xl p-12 text-center"
@@ -499,14 +540,14 @@ function PracticeContent() {
           >
             <p className="inline-flex items-center gap-2" style={{ fontSize: "14px", color: "#6B7280" }}>
               <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#D97706" }} />
-              {results.length === 0 ? "Generating your first question..." : "Generating next question..."}
+              Loading practice...
             </p>
           </div>
         )}
 
-        {/* Question card \u2014 answering / grading / result share this card with
+        {/* Question card \u2014 answering / result share this card with
             colored left border driven by state. */}
-        {(state === "question" || state === "grading" || state === "result") && quiz && (
+        {(state === "question" || state === "result") && quiz && (
           <div
             className="rounded-xl p-8"
             style={{
@@ -523,67 +564,62 @@ function PracticeContent() {
               <div
                 className="px-3 py-1 rounded-full"
                 style={{
-                  backgroundColor: DIFFICULTY_COLORS[quizDifficulty].bg,
-                  color: DIFFICULTY_COLORS[quizDifficulty].fg,
+                  backgroundColor: DIFFICULTY_COLORS[quiz.difficulty].bg,
+                  color: DIFFICULTY_COLORS[quiz.difficulty].fg,
                   fontSize: "11px",
                   fontWeight: 500,
                   textTransform: "capitalize",
                 }}
               >
-                {quizDifficulty}
+                {quiz.difficulty}
               </div>
             </div>
 
-            {/* Math display */}
+            {/* Math display \u2014 prompt + optional separate equation. The bank
+                splits these (mirroring QuizQuestion) so word problems can put
+                the entire prompt in `question` and skip the equation row. */}
             <div
               className="rounded-lg p-8 mb-8 text-center math-display"
               style={{ backgroundColor: "#F0F3F7" }}
             >
               <MathRenderer content={quiz.question} />
+              {quiz.equation && (
+                <div className="mt-3" style={{ fontSize: "18px" }}>
+                  <MathRenderer content={quiz.equation} />
+                </div>
+              )}
             </div>
 
             {/* Answering: input + submit */}
-            {(state === "question" || state === "grading") && (
-              <>
-                <div className="flex gap-3 mb-2">
-                  <input
-                    type="text"
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
-                    placeholder="Type your answer..."
-                    disabled={state === "grading"}
-                    className="flex-1 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 text-center disabled:opacity-50"
-                    style={{
-                      borderColor: "#E2E5EA",
-                      backgroundColor: "#FFFFFF",
-                      fontSize: "18px",
-                      padding: "16px 20px",
-                    }}
-                  />
-                  <button
-                    onClick={submitAnswer}
-                    disabled={state === "grading" || !answer.trim()}
-                    className="px-8 rounded-lg transition-colors disabled:cursor-not-allowed"
-                    style={{
-                      backgroundColor: state === "grading" || !answer.trim() ? "#E2E5EA" : "#0F2A4A",
-                      color: "#FFFFFF",
-                      fontSize: "15px",
-                    }}
-                  >
-                    Submit
-                  </button>
-                </div>
-                {state === "grading" && (
-                  <div className="flex items-center gap-2 justify-center mt-4">
-                    <div
-                      className="w-2 h-2 rounded-full animate-pulse"
-                      style={{ backgroundColor: "#D97706" }}
-                    />
-                    <span style={{ fontSize: "13px", color: "#D97706" }}>Grading answer...</span>
-                  </div>
-                )}
-              </>
+            {state === "question" && (
+              <div className="flex gap-3 mb-2">
+                <input
+                  type="text"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
+                  placeholder="Type your answer..."
+                  className="flex-1 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
+                  style={{
+                    borderColor: "#E2E5EA",
+                    backgroundColor: "#FFFFFF",
+                    fontSize: "18px",
+                    padding: "16px 20px",
+                  }}
+                />
+                <button
+                  onClick={submitAnswer}
+                  disabled={!answer.trim()}
+                  className="px-8 rounded-lg transition-colors disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: !answer.trim() ? "#E2E5EA" : "#0F2A4A",
+                    color: "#FFFFFF",
+                    fontSize: "15px",
+                  }}
+                >
+                  Submit
+                </button>
+              </div>
             )}
 
             {/* Result: correct or incorrect inline feedback */}
@@ -706,22 +742,6 @@ function PracticeContent() {
           </div>
         )}
 
-        {/* Error */}
-        {state === "error" && (
-          <div
-            className="rounded-xl p-8 text-center space-y-3"
-            style={{ backgroundColor: "#FFFFFF", border: "1px solid #FCA5A5" }}
-          >
-            <p style={{ fontSize: "14px", color: "#991B1B" }}>{error}</p>
-            <button
-              onClick={generateQuiz}
-              className="px-4 py-2 rounded-lg border transition-colors"
-              style={{ borderColor: "#E2E5EA", color: "#6B7280", fontSize: "13px" }}
-            >
-              Try again
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
