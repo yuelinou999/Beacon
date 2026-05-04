@@ -365,6 +365,62 @@ export interface GradeResult {
   error_type: ErrorType;
 }
 
+// ── Advisor (AI-narrated readiness check) ──
+// Deterministic analyzer (lib/advisor.ts) computes the verdict + gaps from
+// curriculum.units[].prerequisites and topic mastery. /api/advisor is then a
+// thin endpoint that streams Gemma's personalized narration on TOP of the
+// already-decided analysis — never letting the LLM make the readiness call
+// itself. Two-layer design per codex round-1 review:
+//   1. Pure code = trustworthy, instant, demo-stable verdict
+//   2. LLM      = personalized framing, lands the verdict warmly
+// Stance is advisory, not gatekeeping — see SubjectPage's "Start anyway"
+// action that lets the student override the recommendation.
+
+// Overall judgment for a target unit's readiness gate.
+//   ready          all prereq units fully completed
+//   almost_ready   prereqs in progress but not done — close enough to consider
+//   needs_review   at least one prereq unstarted or far from threshold
+export type AdvisorVerdict = "ready" | "almost_ready" | "needs_review";
+
+// Per-prereq-unit breakdown. "topic-level evidence" lives in weakestTopics
+// so the gap list can drill into specifically what to review when a unit
+// isn't fully mastered yet.
+export interface AdvisorPrereqStatus {
+  unitId: string;
+  unitTitle: string;
+  avgMastery: number;
+  status: "completed" | "in_progress" | "not_started";
+  // Top-N (default 3) lowest-mastery topics within this prereq unit, surfaced
+  // as the concrete review-this-first targets when the unit isn't done.
+  weakestTopics: Array<{
+    topicId: string;
+    topicTitle: string;
+    mastery: number;
+  }>;
+}
+
+export interface AdvisorAnalysis {
+  targetUnitId: string;
+  targetUnitTitle: string;
+  verdict: AdvisorVerdict;
+  prerequisites: AdvisorPrereqStatus[];
+  // True when the target unit has no prerequisites at all — verdict is
+  // trivially "ready", prerequisites is []. UI uses this flag to swap copy
+  // ("No prerequisites for this unit" instead of an empty gap list).
+  noPrereqs: boolean;
+}
+
+// /api/advisor request: caller sends the analysis IT already computed
+// client-side. Server doesn't repeat the computation; it just narrates.
+export interface AdvisorNarrateRequest {
+  analysis: AdvisorAnalysis;
+  language?: "en" | "zh";
+}
+
+// /api/advisor streams plaintext narration (newlines preserved). No
+// structured response wrapper — the structured part is already in the
+// client's hands by the time narration is requested.
+
 // ── Explain (alternative explanation for a missed mistake) ──
 // Used by /review's wrong-again card on demand. Caller passes the original
 // LLM explanation we already showed the student; the endpoint returns a
