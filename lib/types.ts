@@ -103,9 +103,8 @@ export type QuizSkill =
   | "simplification"
   | "verification";
 
-// Quiz-bank question. Distinct from PracticeQuestion (AI-generated, single,
-// has a difficulty rating). Quiz-bank questions are pre-authored, fixed in
-// curriculum.json, and have a numeric `answer` plus a `skill` tag.
+// Quiz-bank question. Pre-authored, fixed in curriculum.json. Numeric
+// `answer` plus a `skill` tag for per-question categorization.
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -128,11 +127,9 @@ export interface QuizBank {
 
 // ── Curriculum: practice bank (static, hardcoded per topic) ─
 
-// Practice-bank question. Distinct from PracticeQuestion below (which was the
-// AI-generated single-question shape from the legacy /api/practice route).
-// Bank questions are pre-authored in curriculum.json, carry a difficulty label
-// for the per-question pill, and ship an `explanation` shown on the result
-// screen — replacing the old Gemma-grader explanation.
+// Practice-bank question. Pre-authored in curriculum.json, carries a
+// difficulty label for the per-question pill, and ships an `explanation`
+// shown on the result screen.
 export interface PracticeBankQuestion {
   id: string;
   question: string;
@@ -210,17 +207,6 @@ export interface Curriculum {
   grade: number;
   language_default: string;
   topics: CurriculumTopic[];
-}
-
-// ── Practice: per-question shape (AI-generated) ────────
-
-// Renamed from `QuizQuestion` to resolve the historical name collision with
-// the curriculum quiz-bank type above. Used by /api/practice and the practice
-// page's loop of one-at-a-time, Ollama-generated questions.
-export interface PracticeQuestion {
-  question: string;
-  correct_answer: string;
-  difficulty: "easy" | "medium" | "hard";
 }
 
 // ── Student progress ───────────────────────────────────
@@ -377,23 +363,6 @@ export interface GradeResult {
   explanation: string;
   correct_answer: string;
   error_type: ErrorType;
-}
-
-export interface PracticeGenerateRequest {
-  topicId: string;
-  topicTitle: string;
-  language: "en" | "zh";
-  mastery: number;
-}
-
-export interface PracticeGradeRequest {
-  topicId: string;
-  topicTitle: string;
-  language: "en" | "zh";
-  question: string;
-  correctAnswer: string;
-  studentAnswer: string;
-  timeSeconds: number;
 }
 
 // ── Explain (alternative explanation for a missed mistake) ──
