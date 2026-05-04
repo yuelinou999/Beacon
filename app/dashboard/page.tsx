@@ -8,6 +8,8 @@ import type { PortraitResponse } from "@/lib/portrait";
 import ViewToggle, { type ViewMode } from "./_components/view-toggle";
 import Section1Portrait from "./_components/section1-portrait";
 import Section2Insights from "./_components/section2-insights";
+import Section3Profile from "./_components/section3-profile";
+import Section4Suggestions from "./_components/section4-suggestions";
 
 // Dashboard state machine — three terminal states for the portrait fetch.
 // All UI sections render off the same PortraitResponse; viewMode flips local
@@ -93,14 +95,15 @@ export default function DashboardPage() {
               onRegenerate={loadPortrait}
             />
             <Section2Insights portrait={state.data.portrait} viewMode={viewMode} />
-            {/* Sections 3–5 land in their respective steps. Placeholder
-                block keeps the layout testable end-to-end mid-port. */}
+            <Section3Profile portrait={state.data.portrait} />
+            <Section4Suggestions portrait={state.data.portrait} viewMode={viewMode} />
+            {/* Section 5 (Quick Facts) lands in step 5. */}
             <div
               className="rounded-xl p-8 text-center"
               style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
             >
               <p style={{ fontSize: "14px", color: "#6B7280" }}>
-                Sections 3–5 land in upcoming steps.
+                Section 5 (Quick Facts) lands next.
               </p>
             </div>
           </>
