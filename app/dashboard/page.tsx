@@ -5,14 +5,12 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { useAIContext } from "@/components/ai-context";
 import type { PortraitResponse } from "@/lib/portrait";
-import PortraitCard from "./_components/portrait-card";
 import ViewToggle, { type ViewMode } from "./_components/view-toggle";
-import InsightCards from "./_components/insight-cards";
-import ProfileCards from "./_components/profile-cards";
-import SuggestionsCard from "./_components/suggestions-card";
-import QuickFacts from "./_components/quick-facts";
-import ThinkingTrace from "./_components/thinking-trace";
 
+// Dashboard state machine — three terminal states for the portrait fetch.
+// All UI sections render off the same PortraitResponse; viewMode flips local
+// display only and does NOT trigger a re-fetch (per design spec, dual-mode
+// content is already in headline.narrative/analytical and suggestion.{...}).
 type DashboardState =
   | { status: "loading" }
   | { status: "error"; message: string }
@@ -44,8 +42,7 @@ export default function DashboardPage() {
     } catch (err) {
       setState({
         status: "error",
-        message:
-          err instanceof Error ? err.message : "Unknown fetch error",
+        message: err instanceof Error ? err.message : "Unknown fetch error",
       });
     }
   }, []);
@@ -55,59 +52,56 @@ export default function DashboardPage() {
   }, [loadPortrait]);
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50">
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-8 py-3 border-b border-gray-200 bg-white">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 transition"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Home
-        </Link>
-        <ViewToggle value={viewMode} onChange={setViewMode} />
-      </div>
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-3xl mx-auto px-10 py-10">
+        {/* Top bar — single inline row, no sticky chrome */}
+        <div className="flex items-center justify-between mb-8">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 transition-colors hover:opacity-70"
+            style={{ color: "#2563EB" }}
+          >
+            <ChevronLeft size={16} />
+            <span style={{ fontSize: "14px" }}>Home</span>
+          </Link>
+          <ViewToggle value={viewMode} onChange={setViewMode} />
+        </div>
 
-      {/* Page body */}
-      <div className="max-w-3xl mx-auto px-8 py-10">
-        {/* Page header */}
-        <header className="mb-8">
-          <h1 className="text-2xl font-medium text-[#0F2A4A] mb-1">
+        {/* Header */}
+        <div className="mb-10">
+          <h1 style={{ fontSize: "24px", fontWeight: 500, color: "#0F2A4A", marginBottom: "8px" }}>
             Dashboard
           </h1>
-          <p className="text-sm text-gray-500">
+          <p style={{ fontSize: "14px", color: "#6B7280" }}>
             Understanding you as a learner
           </p>
-        </header>
+        </div>
 
-        {/* Section 1 — AI Portrait card */}
+        {/* Body */}
         {state.status === "loading" && <LoadingCard />}
-        {state.status === "error" && <ErrorCard message={state.message} />}
+        {state.status === "error" && (
+          <ErrorCard message={state.message} onRetry={loadPortrait} />
+        )}
         {state.status === "ready" && (
-          <>
-            <PortraitCard
-              portrait={state.data.portrait}
-              viewMode={viewMode}
-              onRegenerate={loadPortrait}
-            />
-            <ThinkingTrace thinking={state.data.thinking} />
-            <InsightCards
-              portrait={state.data.portrait}
-              viewMode={viewMode}
-            />
-            <ProfileCards portrait={state.data.portrait} />
-            <SuggestionsCard
-              suggestions={state.data.portrait.suggestions}
-              viewMode={viewMode}
-            />
-            <QuickFacts quickFacts={state.data.portrait.quick_facts} />
-          </>
+          // Sections 1–5 render here in steps 2–5. Placeholder block keeps the
+          // layout testable end-to-end without breaking compile mid-port.
+          <div
+            className="rounded-xl p-8 text-center"
+            style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
+          >
+            <p style={{ fontSize: "14px", color: "#6B7280" }}>
+              Dashboard sections land in steps 2–5.
+            </p>
+          </div>
         )}
       </div>
     </div>
   );
 }
 
+// ── Loading state ─────────────────────────────────────
+// Animated bullet list mirroring figma's generation animation. Each bullet
+// represents a stage of the LLM portrait pipeline so the wait feels narrated.
 function LoadingCard() {
   const lines = [
     "Reading your learning patterns…",
@@ -116,34 +110,73 @@ function LoadingCard() {
     "Writing your portrait…",
   ];
   return (
-    <section className="rounded-xl bg-white border border-gray-200 border-l-[3px] border-l-blue-600 p-8 mb-8">
-      <ul className="space-y-3">
+    <div
+      className="rounded-xl p-8"
+      style={{
+        backgroundColor: "#FFFFFF",
+        border: "1px solid #E2E5EA",
+        borderLeft: "3px solid #2563EB",
+      }}
+    >
+      <ul role="list" className="space-y-3 list-none p-0">
         {lines.map((line, i) => (
           <li
-            key={i}
-            className="flex items-center gap-3 text-sm text-gray-600 animate-pulse"
+            key={line}
+            className="flex items-center gap-3 animate-pulse"
             style={{ animationDelay: `${i * 150}ms` }}
           >
-            <span className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin shrink-0" />
-            <span>{line}</span>
+            <span
+              className="w-4 h-4 rounded-full border-2 animate-spin shrink-0"
+              style={{ borderColor: "#2563EB", borderTopColor: "transparent" }}
+              aria-hidden="true"
+            />
+            <span style={{ fontSize: "14px", color: "#6B7280" }}>{line}</span>
           </li>
         ))}
       </ul>
-    </section>
+    </div>
   );
 }
 
-function ErrorCard({ message }: { message: string }) {
+// ── Error state ─────────────────────────────────────
+// Per codex: keep diagnostic info — the most common failure here is "Ollama
+// isn't running". Visual refresh, but not at the cost of clear setup
+// guidance. Retry button calls the same loadPortrait the page mounts with.
+function ErrorCard({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <section className="rounded-xl bg-white border border-red-200 border-l-[3px] border-l-red-500 p-8 mb-8">
-      <p className="text-sm font-medium text-red-700 mb-2">
+    <div
+      className="rounded-xl p-8"
+      style={{
+        backgroundColor: "#FFFFFF",
+        border: "1px solid #FCA5A5",
+        borderLeft: "3px solid #EF4444",
+      }}
+      role="alert"
+    >
+      <p style={{ fontSize: "14px", fontWeight: 500, color: "#991B1B", marginBottom: "8px" }}>
         Could not generate portrait
       </p>
-      <p className="text-xs text-gray-600 break-words">{message}</p>
-      <p className="text-xs text-gray-500 mt-3">
-        Make sure Ollama is running and gemma4:e2b is pulled, then refresh the
-        page.
+      <p
+        style={{
+          fontSize: "12px",
+          color: "#6B7280",
+          marginBottom: "12px",
+          wordBreak: "break-word",
+        }}
+      >
+        {message}
       </p>
-    </section>
+      <p style={{ fontSize: "12px", color: "#6B7280", marginBottom: "16px", lineHeight: 1.6 }}>
+        Make sure Ollama is running and gemma4:e2b is pulled, then retry.
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="px-4 py-2 rounded-lg border transition-colors hover:border-blue-500"
+        style={{ borderColor: "#E2E5EA", color: "#1F2937", fontSize: "13px" }}
+      >
+        Try again
+      </button>
+    </div>
   );
 }

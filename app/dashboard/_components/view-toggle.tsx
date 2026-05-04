@@ -1,5 +1,10 @@
 "use client";
 
+// View toggle — switches between learner-facing and teacher-facing copy.
+// Per spec: only flips local display state; does NOT re-fetch the portrait.
+// Same PortraitResponse drives both modes via headline.narrative vs analytical
+// and suggestion.suggestion vs suggestion.rationale.
+
 export type ViewMode = "student" | "teacher";
 
 interface ViewToggleProps {
@@ -9,7 +14,7 @@ interface ViewToggleProps {
 
 export default function ViewToggle({ value, onChange }: ViewToggleProps) {
   return (
-    <div className="inline-flex items-center gap-1.5">
+    <div className="flex gap-2">
       <ToggleButton
         active={value === "student"}
         onClick={() => onChange("student")}
@@ -33,17 +38,18 @@ function ToggleButton({
   onClick: () => void;
   label: string;
 }) {
-  const base =
-    "rounded-full border px-3.5 py-1.5 text-xs font-medium transition";
-  const cls = active
-    ? "bg-blue-50 text-blue-600 border-blue-200"
-    : "bg-transparent text-gray-500 border-gray-200 hover:text-gray-700";
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`${base} ${cls}`}
+      className="px-3 py-1.5 rounded-lg transition-colors"
+      style={{
+        backgroundColor: active ? "#EFF6FF" : "transparent",
+        color: active ? "#2563EB" : "#6B7280",
+        border: active ? "1px solid #BFDBFE" : "1px solid #E2E5EA",
+        fontSize: "12px",
+      }}
     >
       {label}
     </button>
