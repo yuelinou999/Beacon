@@ -17,6 +17,8 @@ import {
   computeMistakePatterns,
   type MistakeReviewState,
 } from "@/lib/review";
+import { getAllTopics } from "@/lib/curriculum";
+import { resolveBankQuestion } from "@/lib/wrong-answer-key";
 import type { StudentProfile, WrongAnswer, ExplainRequest, ExplainResponse } from "@/lib/types";
 
 // Per-mistake retry state machine. Only one mistake is in retry mode at a
@@ -48,11 +50,19 @@ export default function ReviewPage() {
   const [expandedMistakeId, setExpandedMistakeId] = useState<string | null>(null);
 
   // ── Alternative explanation state (per current retrying slot) ──
-  // altText is the LLM-generated different teaching angle from /api/explain.
-  // Lives only for the duration of the current retry (resets on closeRetry
-  // and startRetry); persists across try-once-more loops on the SAME slot
-  // so the user doesn't re-fetch each time they bounce back to wrong-again.
-  // Per spec: button-on-demand (no auto-fetch on entering wrong-again).
+  // Two layers of "another way" content:
+  //   bankAltText — pre-authored alternative angle from curriculum.json
+  //     (PracticeBankQuestion.alt_explanation / QuizQuestion.alt_explanation),
+  //     resolved synchronously when startRetry runs. Free, instant, and
+  //     locked-down — primary path post-pivot.
+  //   altText — LLM-generated alternative from /api/explain. Optional
+  //     tertiary layer (button: "Another angle from Gemma") that only
+  //     shows up after bankAltText is rendered, OR as the primary path
+  //     when no bank alt exists (legacy mistakes, unauthored topics).
+  //
+  // Both reset on closeRetry / startRetry; both persist across try-once-more
+  // loops on the SAME slot.
+  const [bankAltText, setBankAltText] = useState<string | null>(null);
   const [altText, setAltText] = useState<string | null>(null);
   const [altState, setAltState] = useState<"idle" | "loading" | "error">("idle");
   const [altError, setAltError] = useState<string>("");
@@ -171,6 +181,18 @@ export default function ReviewPage() {
     setAltText(null);
     setAltState("idle");
     setAltError("");
+    // Resolve bank alt synchronously. Looks up the originating bank entry
+    // by bank_question_id (post-pivot writes) or normalized display string
+    // (legacy mistakes); when found and the entry carries an alt_explanation,
+    // set it as the default "another way" content. No-op for mistakes
+    // outside the authored topics — those fall through to the LLM path.
+    const wa = profile?.wrong_answers.find((w) => w.id === id);
+    if (wa) {
+      const resolved = resolveBankQuestion(wa, getAllTopics());
+      setBankAltText(resolved?.entry.alt_explanation ?? null);
+    } else {
+      setBankAltText(null);
+    }
     // If the user clicked Try-again from inside the archive expanded view,
     // collapse it — the row swaps to a retry card and the expanded chrome
     // would otherwise sit on top of it.
@@ -182,6 +204,7 @@ export default function ReviewPage() {
     setRetryingId(null);
     setRetryState("idle");
     setRetryAnswer("");
+    setBankAltText(null);
     setAltText(null);
     setAltState("idle");
     setAltError("");
@@ -514,6 +537,7 @@ export default function ReviewPage() {
                       onTryOnceMore={tryOnceMore}
                       onSkip={skipFromWrongAgain}
                       onClose={closeRetry}
+                      bankAltText={bankAltText}
                       altText={altText}
                       altState={altState}
                       altError={altError}
@@ -593,6 +617,7 @@ export default function ReviewPage() {
                               onTryOnceMore={tryOnceMore}
                               onSkip={skipFromWrongAgain}
                               onClose={closeRetry}
+                              bankAltText={bankAltText}
                               altText={altText}
                               altState={altState}
                               altError={altError}
@@ -753,6 +778,7 @@ function DueRetryingCard({
   onTryOnceMore,
   onSkip,
   onClose,
+  bankAltText,
   altText,
   altState,
   altError,
@@ -766,6 +792,12 @@ function DueRetryingCard({
   onTryOnceMore: () => void;
   onSkip: () => void;
   onClose: () => void;
+  // Pre-authored alt from the bank — null when the mistake doesn't resolve
+  // to an authored bank entry (legacy data or unauthored topic).
+  bankAltText: string | null;
+  // LLM-generated alt from /api/explain. Tertiary layer: only fetched when
+  // user clicks the "Another angle from Gemma" / "Show me a different way"
+  // button. null until then.
   altText: string | null;
   altState: "idle" | "loading" | "error";
   altError: string;
@@ -866,15 +898,14 @@ function DueRetryingCard({
 
       {retryState === "wrong-again" && (
         <>
-          {/* Explanation block. Renders the alt text once /api/explain has
-              returned for this slot; otherwise the original mistake.explanation.
-              Header copy reflects which one is showing. role="status" +
-              aria-live so screen readers announce the alt swap when it lands. */}
+          {/* Layer 1: original explanation — always visible, amber. The
+              learner saw this once already at submit time; reshowing it
+              here keeps the original framing available even after they
+              ask for a "different way" alt. Per codex review guidance:
+              don't let alt content REPLACE the original. */}
           <div
-            className="rounded-lg p-5 mb-4"
+            className="rounded-lg p-5 mb-3"
             style={{ backgroundColor: "#FFFBEB" }}
-            role="status"
-            aria-live="polite"
           >
             <p
               style={{
@@ -885,9 +916,7 @@ function DueRetryingCard({
                 fontWeight: 500,
               }}
             >
-              {altText
-                ? "Here's another way to think about it."
-                : "Review the explanation, then try once more."}
+              Review the explanation, then try once more.
             </p>
             <p
               className="math-display"
@@ -900,7 +929,6 @@ function DueRetryingCard({
             >
               <MathRenderer
                 content={
-                  altText ||
                   mistake.explanation ||
                   "No explanation recorded for this mistake."
                 }
@@ -912,9 +940,73 @@ function DueRetryingCard({
             </p>
           </div>
 
-          {/* "Show me a different way" — only when no alt loaded yet. After
-              the swap the button is gone (its job is done). Loading + error
-              states render in place so the user sees what happened. */}
+          {/* Layer 2: pre-authored bank alt — blue, only when present.
+              Sourced from PracticeBankQuestion.alt_explanation /
+              QuizQuestion.alt_explanation in curriculum.json. Free,
+              instant; no LLM round-trip. */}
+          {bankAltText && (
+            <div
+              className="rounded-lg p-5 mb-3"
+              style={{ backgroundColor: "#EFF6FF", border: "1px solid #BFDBFE" }}
+              role="status"
+              aria-live="polite"
+            >
+              <p
+                style={{
+                  fontSize: "13px",
+                  color: "#1E40AF",
+                  marginBottom: "8px",
+                  fontWeight: 500,
+                  letterSpacing: "0.3px",
+                }}
+              >
+                Another way to think about it
+              </p>
+              <p
+                className="math-display"
+                style={{ fontSize: "14px", color: "#1E3A8A", lineHeight: 1.7 }}
+              >
+                <MathRenderer content={bankAltText} />
+              </p>
+            </div>
+          )}
+
+          {/* Layer 3: LLM-generated alt — purple, only when fetched.
+              Tertiary "Another angle from Gemma" when bankAltText already
+              showed; primary "Show me a different way" when no bank alt
+              exists (legacy mistakes / topics without a bank). */}
+          {altText && (
+            <div
+              className="rounded-lg p-5 mb-3"
+              style={{ backgroundColor: "#F5F3FF", border: "1px solid #C4B5FD" }}
+              role="status"
+              aria-live="polite"
+            >
+              <p
+                className="inline-flex items-center gap-1.5"
+                style={{
+                  fontSize: "13px",
+                  color: "#5B21B6",
+                  marginBottom: "8px",
+                  fontWeight: 500,
+                  letterSpacing: "0.3px",
+                }}
+              >
+                <Sparkles size={13} aria-hidden="true" />
+                {bankAltText ? "Another angle from Gemma" : "Here's another way to think about it"}
+              </p>
+              <p
+                className="math-display"
+                style={{ fontSize: "14px", color: "#4C1D95", lineHeight: 1.7 }}
+              >
+                <MathRenderer content={altText} />
+              </p>
+            </div>
+          )}
+
+          {/* Button — only when LLM alt hasn't loaded yet. Label depends
+              on whether bank alt is the current "default" alt (tertiary
+              ask) or whether there's no bank alt at all (primary ask). */}
           {!altText && (
             <div className="mb-4">
               <button
@@ -942,6 +1034,11 @@ function DueRetryingCard({
                   </span>
                 ) : altState === "error" ? (
                   "Try fetching again"
+                ) : bankAltText ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Sparkles size={13} aria-hidden="true" />
+                    Another angle from Gemma
+                  </span>
                 ) : (
                   "Show me a different way"
                 )}
