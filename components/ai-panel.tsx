@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Plus, Maximize2, Minimize2 } from "lucide-react";
 import MathRenderer from "@/components/math-renderer";
 import { useAIContext, type AIContext } from "@/components/ai-context";
 import { loadProfile } from "@/lib/progress";
@@ -66,28 +67,6 @@ function CameraIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
       <circle cx="12" cy="13" r="4"/>
-    </svg>
-  );
-}
-
-function ExpandIcon({ expanded }: { expanded: boolean }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      {expanded ? (
-        <>
-          <polyline points="4 14 10 14 10 20"/>
-          <polyline points="20 10 14 10 14 4"/>
-          <line x1="14" y1="10" x2="21" y2="3"/>
-          <line x1="3" y1="21" x2="10" y2="14"/>
-        </>
-      ) : (
-        <>
-          <polyline points="15 3 21 3 21 9"/>
-          <polyline points="9 21 3 21 3 15"/>
-          <line x1="21" y1="3" x2="14" y2="10"/>
-          <line x1="3" y1="21" x2="10" y2="14"/>
-        </>
-      )}
     </svg>
   );
 }
@@ -304,56 +283,94 @@ export default function AIPanel() {
     <div className={`flex flex-col bg-card border-l border-border shrink-0 transition-all ${
       isExpanded ? "flex-1" : "flex-1 min-w-[380px] max-w-[50%]"
     }`} style={{ borderLeftWidth: "0.5px", borderColor: "#E8EBF0" }}>
-      {/* Header */}
-      <div className="px-5 py-3.5 border-b border-border shrink-0">
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${ollamaOk ? "bg-success" : "bg-muted"}`} />
-            <span className="text-[15px] font-semibold text-navy">Beacon AI</span>
-            <span className="text-[11px] text-muted">{ollamaOk ? "Local AI ready" : "Offline"}</span>
+      {/* Header — figma px-6 py-5 spacing, status indicator front-and-center
+          (the "Gemma running locally" line is the Ollama-track headline). */}
+      <div className="px-6 py-5 border-b shrink-0" style={{ borderColor: "#E2E5EA" }}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              {/* H1: more prominent status — pulsing dot when ok, muted when
+                  unreachable. The aria-label calls out the offline-ness
+                  explicitly so SR users get the same signal. */}
+              <span className="relative flex w-2.5 h-2.5">
+                {ollamaOk && (
+                  <span
+                    className="absolute inset-0 rounded-full animate-ping"
+                    style={{ backgroundColor: "#059669", opacity: 0.4 }}
+                    aria-hidden="true"
+                  />
+                )}
+                <span
+                  className="relative w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: ollamaOk ? "#059669" : "#9CA3AF" }}
+                  role="status"
+                  aria-label={ollamaOk ? "Gemma running locally" : "Gemma not reachable"}
+                />
+              </span>
+              <span style={{ color: "#0F2A4A", fontSize: "14px", fontWeight: 500 }}>
+                Beacon AI
+              </span>
+            </div>
+            <span style={{ color: "#6B7280", fontSize: "12px" }}>
+              {ollamaOk ? "Gemma running locally" : "Offline · Gemma not reachable"}
+            </span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleNewChat}
-              className="flex items-center gap-1 text-muted hover:text-blue transition px-2 py-1 rounded-md text-[11px]"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors hover:bg-gray-50"
               title="New chat"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              New chat
+              <Plus size={14} style={{ color: "#2563EB" }} aria-hidden="true" />
+              <span style={{ color: "#2563EB", fontSize: "13px" }}>New chat</span>
             </button>
             <button
               onClick={() => toggleExpand("panel")}
-              className="text-muted hover:text-navy transition p-1"
-              title={isExpanded ? "Restore panel" : "Expand panel"}
+              className="p-2 rounded-lg transition-colors hover:bg-gray-50"
+              title={isExpanded ? "Exit focus mode" : "Focus mode"}
+              aria-label={isExpanded ? "Exit focus mode" : "Focus mode"}
             >
-              <ExpandIcon expanded={isExpanded} />
+              {isExpanded ? (
+                <Minimize2 size={16} style={{ color: "#6B7280" }} aria-hidden="true" />
+              ) : (
+                <Maximize2 size={16} style={{ color: "#6B7280" }} aria-hidden="true" />
+              )}
             </button>
           </div>
         </div>
-        <p className="text-[11px] text-muted truncate mb-2.5">{contextLabel(context)}</p>
 
-        {/* Mode pills */}
+        {/* Context line + mode pills — figma renders these as a separate
+            section under the header; we keep them tight inside the header
+            block to preserve scrollable area for chat. */}
+        <div style={{ color: "#6B7280", fontSize: "12px", marginBottom: "12px" }} className="truncate">
+          {contextLabel(context)}
+        </div>
         <div className="flex gap-2">
           <button
             onClick={() => setMode("guided")}
-            className={`text-[11px] px-3.5 py-1.5 rounded-full transition font-medium ${
-              mode === "guided"
-                ? "bg-blue text-white"
-                : "border border-border text-muted hover:text-body hover:border-body"
-            }`}
+            className="rounded-lg transition-colors"
+            style={{
+              backgroundColor: mode === "guided" ? "#2563EB" : "transparent",
+              color: mode === "guided" ? "#FFFFFF" : "#6B7280",
+              border: mode === "guided" ? "none" : "1px solid #E2E5EA",
+              fontSize: "13px",
+              padding: "6px 14px",
+            }}
+            aria-pressed={mode === "guided"}
           >
             Guided
           </button>
           <button
             onClick={() => setMode("explain")}
-            className={`text-[11px] px-3.5 py-1.5 rounded-full transition font-medium ${
-              mode === "explain"
-                ? "bg-blue text-white"
-                : "border border-border text-muted hover:text-body hover:border-body"
-            }`}
+            className="rounded-lg transition-colors"
+            style={{
+              backgroundColor: mode === "explain" ? "#2563EB" : "transparent",
+              color: mode === "explain" ? "#FFFFFF" : "#6B7280",
+              border: mode === "explain" ? "none" : "1px solid #E2E5EA",
+              fontSize: "13px",
+              padding: "6px 14px",
+            }}
+            aria-pressed={mode === "explain"}
           >
             Explain
           </button>
