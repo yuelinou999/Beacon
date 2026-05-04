@@ -9,6 +9,14 @@ import type { ExplainRequest, ExplainResponse } from "@/lib/types";
 // Free-form text response (no tool call) — we want a short, conversational
 // alt explanation, not a structured object. Mirrors the no-tools shape the
 // quiz-take route uses for narrative output.
+//
+// Language note: en/zh prompts both exist, but the only caller today
+// (Review's fetchAltExplanation) hardcodes profile.language as the source.
+// profile.language defaults to "en" in student.json and there is no UI yet
+// to switch it — Settings' bilingual toggle is a separate concept (display
+// of zh subtitles alongside en titles, not primary content language). The
+// zh path is intentionally future-ready for an eventual primary-language
+// selector; do NOT wire it to the bilingual toggle.
 
 const SYSTEM_PROMPT_EN =
   "You are a patient tutor explaining the SAME problem in a NEW way. The " +

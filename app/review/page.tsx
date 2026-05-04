@@ -265,6 +265,12 @@ export default function ReviewPage() {
         question: wa.question,
         originalExplanation: wa.explanation,
         correctAnswer: wa.correct_answer,
+        // profile.language defaults to "en" and has no UI to flip today.
+        // Settings' bilingual toggle is a separate concept (display garnish
+        // for zh subtitles on topic titles) and intentionally does NOT
+        // route here — alt explanations stay in the learner's primary
+        // content language. The "zh" branch is reachable only by a future
+        // primary-language selector; see /api/explain route comment.
         language: profile.language === "zh" ? "zh" : "en",
       };
       const res = await fetch("/api/explain", {
