@@ -224,6 +224,12 @@ export interface WrongAnswer {
   error_type: string;
   explanation: string;
   timestamp: string;
+  // ── Spaced repetition fields ──
+  // review_count: count of CONSECUTIVE SUCCESSFUL reviews (NOT total attempts).
+  //   Resets to 0 on a failed review. Used to index REVIEW_INTERVAL_DAYS in
+  //   lib/progress.ts:recordReviewAttempt.
+  // next_review_date: YYYY-MM-DD; mistake is "due" when today >= this date.
+  // last_review_correct: outcome of most recent review attempt (null if never).
   review_count: number;
   next_review_date: string;
   last_review_correct: boolean | null;

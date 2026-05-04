@@ -126,6 +126,13 @@ function migrateWrongAnswerTopics(
 export const MASTERY_CORRECT_DELTA = 0.1;
 export const MASTERY_INCORRECT_DELTA = -0.05;
 
+// ── Spaced repetition intervals ───────────────────────
+// Indexed by WrongAnswer.review_count (= consecutive successful reviews).
+// On success, review_count++; next_review_date = today + intervals[count].
+// On failure, review_count = 0; next_review_date = tomorrow.
+// Last index is the cap — counts beyond clamp to the final 32-day interval.
+export const REVIEW_INTERVAL_DAYS: readonly number[] = [1, 2, 4, 8, 16, 32];
+
 // ── Helpers ───────────────────────────────────────────
 
 export function generateId(): string {
@@ -147,6 +154,12 @@ function todayStr(): string {
 function tomorrowStr(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function dateNDaysFromTodayStr(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
   return d.toISOString().slice(0, 10);
 }
 
@@ -446,6 +459,47 @@ export function markLessonComplete(
     topics: { ...profile.topics, [topicId]: tp },
   };
 
+  saveProfile(newProfile);
+  return newProfile;
+}
+
+// ── Review attempt: SR update for a single WrongAnswer ─
+// Called from /review when the user retries a mistake. Updates the matching
+// WrongAnswer's review_count, last_review_correct, and next_review_date per
+// the SR rules:
+//   - correct: review_count++ (capped); next due in REVIEW_INTERVAL_DAYS
+//     entry indexed by the new count
+//   - incorrect: review_count = 0; next due tomorrow
+// Returns a new profile (immutable update). No-op if the id isn't found —
+// the caller's UI may have raced a profile reset / migration.
+export function recordReviewAttempt(
+  profile: StudentProfile,
+  wrongAnswerId: string,
+  correct: boolean
+): StudentProfile {
+  const idx = profile.wrong_answers.findIndex((wa) => wa.id === wrongAnswerId);
+  if (idx === -1) return profile;
+
+  const prev = profile.wrong_answers[idx];
+  const newCount = correct ? prev.review_count + 1 : 0;
+  const intervalIdx = Math.min(newCount, REVIEW_INTERVAL_DAYS.length - 1);
+  const intervalDays = REVIEW_INTERVAL_DAYS[intervalIdx];
+  const nextDate = correct ? dateNDaysFromTodayStr(intervalDays) : tomorrowStr();
+
+  const updated: WrongAnswer = {
+    ...prev,
+    review_count: newCount,
+    last_review_correct: correct,
+    next_review_date: nextDate,
+  };
+
+  const newWrongAnswers = [...profile.wrong_answers];
+  newWrongAnswers[idx] = updated;
+
+  const newProfile: StudentProfile = {
+    ...profile,
+    wrong_answers: newWrongAnswers,
+  };
   saveProfile(newProfile);
   return newProfile;
 }
