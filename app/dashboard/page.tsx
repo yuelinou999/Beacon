@@ -6,6 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { useAIContext } from "@/components/ai-context";
 import type { PortraitResponse } from "@/lib/portrait";
 import ViewToggle, { type ViewMode } from "./_components/view-toggle";
+import Section1Portrait from "./_components/section1-portrait";
 
 // Dashboard state machine — three terminal states for the portrait fetch.
 // All UI sections render off the same PortraitResponse; viewMode flips local
@@ -83,16 +84,24 @@ export default function DashboardPage() {
           <ErrorCard message={state.message} onRetry={loadPortrait} />
         )}
         {state.status === "ready" && (
-          // Sections 1–5 render here in steps 2–5. Placeholder block keeps the
-          // layout testable end-to-end without breaking compile mid-port.
-          <div
-            className="rounded-xl p-8 text-center"
-            style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
-          >
-            <p style={{ fontSize: "14px", color: "#6B7280" }}>
-              Dashboard sections land in steps 2–5.
-            </p>
-          </div>
+          <>
+            <Section1Portrait
+              portrait={state.data.portrait}
+              thinking={state.data.thinking}
+              viewMode={viewMode}
+              onRegenerate={loadPortrait}
+            />
+            {/* Sections 2–5 land in their respective steps. Placeholder
+                block keeps the layout testable end-to-end mid-port. */}
+            <div
+              className="rounded-xl p-8 text-center"
+              style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
+            >
+              <p style={{ fontSize: "14px", color: "#6B7280" }}>
+                Sections 2–5 land in upcoming steps.
+              </p>
+            </div>
+          </>
         )}
       </div>
     </div>
