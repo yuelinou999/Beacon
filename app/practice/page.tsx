@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import MathRenderer from "@/components/math-renderer";
 import { getBilingual } from "@/components/settings-modal";
+import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
 import {
   loadProfile,
@@ -64,6 +65,18 @@ function PracticeContent() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Same-tab settings refresh: kept separate from the mount effect above so
+  // toggling bilingual mid-practice doesn't restart the session timer.
+  useEffect(() => {
+    const refresh = () => setBilingual(getBilingual());
+    window.addEventListener("focus", refresh);
+    const unsubscribe = onSettingsChanged(refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      unsubscribe();
+    };
   }, []);
 
   // End session with final stats when leaving

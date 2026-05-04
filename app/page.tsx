@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { loadProfile, getTopicProgress } from "@/lib/progress";
 import { getTopicsForUnit, getUnits, getUnit } from "@/lib/curriculum";
-import { getStudentName } from "@/components/settings-modal";
+import { getStudentName, getBilingual } from "@/components/settings-modal";
+import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
-import type { StudentProfile, CurriculumTopic } from "@/lib/types";
+import type { StudentProfile, CurriculumTopic, TopicTitle } from "@/lib/types";
 import curriculum from "@/data/curriculum.json";
 import subjects, { type SubjectDef } from "@/data/subjects";
 
@@ -25,17 +26,24 @@ export default function Home() {
   const { setContext } = useAIContext();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [studentName, setStudentName] = useState("");
+  const [bilingual, setBilingual] = useState(false);
   const [hoveredSubject, setHoveredSubject] = useState<SubjectDef | null>(null);
 
   useEffect(() => {
-    setProfile(loadProfile());
-    setStudentName(getStudentName());
-    const onFocus = () => {
+    const refresh = () => {
       setProfile(loadProfile());
       setStudentName(getStudentName());
+      setBilingual(getBilingual());
     };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    refresh();
+    // focus refreshes when the user returns to this tab; the custom event
+    // covers same-tab updates immediately (e.g. toggling settings inline).
+    window.addEventListener("focus", refresh);
+    const unsubscribe = onSettingsChanged(refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      unsubscribe();
+    };
   }, []);
 
   const topics = curriculum.topics as CurriculumTopic[];
@@ -112,8 +120,8 @@ export default function Home() {
   const lastWrongTopic = profile?.wrong_answers?.length
     ? profile.wrong_answers[profile.wrong_answers.length - 1]?.topic
     : null;
-  const lastWrongTopicName = lastWrongTopic
-    ? topics.find((t) => t.id === lastWrongTopic)?.title.en || null
+  const lastWrongTopicTitle: TopicTitle | null = lastWrongTopic
+    ? topics.find((t) => t.id === lastWrongTopic)?.title ?? null
     : null;
   const lastWrongUnit = lastWrongTopic
     ? getUnits().find((u) => u.topics.includes(lastWrongTopic))
@@ -170,6 +178,9 @@ export default function Home() {
           </Link>
           <div style={{ fontSize: 12, color: "#6B7280", marginTop: 12 }}>
             Mathematics · {continueTopic.topic.title.en}
+            {bilingual && (
+              <span style={{ color: "#9CA3AF" }}> · {continueTopic.topic.title.zh}</span>
+            )}
           </div>
         </div>
 
@@ -278,16 +289,18 @@ export default function Home() {
                 subject={hoveredSubject}
                 topicData={topicData}
                 totalAttempts={totalAttempts}
+                bilingual={bilingual}
               />
             ) : (
               <LearningMemory
                 hasStarted={hasStarted}
-                weakestTopicName={weakestStarted?.topic.title.en || null}
-                fadingTopicName={fadingTopic?.topic.title.en || null}
+                weakestTopicTitle={weakestStarted?.topic.title ?? null}
+                fadingTopicTitle={fadingTopic?.topic.title ?? null}
                 fadingDays={fadingDays}
-                lastWrongTopicName={lastWrongTopicName}
+                lastWrongTopicTitle={lastWrongTopicTitle}
                 lastWrongUnitTag={lastWrongUnitTag}
-                continueTopicName={continueTopic.topic.title.en}
+                continueTopicTitle={continueTopic.topic.title}
+                bilingual={bilingual}
               />
             )}
           </div>
@@ -354,20 +367,22 @@ export default function Home() {
 /* ── Learning Memory (default right card) ── */
 function LearningMemory({
   hasStarted,
-  weakestTopicName,
-  fadingTopicName,
+  weakestTopicTitle,
+  fadingTopicTitle,
   fadingDays,
-  lastWrongTopicName,
+  lastWrongTopicTitle,
   lastWrongUnitTag,
-  continueTopicName,
+  continueTopicTitle,
+  bilingual,
 }: {
   hasStarted: boolean;
-  weakestTopicName: string | null;
-  fadingTopicName: string | null;
+  weakestTopicTitle: TopicTitle | null;
+  fadingTopicTitle: TopicTitle | null;
   fadingDays: number;
-  lastWrongTopicName: string | null;
+  lastWrongTopicTitle: TopicTitle | null;
   lastWrongUnitTag: string | null;
-  continueTopicName: string;
+  continueTopicTitle: TopicTitle;
+  bilingual: boolean;
 }) {
   if (!hasStarted) {
     return (
@@ -384,20 +399,44 @@ function LearningMemory({
     );
   }
 
-  const rows: Array<{ label: string; value: string; meta?: string | null; color: string }> = [
-    { label: "Weakest topic", value: weakestTopicName || "Start learning to find out", color: "#1F2937" },
+  // Each row carries an optional title-pair so we can render zh underneath
+  // when bilingual mode is on. Rows that don't refer to a topic (e.g. the
+  // empty "Nothing yet" placeholder) leave `title` null.
+  const rows: Array<{
+    label: string;
+    title: TopicTitle | null;
+    fallback: string;
+    suffix?: string | null;
+    meta?: string | null;
+    color: string;
+  }> = [
+    {
+      label: "Weakest topic",
+      title: weakestTopicTitle,
+      fallback: "Start learning to find out",
+      color: "#1F2937",
+    },
     {
       label: "Needs review",
-      value: fadingTopicName && fadingDays >= 3 ? `${fadingTopicName} (${fadingDays}d ago)` : "Nothing yet",
+      title: fadingTopicTitle && fadingDays >= 3 ? fadingTopicTitle : null,
+      fallback: "Nothing yet",
+      suffix: fadingTopicTitle && fadingDays >= 3 ? ` (${fadingDays}d ago)` : null,
       color: "#1F2937",
     },
     {
       label: "Last mistake",
-      value: lastWrongTopicName || "No mistakes yet",
-      meta: lastWrongTopicName ? lastWrongUnitTag : null,
+      title: lastWrongTopicTitle,
+      fallback: "No mistakes yet",
+      meta: lastWrongTopicTitle ? lastWrongUnitTag : null,
       color: "#1F2937",
     },
-    { label: "Next step", value: `Continue: ${continueTopicName}`, color: "#2563EB" },
+    {
+      label: "Next step",
+      title: continueTopicTitle,
+      fallback: "",
+      suffix: null,
+      color: "#2563EB",
+    },
   ];
 
   return (
@@ -406,17 +445,30 @@ function LearningMemory({
         LEARNING MEMORY
       </h3>
       <div className="space-y-4">
-        {rows.map((row, i) => (
-          <div key={i}>
-            <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 4 }}>{row.label}</div>
-            <div style={{ fontSize: 14, color: row.color }}>
-              {row.value}
-              {row.meta && (
-                <span style={{ color: "#9CA3AF" }}> · {row.meta}</span>
+        {rows.map((row, i) => {
+          const isNextStep = row.label === "Next step";
+          const primaryEn = row.title
+            ? isNextStep
+              ? `Continue: ${row.title.en}`
+              : `${row.title.en}${row.suffix ?? ""}`
+            : row.fallback;
+          return (
+            <div key={i}>
+              <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 4 }}>{row.label}</div>
+              <div style={{ fontSize: 14, color: row.color }}>
+                {primaryEn}
+                {row.meta && (
+                  <span style={{ color: "#9CA3AF" }}> · {row.meta}</span>
+                )}
+              </div>
+              {bilingual && row.title && (
+                <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
+                  {row.title.zh}
+                </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );
@@ -427,10 +479,12 @@ function HoveredDetail({
   subject,
   topicData,
   totalAttempts,
+  bilingual,
 }: {
   subject: SubjectDef;
   topicData: Array<{ topic: CurriculumTopic; mastery: number; attempts: number; last_seen: string | null }>;
   totalAttempts: number;
+  bilingual: boolean;
 }) {
   const isActive = subject.status === "active";
   const avgMastery = isActive
@@ -441,14 +495,25 @@ function HoveredDetail({
     : 0;
   const totalTopics = isActive ? topicData.length : (subject.plannedTopics?.length || 0);
 
-  const displayTopics = isActive
-    ? topicData.slice(0, 3).map((td) => ({ name: td.topic.title.en, mastery: td.mastery }))
-    : (subject.plannedTopics || []).slice(0, 3).map((name) => ({ name, mastery: -1 }));
+  // Active subject rows carry a title-pair; planned-topic rows from
+  // subjects.ts are English-only strings, so titleZh stays null for them.
+  const displayTopics: Array<{ name: string; titleZh: string | null; mastery: number }> = isActive
+    ? topicData.slice(0, 3).map((td) => ({
+        name: td.topic.title.en,
+        titleZh: td.topic.title.zh,
+        mastery: td.mastery,
+      }))
+    : (subject.plannedTopics || []).slice(0, 3).map((name) => ({
+        name,
+        titleZh: null,
+        mastery: -1,
+      }));
 
-  const currentTopicName = isActive
-    ? topicData.find((t) => t.mastery > 0 && t.mastery < 0.7)?.topic.title.en
-      || topicData.find((t) => t.mastery === 0)?.topic.title.en
-      || topicData[0]?.topic.title.en
+  const currentTopicTitle: TopicTitle | null = isActive
+    ? topicData.find((t) => t.mastery > 0 && t.mastery < 0.7)?.topic.title
+      ?? topicData.find((t) => t.mastery === 0)?.topic.title
+      ?? topicData[0]?.topic.title
+      ?? null
     : null;
 
   return (
@@ -472,12 +537,19 @@ function HoveredDetail({
                 {Math.round(avgMastery * 100)}%
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-start justify-between text-sm">
               <span style={{ color: "#6B7280" }}>Current topic:</span>
-              <span style={{
-                color: "#1F2937", fontWeight: 500, fontSize: 13, textAlign: "right", maxWidth: 170,
-              }}>
-                {currentTopicName}
+              <span
+                style={{
+                  color: "#1F2937", fontWeight: 500, fontSize: 13, textAlign: "right", maxWidth: 170,
+                }}
+              >
+                {currentTopicTitle?.en}
+                {bilingual && currentTopicTitle?.zh && (
+                  <span style={{ display: "block", color: "#9CA3AF", fontWeight: 400, fontSize: 11, marginTop: 2 }}>
+                    {currentTopicTitle.zh}
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -486,8 +558,15 @@ function HoveredDetail({
               const ml = masteryLabel(t.mastery);
               return (
                 <div key={i} className="flex items-center justify-between py-1.5">
-                  <span style={{ fontSize: 13, color: "#1F2937", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 8 }}>
-                    {t.name}
+                  <span style={{ flex: 1, overflow: "hidden", marginRight: 8 }}>
+                    <span style={{ fontSize: 13, color: "#1F2937", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {t.name}
+                    </span>
+                    {bilingual && t.titleZh && (
+                      <span style={{ fontSize: 11, color: "#9CA3AF", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {t.titleZh}
+                      </span>
+                    )}
                   </span>
                   <span style={{ fontSize: 11, color: ml.color, fontWeight: 500, flexShrink: 0 }}>
                     {ml.text}

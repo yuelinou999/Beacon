@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ChevronLeft, Clock, Check, Lock, ChevronDown, ChevronRight, TrendingUp } from "lucide-react";
 import { loadProfile, getTopicProgress } from "@/lib/progress";
 import { getBilingual } from "@/components/settings-modal";
+import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
 import { getAllTopics, getGrade7 } from "@/lib/curriculum";
 import type {
@@ -133,14 +134,17 @@ export default function SubjectDetailPage() {
   const [bilingual, setBilingual] = useState(false);
 
   useEffect(() => {
-    setProfile(loadProfile());
-    setBilingual(getBilingual());
-    const onFocus = () => {
+    const refresh = () => {
       setProfile(loadProfile());
       setBilingual(getBilingual());
     };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    refresh();
+    window.addEventListener("focus", refresh);
+    const unsubscribe = onSettingsChanged(refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      unsubscribe();
+    };
   }, []);
 
   // ── Coming soon or unknown subject ──

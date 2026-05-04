@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { getAllTopics } from "@/lib/curriculum";
 import { isTopicStub } from "@/lib/types";
+import { getBilingual } from "@/components/settings-modal";
+import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
 import PhaseProgress from "../_components/phase-progress";
 import ConceptPhaseView from "../_components/concept-phase";
@@ -23,6 +25,18 @@ export default function LearnV2TopicPage() {
   const { setContext } = useAIContext();
 
   const [currentPhase, setCurrentPhase] = useState<PhaseState>(1);
+  const [bilingual, setBilingual] = useState(false);
+
+  useEffect(() => {
+    const refresh = () => setBilingual(getBilingual());
+    refresh();
+    window.addEventListener("focus", refresh);
+    const unsubscribe = onSettingsChanged(refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      unsubscribe();
+    };
+  }, []);
 
   const topic = getAllTopics().find((t) => t.id === topicId);
 
@@ -99,6 +113,9 @@ export default function LearnV2TopicPage() {
           >
             {topic.title.en}
           </h1>
+          {bilingual && (
+            <p style={{ fontSize: "14px", color: "#6B7280" }}>{topic.title.zh}</p>
+          )}
         </div>
         <div
           className="max-w-2xl mx-auto rounded-xl p-8 text-center"
@@ -158,6 +175,11 @@ export default function LearnV2TopicPage() {
         >
           {topic.title.en}
         </h1>
+        {bilingual && (
+          <p style={{ fontSize: "14px", color: "#9CA3AF", marginBottom: "4px" }}>
+            {topic.title.zh}
+          </p>
+        )}
         {subtitle && (
           <p style={{ fontSize: "14px", color: "#6B7280" }}>{subtitle}</p>
         )}
