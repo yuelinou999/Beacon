@@ -36,8 +36,15 @@ function QuizContent() {
     setContext({ page: "quiz" });
   }, [setContext]);
 
+  // Pause the AI panel from the moment the user lands on /quiz, not just
+  // once they hit "Start quiz". The pre-quiz info card already promises
+  // "The AI assistant is paused during the quiz" and the figma reference
+  // shows the locked state alongside the start screen — so the start phase
+  // counts as "during the quiz" for AI-pause purposes.
+  // Results phase unpauses: post-quiz reflection (asking why a question
+  // was wrong) is exactly what we want the AI panel available for.
   useEffect(() => {
-    setQuizActive(quizState === "in-progress");
+    setQuizActive(quizState !== "results");
     return () => setQuizActive(false);
   }, [quizState, setQuizActive]);
 
