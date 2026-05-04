@@ -92,8 +92,20 @@ export function analyzeReadiness(
         topicMasteries.reduce((sum, t) => sum + t.mastery, 0) /
         topicMasteries.length;
 
+      // "completed" semantics: ALL topics >= MASTERY_COMPLETED. Matches
+      // app/subject/[id]/page.tsx:isUnitCompleted, which counts a unit as
+      // done only when every topic clears the threshold. Average mastery
+      // is too lenient for the completion gate — one weak topic could
+      // hide behind several strong ones and the advisor would say "ready"
+      // for a unit the rest of the product still treats as in-progress.
+      // Average mastery still drives the in_progress threshold below and
+      // shows up in the gap UI for human-readable framing.
+      const allTopicsMastered = topicMasteries.every(
+        (t) => t.mastery >= MASTERY_COMPLETED,
+      );
+
       let status: AdvisorPrereqStatus["status"];
-      if (avgMastery >= MASTERY_COMPLETED) status = "completed";
+      if (allTopicsMastered) status = "completed";
       else if (avgMastery >= MASTERY_IN_PROGRESS) status = "in_progress";
       else status = "not_started";
 
