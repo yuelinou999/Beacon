@@ -5,7 +5,7 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 
 interface MathRendererProps {
-  content: string;
+  content: string | null | undefined;
   className?: string;
 }
 
@@ -15,7 +15,12 @@ interface MathRendererProps {
 // Non-math text passes through as-is. Unparseable LaTeX falls back to plain text.
 
 export default function MathRenderer({ content, className }: MathRendererProps) {
-  const html = useMemo(() => renderMathContent(content), [content]);
+  // Defensive coercion: type says string|null|undefined but in practice
+  // callers occasionally pass non-string values (stale HMR module cache,
+  // malformed LLM payload bypassing TS, etc.). Normalize at the boundary
+  // so renderMathContent below can assume a real string.
+  const safeContent = typeof content === "string" ? content : "";
+  const html = useMemo(() => renderMathContent(safeContent), [safeContent]);
   return (
     <div
       className={className}
@@ -25,6 +30,11 @@ export default function MathRenderer({ content, className }: MathRendererProps) 
 }
 
 function renderMathContent(text: string): string {
+  // Belt-and-suspenders — even though the only caller now coerces, this
+  // function is also called recursively / indirectly and the cost of the
+  // typeof check is zero compared to a runtime crash inside dangerouslySet.
+  if (typeof text !== "string") return "";
+
   // Process display math first ($$...$$), then inline ($...$).
   // We split on patterns and render each segment.
 
