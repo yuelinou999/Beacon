@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Plus, Maximize2, Minimize2, Lock } from "lucide-react";
+import { Plus, Maximize2, Minimize2, Lock, Camera, Send } from "lucide-react";
 import MathRenderer from "@/components/math-renderer";
 import { useAIContext, type AIContext } from "@/components/ai-context";
 import { loadProfile } from "@/lib/progress";
@@ -77,15 +77,6 @@ function sourceContextLabel(ctx: AIContext): string {
     default:
       return "Using general context";
   }
-}
-
-function CameraIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-      <circle cx="12" cy="13" r="4"/>
-    </svg>
-  );
 }
 
 export default function AIPanel() {
@@ -608,9 +599,11 @@ export default function AIPanel() {
         </div>
       )}
 
-      {/* Input area */}
-      <div className="border-t border-border px-4 py-3 shrink-0">
-        <div className="flex items-center gap-2">
+      {/* Input area — figma px-6 py-5 spacing, lucide Send + Camera icons.
+          Camera button keeps a "Snap a problem" tooltip + an inline label
+          on hover; the bigger affordance comes from the icon size. */}
+      <div className="border-t shrink-0" style={{ borderColor: "#E2E5EA", padding: "20px 24px" }}>
+        <div className="flex items-center gap-2 mb-2">
           <input
             type="text"
             value={input}
@@ -618,7 +611,13 @@ export default function AIPanel() {
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             placeholder={placeholderText(context)}
             disabled={isLoading}
-            className="flex-1 rounded-lg border border-border px-3 py-2 text-[13px] text-body focus:outline-none focus:border-blue disabled:opacity-50 bg-white"
+            className="flex-1 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            style={{
+              borderColor: "#E2E5EA",
+              backgroundColor: "#FFFFFF",
+              fontSize: "14px",
+              padding: "12px 16px",
+            }}
           />
           <input
             ref={fileInputRef}
@@ -629,21 +628,35 @@ export default function AIPanel() {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="text-muted hover:text-blue transition p-1.5"
-            title="Upload photo of a problem"
+            className="rounded-lg transition-colors hover:bg-gray-50"
+            style={{ border: "1px solid #E2E5EA", padding: "12px" }}
+            title="Snap a problem (Gemma vision)"
+            aria-label="Upload photo of a problem"
           >
-            <CameraIcon />
+            <Camera size={20} style={{ color: "#6B7280" }} aria-hidden="true" />
           </button>
           <button
             onClick={sendMessage}
             disabled={isLoading || (!input.trim() && !pendingImage)}
-            className="px-3.5 py-2 rounded-lg bg-navy text-white text-[13px] font-medium hover:bg-navy-light disabled:opacity-40 transition"
+            className="rounded-lg transition-colors disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: isLoading || (!input.trim() && !pendingImage) ? "#E2E5EA" : "#0F2A4A",
+              color: "#FFFFFF",
+              padding: "12px 20px",
+            }}
+            aria-label="Send message"
           >
-            Send
+            <Send size={18} aria-hidden="true" />
           </button>
         </div>
-        <p className="text-[10px] text-muted mt-2 text-center">
-          Snap a printed problem or type your question &middot; 100% offline &middot; Powered by Gemma 4
+        {/* H4 + framing footer: name every part of the value prop (snap
+            a problem via the Camera button above, type a question, 100%
+            offline, the model). Codex review preferred icon + text over
+            inline emoji for consistency with the rest of the panel chrome
+            — the visible Camera icon button to the left already does the
+            "snap" affordance, so the footer is plain prose. */}
+        <p style={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.5 }}>
+          Snap a printed problem or type your question · 100% offline · Powered by Gemma
         </p>
       </div>
       </>
