@@ -191,12 +191,20 @@ export default function SubjectDetailPage() {
   // ── Active subject (math) ──
   // Activate-unit callback bundles the setCurrentUnit + setProfile pair so
   // the catalog component doesn't need direct access to the profile state
-  // setter. No-op when profile hasn't loaded yet (early click race).
+  // setter.
+  //
+  // Early-click race fix (codex round-2): if the user fires this click
+  // before the mount-effect has hydrated `profile` from localStorage,
+  // we used to silently no-op — navigation went through but
+  // current_unit didn't update, breaking the Tier 1 "all entry points
+  // agree" promise for that session. Defensive load: fall back to a
+  // synchronous loadProfile() snapshot when state is still null.
+  // loadProfile is sync (localStorage read) and safe in a click handler
+  // since clicks only fire client-side.
   const handleActivateUnit = (unitId: string) => {
-    if (profile) {
-      const updated = setCurrentUnit(profile, unitId);
-      setProfile(updated);
-    }
+    const current = profile ?? loadProfile();
+    const updated = setCurrentUnit(current, unitId);
+    setProfile(updated);
   };
   return (
     <MathCourseCatalog
