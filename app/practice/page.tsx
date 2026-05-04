@@ -27,6 +27,7 @@ import type {
   ErrorType,
 } from "@/lib/types";
 import { getDisplayQuestion } from "@/lib/wrong-answer-key";
+import { resolveActiveStudyTarget } from "@/lib/active-target";
 import curriculum from "@/data/curriculum.json";
 
 // Practice runs in fixed-size batches. 6 = 12 ÷ 2, so each topic's bank
@@ -72,13 +73,24 @@ export default function PracticePage() {
 }
 
 // Fallback topic used when /practice is loaded without a ?topic= query.
-// Prefers a topic that actually has a practice bank (post-bank-pivot — see
-// commit feat(practice): add static practice banks). The earlier fallback
-// chain (first non-stub → solving_one_step) is preserved beneath it for
-// safety if curriculum.json ever ships with no practice banks at all.
+// Prefers the student's active study target (resolveActiveStudyTarget),
+// so sidebar Practice + manual /practice URL both honor the same source
+// of truth as Learn / Home / Quiz. Falls back to the first topic with a
+// practice bank if the active target's topic doesn't have one (e.g. user
+// registered a unit whose topics are all stubs — they'll still land on
+// SOMETHING usable). Last-ditch fallback: the known-good demo topic.
 const KNOWN_GOOD_DEMO_TOPIC = "solving_one_step";
 
 function defaultTopicId(): string {
+  // Prefer the active study target. resolveActiveStudyTarget needs a
+  // profile, but defaultTopicId() is called during render before profile
+  // hydrates from localStorage — so we feature-detect window first.
+  if (typeof window !== "undefined") {
+    const target = resolveActiveStudyTarget(loadProfile());
+    if (target.topic.practice) return target.topicId;
+  }
+  // Active target has no bank (or we're SSR'ing) — find the first topic
+  // anywhere with a practice bank.
   const topics = curriculum.topics as Array<{
     id: string;
     phases?: { stub?: boolean };

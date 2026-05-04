@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { loadProfile, getTopicProgress } from "@/lib/progress";
 import { getTopicsForUnit, getUnits, getUnit } from "@/lib/curriculum";
+import { resolveActiveStudyTarget } from "@/lib/active-target";
 import { getStudentName, getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
@@ -58,50 +59,23 @@ export default function Home() {
   const totalWrong = profile?.wrong_answers?.length || 0;
   const totalAttempts = topicData.reduce((sum, t) => sum + t.attempts, 0);
 
-  // Resolve continueTopic from profile.current_unit, with fallback chain
-  const requestedUnitId = profile?.current_unit || "unit_6_equations";
-  let resolvedUnitId = requestedUnitId;
-  let unitTopics = getTopicsForUnit(resolvedUnitId);
-
-  if (unitTopics.length === 0) {
-    const units = getUnits();
-    const unitWithProgress = units.find((u) =>
-      u.topics.some((tid) => (profile?.topics?.[tid]?.mastery ?? 0) > 0)
-    );
-    resolvedUnitId = unitWithProgress?.id ?? "unit_6_equations";
-    unitTopics = getTopicsForUnit(resolvedUnitId);
-
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(
-        `[Beacon] profile.current_unit "${requestedUnitId}" not found in curriculum; fell back to "${resolvedUnitId}"`
-      );
-    }
-
-    if (unitTopics.length === 0) {
-      // Curriculum regression — even the hardcoded unit is gone.
-      // Log loudly and attempt one last fallback to the first unit that has topics.
-      const anyUnit = units.find((u) => getTopicsForUnit(u.id).length > 0);
-      if (anyUnit) {
-        resolvedUnitId = anyUnit.id;
-        unitTopics = getTopicsForUnit(resolvedUnitId);
-      }
-      // eslint-disable-next-line no-console
-      console.error(
-        `[Beacon] continueTopic: fallback unit "${resolvedUnitId}" returned no topics. ` +
-          `Curriculum may be malformed or renamed — add a UNIT_ID_RENAMES entry in lib/progress.ts.`
-      );
-    }
-  }
-
+  // Resolve continueTopic via the shared helper — same logic Sidebar and
+  // Subject Start Unit CTAs use, so the three entry points always agree.
+  const activeTarget = resolveActiveStudyTarget(profile);
+  const resolvedUnitId = activeTarget.unitId;
+  const unitTopics = getTopicsForUnit(resolvedUnitId);
   const unitTopicData = unitTopics.map((t) => {
     const tp = profile ? getTopicProgress(profile, t.id) : { mastery: 0, attempts: 0, last_seen: null };
     return { topic: t, ...tp };
   });
 
-  const continueTopic = unitTopicData.find((t) => t.mastery > 0 && t.mastery < 0.7)
-    || unitTopicData.find((t) => t.mastery === 0)
-    || unitTopicData[0]
-    || topicData[0];
+  // Find the picked topic in the local unitTopicData so downstream UI
+  // (mastery pill, dot grid) gets the same { topic, mastery, attempts,
+  // last_seen } shape it had before this refactor.
+  const continueTopic =
+    unitTopicData.find((t) => t.topic.id === activeTarget.topicId) ??
+    unitTopicData[0] ??
+    topicData[0];
 
   // Unit-scoped Learning Memory signals
   const hasStarted = unitTopicData.some((t) => t.mastery > 0);

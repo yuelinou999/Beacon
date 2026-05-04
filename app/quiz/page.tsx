@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { getAllTopics } from "@/lib/curriculum";
+import { loadProfile } from "@/lib/progress";
+import { resolveActiveStudyTarget } from "@/lib/active-target";
 import type { QuizAttempt } from "@/lib/types";
 import { useAIContext } from "@/components/ai-context";
 import StartPhaseView from "./_components/start-phase";
@@ -24,7 +26,17 @@ export default function QuizPage() {
 function QuizContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const topicId = searchParams.get("topic") ?? "";
+  // Honor an explicit ?topic= when present; otherwise fall back to the
+  // student's active study target (same source of truth as Learn /
+  // Practice / Home Continue). The "Pick a topic" fallback card below
+  // is now reserved for the genuine "no active target" case (curriculum
+  // has no topics at all — won't happen in practice).
+  const requestedTopicId = searchParams.get("topic") ?? "";
+  const topicId =
+    requestedTopicId ||
+    (typeof window !== "undefined"
+      ? resolveActiveStudyTarget(loadProfile()).topicId
+      : "");
   const { setContext, setQuizActive } = useAIContext();
 
   const topic = getAllTopics().find((t) => t.id === topicId);

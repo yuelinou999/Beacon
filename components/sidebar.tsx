@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import type { StudentProfile } from "@/lib/types";
 import subjects from "@/data/subjects";
+import { loadProfile } from "@/lib/progress";
+import { resolveActiveStudyTarget, FALLBACK_UNIT } from "@/lib/active-target";
+import { getTopicsForUnit } from "@/lib/curriculum";
 
 type ModuleId = "home" | "learn" | "practice" | "quiz" | "review" | "dashboard";
 type ModuleStatus = "ready" | "preview" | "soon";
@@ -16,14 +19,28 @@ interface NavItem {
   status: ModuleStatus;
 }
 
-const navItems: NavItem[] = [
-  { id: "home", href: "/", label: "Home", status: "ready" },
-  { id: "learn", href: "/learn-v2/solving_one_step", label: "Learn", status: "ready" },
-  { id: "practice", href: "/practice", label: "Practice", status: "ready" },
-  { id: "quiz", href: "/quiz?topic=solving_one_step", label: "Quiz", status: "ready" },
-  { id: "review", href: "/review", label: "Review", status: "ready" },
-  { id: "dashboard", href: "/dashboard", label: "Dashboard", status: "ready" },
-];
+// Static fallback nav — used during SSR + first paint before profile
+// hydrates from localStorage. resolveActiveStudyTarget(null) lands on
+// FALLBACK_UNIT's first topic, so the fallback hrefs match what a fresh
+// profile would resolve to. After mount the build below re-runs with
+// the real profile and any href differences swap in (acceptable per
+// codex round-1 — small flicker, no skeleton chrome needed).
+function buildNavItems(target: { topicId: string }): NavItem[] {
+  return [
+    { id: "home", href: "/", label: "Home", status: "ready" },
+    { id: "learn", href: `/learn-v2/${target.topicId}`, label: "Learn", status: "ready" },
+    { id: "practice", href: `/practice?topic=${target.topicId}`, label: "Practice", status: "ready" },
+    { id: "quiz", href: `/quiz?topic=${target.topicId}`, label: "Quiz", status: "ready" },
+    { id: "review", href: "/review", label: "Review", status: "ready" },
+    { id: "dashboard", href: "/dashboard", label: "Dashboard", status: "ready" },
+  ];
+}
+
+// SSR-safe initial target: derived from the FALLBACK_UNIT without
+// touching localStorage. resolveActiveStudyTarget(null) would do the
+// same thing but adds a getTopicProgress lookup we don't need pre-mount.
+const INITIAL_TOPIC_ID =
+  getTopicsForUnit(FALLBACK_UNIT)[0]?.id ?? "solving_one_step";
 
 const STATUS_DOT: Record<ModuleStatus, string> = {
   ready: "#059669",
@@ -122,6 +139,18 @@ function SidebarInner({
   onToggleCollapse: () => void;
 }) {
   const pathname = usePathname();
+
+  // Resolve the active study target from profile.current_unit. Re-runs on
+  // every route change so a click on "Start Unit" in the subject page
+  // (which writes current_unit and navigates) immediately refreshes the
+  // Learn / Practice / Quiz hrefs here without needing a separate event.
+  const [activeTopicId, setActiveTopicId] = useState<string>(INITIAL_TOPIC_ID);
+  useEffect(() => {
+    const target = resolveActiveStudyTarget(loadProfile());
+    setActiveTopicId(target.topicId);
+  }, [pathname]);
+
+  const navItems = buildNavItems({ topicId: activeTopicId });
 
   const isNavActive = (href: string) => {
     if (href === "/") return pathname === "/";

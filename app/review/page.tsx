@@ -19,6 +19,7 @@ import {
 } from "@/lib/review";
 import { getAllTopics } from "@/lib/curriculum";
 import { resolveBankQuestion } from "@/lib/wrong-answer-key";
+import { resolveActiveStudyTarget } from "@/lib/active-target";
 import type { StudentProfile, WrongAnswer, ExplainRequest, ExplainResponse } from "@/lib/types";
 
 // Per-mistake retry state machine. Only one mistake is in retry mode at a
@@ -130,6 +131,11 @@ export default function ReviewPage() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [retryState]);
+
+  // "Go to Practice" CTAs route through the active study target so /review's
+  // empty state and "all caught up" state hand the user back to the same
+  // topic Sidebar / Home / Subject all agree on.
+  const activePracticeHref = `/practice?topic=${resolveActiveStudyTarget(profile).topicId}`;
 
   const wrongAnswers: WrongAnswer[] = profile?.wrong_answers ?? [];
   const dueItems = wrongAnswers.filter((wa) => isMistakeDue(wa));
@@ -399,7 +405,7 @@ export default function ReviewPage() {
               Mistakes you miss in Practice will appear here for review.
             </p>
             <Link
-              href="/practice?topic=solving_one_step"
+              href={activePracticeHref}
               className="inline-block px-8 py-3 rounded-lg transition-colors"
               style={{ backgroundColor: "#0F2A4A", color: "#FFFFFF", fontSize: "15px" }}
             >
@@ -514,7 +520,7 @@ export default function ReviewPage() {
                 No reviews due today. Come back tomorrow, or keep practicing to build your memory.
               </p>
               <Link
-                href="/practice?topic=solving_one_step"
+                href={activePracticeHref}
                 className="inline-block px-6 py-3 rounded-lg transition-colors"
                 style={{ backgroundColor: "#0F2A4A", color: "#FFFFFF", fontSize: "14px" }}
               >
