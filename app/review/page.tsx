@@ -187,16 +187,31 @@ export default function ReviewPage() {
     setAltError("");
   }
 
-  // Local judging — trimmed case-insensitive string equality. No LLM round
-  // trip per spec (H3): review goal is recalling the correct answer, not
-  // re-grading nuance.
+  // Local judging — no LLM round trip per spec (H3): review goal is
+  // recalling the correct answer, not re-grading nuance.
   //
-  // Known v1 limitation: rejects format-equivalent answers like "07" vs "7"
-  // or "1.0" vs "1". A numeric-aware comparison would help but pulls in its
-  // own false-positive risk (e.g. expression equivalence "0.1+0.2" === 0.3).
-  // Worth a polish pass once we see real user data showing this matters.
+  // Two-tier match:
+  //   1. If BOTH sides parse as a strict decimal number, compare numerically.
+  //      Handles "07" vs "7", "1.0" vs "1", "+7" vs "7" cleanly.
+  //   2. Otherwise fall back to trimmed case-insensitive string equality
+  //      (covers algebraic expressions, word answers, etc.).
+  //
+  // "Strict" parse intentionally rejects expressions like "1+2" — a student
+  // typing "0.1+0.2" should NOT be quietly normalized to 0.3; that's a
+  // grading semantics call we're not making here.
+  function parseStrictNumber(s: string): number | null {
+    if (!/^[-+]?\d+(\.\d+)?$/.test(s)) return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+
   function isAnswerCorrect(student: string, correct: string): boolean {
-    return student.trim().toLowerCase() === correct.trim().toLowerCase();
+    const s = student.trim();
+    const c = correct.trim();
+    const sn = parseStrictNumber(s);
+    const cn = parseStrictNumber(c);
+    if (sn !== null && cn !== null) return sn === cn;
+    return s.toLowerCase() === c.toLowerCase();
   }
 
   function submitRetry() {
