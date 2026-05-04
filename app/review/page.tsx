@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Clock, Check, X, ChevronDown, ChevronRight, BookOpen, Sparkles } from "lucide-react";
 import MathRenderer from "@/components/math-renderer";
 import { useAIContext } from "@/components/ai-context";
-import { loadProfile, recordReviewAttempt } from "@/lib/progress";
+import { loadProfile, recordReviewAttempt, startSession, endSession } from "@/lib/progress";
 import { onSettingsChanged } from "@/lib/settings-events";
 import {
   isMistakeDue,
@@ -47,9 +47,32 @@ export default function ReviewPage() {
   // when a retry starts on the same item to avoid double UI.
   const [expandedMistakeId, setExpandedMistakeId] = useState<string | null>(null);
 
+  // ── Session tracking (one session per visit) ──
+  // Mount opens a "review" session; unmount closes it with whatever stats
+  // accumulated. Stats live in a ref so the unmount cleanup can read latest
+  // values without re-firing on every state change. Topic is "" — review is
+  // cross-topic by nature.
+  const sessionIdRef = useRef<string | null>(null);
+  const sessionStatsRef = useRef({ attempted: 0, correct: 0 });
+
   useEffect(() => {
     setContext({ page: "general" });
   }, [setContext]);
+
+  useEffect(() => {
+    sessionIdRef.current = startSession("review", "");
+    return () => {
+      if (sessionIdRef.current) {
+        endSession(sessionIdRef.current, {
+          questions_attempted: sessionStatsRef.current.attempted,
+          questions_correct: sessionStatsRef.current.correct,
+          hints_used: 0,
+          explain_differently_used: 0,
+        });
+        sessionIdRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const refresh = () => setProfile(loadProfile());
@@ -130,8 +153,14 @@ export default function ReviewPage() {
     const wa = profile.wrong_answers.find((w) => w.id === retryingId);
     if (!wa) return;
 
+    // Every submit counts as one session attempt — including the "wrong"
+    // submit that lands on wrong-again. The terminal SR write happens
+    // separately (success path here, skip path in skipFromWrongAgain).
+    sessionStatsRef.current.attempted += 1;
+
     if (isAnswerCorrect(retryAnswer, wa.correct_answer)) {
       // Success path — write SR immediately, show "correct" card briefly.
+      sessionStatsRef.current.correct += 1;
       const updated = recordReviewAttempt(profile, retryingId, true);
       setProfile(updated);
       setRetryState("correct");
@@ -246,16 +275,16 @@ export default function ReviewPage() {
               <strong style={{ color: "#1F2937" }}>{dueItems.length}</strong> due today
             </span>
           </div>
-          <span>·</span>
+          <span aria-hidden="true">·</span>
           <span>
             <strong style={{ color: "#1F2937" }}>{totalMistakes}</strong> total mistake
             {totalMistakes !== 1 ? "s" : ""}
           </span>
-          <span>·</span>
+          <span aria-hidden="true">·</span>
           <span>
             <strong style={{ color: "#059669" }}>{reviewedCount}</strong> reviewed
           </span>
-          <span>·</span>
+          <span aria-hidden="true">·</span>
           <span>
             <strong style={{ color: "#1F2937" }}>{remainingCount}</strong> remaining
           </span>
@@ -635,10 +664,11 @@ function DueRetryingCard({
       )}
 
       {retryState === "correct" && (
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3" role="status" aria-live="polite">
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: "#059669" }}
+            aria-hidden="true"
           >
             <Check size={18} style={{ color: "#FFFFFF" }} />
           </div>
@@ -679,6 +709,8 @@ function DueRetryingCard({
           <div
             className="rounded-lg p-5 mb-6"
             style={{ backgroundColor: "#FFFBEB" }}
+            role="status"
+            aria-live="polite"
           >
             <p
               style={{
@@ -783,6 +815,7 @@ function ArchiveRow({
           <div
             className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: statusBg }}
+            aria-hidden="true"
           >
             {statusIcon}
           </div>
