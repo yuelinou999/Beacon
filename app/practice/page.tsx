@@ -287,6 +287,22 @@ function PracticeContent() {
     }
   };
 
+  // "Practice more" — reset batch-local state and start a fresh batch on the
+  // same topic. Preserves profile / settings / page-level subscriptions; only
+  // batch state and the session counter restart.
+  const restartBatch = () => {
+    if (!profile) return;
+    setCurrentIdx(0);
+    setResults([]);
+    setStreak(0);
+    setQuiz(null);
+    setGrade(null);
+    setAnswer("");
+    setMasteryAtStart(getTopicProgress(profile, topicId).mastery);
+    sessionIdRef.current = startSession("practice", topicId);
+    generateQuiz();
+  };
+
   if (!topic) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -437,29 +453,17 @@ function PracticeContent() {
             </>
           )}
 
-          {/* Complete \u2014 placeholder until step 3 builds the real summary */}
+          {/* Complete \u2014 batch summary */}
           {state === "complete" && (
-            <div className="text-center py-12 space-y-4">
-              <p className="text-lg font-medium text-navy">Practice complete!</p>
-              <p className="text-sm text-muted">
-                {results.filter((r) => r.correct).length} of {BATCH_SIZE} correct
-                {masteryAtStart !== null && (
-                  <>
-                    {" \u00b7 mastery "}
-                    {Math.round(masteryAtStart * 100)}% \u2192 {Math.round(progress.mastery * 100)}%
-                  </>
-                )}
-              </p>
-              <p className="text-xs text-muted">
-                (Real completion summary lands in step 3)
-              </p>
-              <Link
-                href="/subject/math"
-                className="inline-block px-5 py-2.5 rounded-lg bg-navy text-white text-sm font-medium hover:bg-navy-light transition"
-              >
-                Back to course
-              </Link>
-            </div>
+            <CompletionSummary
+              results={results}
+              batchSize={BATCH_SIZE}
+              masteryBefore={masteryAtStart ?? 0}
+              masteryAfter={progress.mastery}
+              topicId={topicId}
+              hasQuiz={topic.quiz !== undefined}
+              onPracticeMore={restartBatch}
+            />
           )}
 
           {/* Error */}
@@ -474,6 +478,161 @@ function PracticeContent() {
               </button>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Completion summary ──────────────────────────────
+// Step 3 builds the structure (heading, score line, mastery delta block, dot
+// grid, mistake link, CTA stack). Visual polish (icons, exact colors,
+// animations) lands in step 4. AI-stats insight callout lands in step 5.
+//
+// CTA priority:
+//   - mastered (mastery ≥ MASTERY_STRONG_THRESHOLD) AND topic has a quiz:
+//       primary "Go to quiz" → secondary "Practice more" → tertiary "Back"
+//   - otherwise:
+//       primary "Practice more" → secondary "Try a different topic" → "Back"
+const MASTERY_STRONG_THRESHOLD = 0.7; // mirrors lib/progress.ts:deriveTopicStatus and /subject/[id]/page.tsx
+
+function CompletionSummary({
+  results,
+  batchSize,
+  masteryBefore,
+  masteryAfter,
+  topicId,
+  hasQuiz,
+  onPracticeMore,
+}: {
+  results: QuestionResult[];
+  batchSize: number;
+  masteryBefore: number;
+  masteryAfter: number;
+  topicId: string;
+  hasQuiz: boolean;
+  onPracticeMore: () => void;
+}) {
+  const correctCount = results.filter((r) => r.correct).length;
+  const wrongCount = results.length - correctCount;
+  const isMastered = masteryAfter >= MASTERY_STRONG_THRESHOLD;
+  const masteryAfterPct = Math.round(masteryAfter * 100);
+  const masteryBeforePct = Math.round(masteryBefore * 100);
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <div className="rounded-xl bg-card border border-border/60 p-10 text-center space-y-8">
+        {/* Heading */}
+        <div>
+          <p className="text-2xl font-medium text-navy mb-2">Practice complete!</p>
+          <p className="text-lg text-body">
+            {correctCount} out of {batchSize} correct
+          </p>
+        </div>
+
+        {/* Mastery delta block */}
+        <div className="rounded-lg bg-surface px-6 py-5 space-y-3">
+          <p className="text-xs uppercase text-muted">Your mastery for this topic</p>
+          <div className="flex items-center justify-center gap-4">
+            <span className="text-2xl font-medium text-body">{masteryBeforePct}%</span>
+            <span className="text-xl text-muted">→</span>
+            <span className="text-2xl font-medium text-success">{masteryAfterPct}%</span>
+          </div>
+          <div className="h-2 rounded-full bg-border overflow-hidden">
+            <div
+              className="h-2 rounded-full bg-success transition-all"
+              style={{ width: `${masteryAfterPct}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Per-question dot grid */}
+        <div className="flex gap-3 justify-center">
+          {Array.from({ length: batchSize }).map((_, i) => {
+            const r = results[i];
+            const status = r ? (r.correct ? "correct" : "incorrect") : "pending";
+            return (
+              <div
+                key={i}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border"
+                style={{
+                  backgroundColor:
+                    status === "correct" ? "#ECFDF5" : status === "incorrect" ? "#FFFBEB" : "#F3F4F6",
+                  borderColor:
+                    status === "correct" ? "#059669" : status === "incorrect" ? "#D97706" : "#E2E5EA",
+                  color:
+                    status === "correct" ? "#059669" : status === "incorrect" ? "#D97706" : "#9CA3AF",
+                }}
+                aria-label={`Question ${i + 1}: ${status}`}
+              >
+                {status === "correct" ? "✓" : status === "incorrect" ? "✗" : i + 1}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Mistake → review link */}
+        {wrongCount > 0 && (
+          <p className="text-sm text-muted">
+            {wrongCount} mistake{wrongCount > 1 ? "s" : ""} saved to your{" "}
+            <Link href="/review" className="text-blue underline hover:opacity-80">
+              Review notebook
+            </Link>
+          </p>
+        )}
+
+        {/* Mastered callout */}
+        {isMastered && (
+          <div className="rounded-lg bg-success-bg border border-success/20 px-5 py-3">
+            <p className="text-sm text-success font-medium">
+              You&apos;ve mastered this topic. Try the quiz to lock it in.
+            </p>
+          </div>
+        )}
+
+        {/* CTA stack — hierarchy depends on mastery + has-quiz */}
+        <div className="flex gap-3 justify-center">
+          {isMastered && hasQuiz ? (
+            <>
+              <Link
+                href={`/quiz?topic=${topicId}`}
+                className="px-6 py-3 rounded-lg bg-navy text-white text-sm font-medium hover:bg-navy-light transition"
+              >
+                Go to quiz →
+              </Link>
+              <button
+                onClick={onPracticeMore}
+                className="px-6 py-3 rounded-lg border border-border text-body text-sm hover:border-navy transition"
+              >
+                Practice more
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={onPracticeMore}
+                className="px-6 py-3 rounded-lg bg-navy text-white text-sm font-medium hover:bg-navy-light transition"
+              >
+                Practice more →
+              </button>
+              <Link
+                href="/subject/math"
+                className="px-6 py-3 rounded-lg border border-border text-body text-sm hover:border-navy transition"
+              >
+                Try a different topic
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Tertiary back link */}
+        <div>
+          <Link
+            href="/"
+            className="text-sm text-muted hover:underline"
+          >
+            Back to home
+          </Link>
         </div>
       </div>
     </div>
