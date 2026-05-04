@@ -46,15 +46,26 @@ export function errorTypeColor(label: string): ErrorTypeColor {
 // figma's examples ("Equation solving") and aligns with Course Catalog.
 // Falls back to topic title.en if the topic exists but its unit can't be
 // resolved (legacy / orphan), then to "Other" if even the topic is gone.
+//
+// Memoization: curriculum.json is a static module import so topic→skill is
+// a build-time-stable map. Lazy-build on first call, then O(1) per lookup.
+// Archive views with N items × M topic.find() were O(N·M); now O(N).
+let _topicToSkillCache: Map<string, string> | null = null;
+
+function buildTopicToSkillCache(): Map<string, string> {
+  const cache = new Map<string, string>();
+  const units = getUnits();
+  const unitTitleById = new Map(units.map((u) => [u.id, u.title]));
+  for (const topic of getAllTopics()) {
+    const unitTitle = unitTitleById.get(topic.unit_id);
+    cache.set(topic.id, unitTitle ?? topic.title.en);
+  }
+  return cache;
+}
+
 export function getSkillAreaForTopic(topicId: string): string {
-  const topics = getAllTopics();
-  const topic = topics.find((t) => t.id === topicId);
-  if (!topic) return "Other";
-
-  const unit = getUnits().find((u) => u.id === topic.unit_id);
-  if (unit) return unit.title;
-
-  return topic.title.en;
+  if (!_topicToSkillCache) _topicToSkillCache = buildTopicToSkillCache();
+  return _topicToSkillCache.get(topicId) ?? "Other";
 }
 
 // ── Date helpers ───────────────────────────────────

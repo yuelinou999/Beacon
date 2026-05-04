@@ -144,6 +144,11 @@ export default function ReviewPage() {
   // Local judging — trimmed case-insensitive string equality. No LLM round
   // trip per spec (H3): review goal is recalling the correct answer, not
   // re-grading nuance.
+  //
+  // Known v1 limitation: rejects format-equivalent answers like "07" vs "7"
+  // or "1.0" vs "1". A numeric-aware comparison would help but pulls in its
+  // own false-positive risk (e.g. expression equivalence "0.1+0.2" === 0.3).
+  // Worth a polish pass once we see real user data showing this matters.
   function isAnswerCorrect(student: string, correct: string): boolean {
     return student.trim().toLowerCase() === correct.trim().toLowerCase();
   }
