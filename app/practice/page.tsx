@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { ChevronLeft, Check, X, Flame, TrendingUp, TrendingDown } from "lucide-react";
 import MathRenderer from "@/components/math-renderer";
 import { getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
@@ -15,6 +16,8 @@ import {
   startSession,
   endSession,
   updateStreak,
+  MASTERY_CORRECT_DELTA,
+  MASTERY_INCORRECT_DELTA,
 } from "@/lib/progress";
 import type { StudentProfile, CurriculumTopic, PracticeQuestion, GradeResult } from "@/lib/types";
 import curriculum from "@/data/curriculum.json";
@@ -41,6 +44,18 @@ interface QuestionResult {
   difficulty: "easy" | "medium" | "hard";
   timeSeconds: number;
 }
+
+// Difficulty pill colors — match design-reference/PracticeScreen.tsx.
+const DIFFICULTY_COLORS: Record<"easy" | "medium" | "hard", { fg: string; bg: string }> = {
+  easy: { fg: "#059669", bg: "#ECFDF5" },
+  medium: { fg: "#D97706", bg: "#FFFBEB" },
+  hard: { fg: "#EF4444", bg: "#FEF2F2" },
+};
+
+// +10% / -5% display strings, derived from the source-of-truth constants in
+// lib/progress.ts. Sign included so callers don't have to format.
+const CORRECT_DELTA_LABEL = `+${Math.round(MASTERY_CORRECT_DELTA * 100)}% mastery`;
+const INCORRECT_DELTA_LABEL = `${Math.round(MASTERY_INCORRECT_DELTA * 100)}% mastery`;
 
 export default function PracticePage() {
   return (
@@ -312,173 +327,314 @@ function PracticeContent() {
     );
   }
 
-  const difficulty = getDifficulty(progress.mastery);
+  // Card border color reflects current state \u2014 green when correct, amber
+  // when incorrect, neutral while answering/grading.
+  const cardBorderLeft =
+    state === "result" && grade
+      ? grade.correct
+        ? "3px solid #059669"
+        : "3px solid #D97706"
+      : "1px solid #E2E5EA";
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Topic header */}
-      <div className="flex items-center justify-between px-8 py-3 border-b border-border/60 bg-card shrink-0">
-        <div className="flex items-center gap-3">
-          <Link href="/subject/math" className="text-muted hover:text-navy text-sm">&larr; Back</Link>
-          <span className="text-border">|</span>
-          <span className="text-sm font-medium text-navy">{topic.title[language]}</span>
-          {bilingual && (
-            <span className="text-xs text-muted">({language === "en" ? topic.title.zh : topic.title.en})</span>
-          )}
-          <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface text-muted border border-border">
-            Practice
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-muted">
-            Slot {Math.min(currentIdx + 1, BATCH_SIZE)} of {BATCH_SIZE}
-          </span>
-          {questionsAnswered > 0 && (
-            <span className="text-xs text-muted">
-              {correctCount} correct of {questionsAnswered}
-            </span>
-          )}
-          <span className="text-xs text-muted">
-            Mastery {(progress.mastery * 100).toFixed(0)}%
-          </span>
-          <span className="text-xs px-2 py-0.5 rounded bg-surface text-muted border border-border">
-            {difficulty}
-          </span>
+  // Completion gates a different layout \u2014 render its own page-fill view.
+  if (state === "complete") {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-8 py-8">
+          <Link
+            href="/subject/math"
+            className="inline-flex items-center gap-2 mb-8 transition-colors hover:opacity-70"
+            style={{ color: "#2563EB" }}
+          >
+            <ChevronLeft size={16} />
+            <span style={{ fontSize: "14px" }}>Back to course</span>
+          </Link>
+          <CompletionSummary
+            results={results}
+            batchSize={BATCH_SIZE}
+            masteryBefore={masteryAtStart ?? 0}
+            masteryAfter={progress.mastery}
+            topicId={topicId}
+            hasQuiz={topic.quiz !== undefined}
+            onPracticeMore={restartBatch}
+          />
         </div>
       </div>
+    );
+  }
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-8 py-8">
-        <div className="max-w-[720px] space-y-6">
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-3xl mx-auto px-8 py-8">
+        {/* Top bar */}
+        <div className="flex items-center justify-between mb-8">
+          <Link
+            href="/subject/math"
+            className="inline-flex items-center gap-2 transition-colors hover:opacity-70"
+            style={{ color: "#2563EB" }}
+          >
+            <ChevronLeft size={16} />
+            <span style={{ fontSize: "14px" }}>Back to course</span>
+          </Link>
+          <div
+            className="px-4 py-2 rounded-full border"
+            style={{
+              borderColor: "#BFDBFE",
+              backgroundColor: "#EFF6FF",
+              color: "#2563EB",
+              fontSize: "13px",
+              fontWeight: 500,
+            }}
+          >
+            Practice mode
+          </div>
+        </div>
 
-          {/* Loading */}
-          {state === "loading" && (
-            <p className="text-xs text-muted flex items-center gap-1.5 py-12">
-              <span className="w-2 h-2 rounded-full bg-warning inline-block animate-pulse" />
-              Generating quiz...
-            </p>
-          )}
-
-          {/* Question card */}
-          {(state === "question" || state === "grading") && quiz && (
-            <>
-              <div className="bg-card border border-border/60 rounded-xl px-6 py-5">
-                <p className="text-label uppercase text-muted mb-3">
-                  Question {currentIdx + 1} of {BATCH_SIZE}
+        {/* Practice header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 style={{ fontSize: "20px", fontWeight: 500, color: "#0F2A4A" }}>
+                Practice: {topic.title[language]}
+              </h1>
+              {bilingual && language === "en" && (
+                <p style={{ fontSize: "13px", color: "#9CA3AF", marginTop: "2px" }}>
+                  {topic.title.zh}
                 </p>
-                <div className="text-body math-display">
-                  <MathRenderer content={quiz.question} />
-                </div>
-              </div>
-
-              {/* Answer input */}
-              <div className="bg-card border border-border/60 rounded-xl px-6 py-5 space-y-3">
-                <p className="text-label uppercase text-muted">Your answer</p>
-                <input
-                  type="text"
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
-                  placeholder="Type your answer..."
-                  disabled={state === "grading"}
-                  className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-body focus:outline-none focus:border-blue disabled:opacity-50"
-                />
-                <button
-                  onClick={submitAnswer}
-                  disabled={state === "grading" || !answer.trim()}
-                  className="w-full py-2.5 rounded-lg bg-navy text-white text-sm font-medium hover:bg-navy-light disabled:opacity-40 transition"
-                >
-                  {state === "grading" ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-warning inline-block animate-pulse" />
-                      Grading answer...
-                    </span>
-                  ) : "Submit answer"}
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* Result */}
-          {state === "result" && grade && quiz && (
-            <>
-              {/* Question (read-only) */}
-              <div className="bg-card border border-border/60 rounded-xl px-6 py-5">
-                <p className="text-label uppercase text-muted mb-3">
-                  Question {currentIdx + 1} of {BATCH_SIZE}
-                </p>
-                <div className="text-body math-display">
-                  <MathRenderer content={quiz.question} />
-                </div>
-              </div>
-
-              {/* Result card */}
-              <div className={`rounded-xl px-6 py-5 ${
-                grade.correct ? "bg-success-bg border border-success/20" : "bg-danger-bg border border-danger/20"
-              }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-lg ${grade.correct ? "text-success" : "text-danger"}`}>
-                    {grade.correct ? "\u2713" : "\u2717"}
+              )}
+            </div>
+            <div className="flex items-center gap-4">
+              <span style={{ fontSize: "14px", color: "#6B7280" }}>
+                <span style={{ fontWeight: 500, color: "#1F2937" }}>
+                  {correctCount}/{BATCH_SIZE}
+                </span>{" "}
+                correct
+              </span>
+              {streak > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Flame size={16} style={{ color: "#EF4444" }} />
+                  <span style={{ fontSize: "14px", fontWeight: 500, color: "#EF4444" }}>
+                    {streak} streak
                   </span>
-                  <p className={`text-sm font-semibold ${grade.correct ? "text-success" : "text-danger"}`}>
-                    {grade.correct ? "Correct!" : "Incorrect"}
-                  </p>
                 </div>
-                <p className="text-xs text-muted mb-2">Your answer: {answer}</p>
-                <div className="text-sm text-body math-display">
-                  <MathRenderer content={grade.explanation} />
-                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-2 rounded-full" style={{ backgroundColor: "#E2E5EA" }}>
+            <div
+              className="h-2 rounded-full transition-all"
+              style={{
+                backgroundColor: "#2563EB",
+                width: `${(Math.min(currentIdx, BATCH_SIZE - 1) + (state === "result" ? 1 : 0)) / BATCH_SIZE * 100}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Loading state \u2014 initial OR mid-batch */}
+        {state === "loading" && (
+          <div
+            className="rounded-xl p-12 text-center"
+            style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
+          >
+            <p className="inline-flex items-center gap-2" style={{ fontSize: "14px", color: "#6B7280" }}>
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#D97706" }} />
+              {results.length === 0 ? "Generating your first question..." : "Generating next question..."}
+            </p>
+          </div>
+        )}
+
+        {/* Question card \u2014 answering / grading / result share this card with
+            colored left border driven by state. */}
+        {(state === "question" || state === "grading" || state === "result") && quiz && (
+          <div
+            className="rounded-xl p-8"
+            style={{
+              backgroundColor: "#FFFFFF",
+              border: "1px solid #E2E5EA",
+              borderLeft: cardBorderLeft,
+            }}
+          >
+            {/* Card header: Question N of N + difficulty pill */}
+            <div className="flex items-center justify-between mb-6">
+              <span style={{ fontSize: "12px", color: "#6B7280" }}>
+                Question {currentIdx + 1} of {BATCH_SIZE}
+              </span>
+              <div
+                className="px-3 py-1 rounded-full"
+                style={{
+                  backgroundColor: DIFFICULTY_COLORS[quizDifficulty].bg,
+                  color: DIFFICULTY_COLORS[quizDifficulty].fg,
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  textTransform: "capitalize",
+                }}
+              >
+                {quizDifficulty}
               </div>
+            </div>
 
-              {/* Mastery change indicator */}
-              <p className="text-xs text-muted text-center">
-                Mastery updated to {(progress.mastery * 100).toFixed(0)}%
-              </p>
+            {/* Math display */}
+            <div
+              className="rounded-lg p-8 mb-8 text-center math-display"
+              style={{ backgroundColor: "#F0F3F7" }}
+            >
+              <MathRenderer content={quiz.question} />
+            </div>
 
-              {/* Actions \u2014 advance to next slot or finish batch */}
-              <div className="flex gap-3">
+            {/* Answering: input + submit */}
+            {(state === "question" || state === "grading") && (
+              <>
+                <div className="flex gap-3 mb-2">
+                  <input
+                    type="text"
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
+                    placeholder="Type your answer..."
+                    disabled={state === "grading"}
+                    className="flex-1 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 text-center disabled:opacity-50"
+                    style={{
+                      borderColor: "#E2E5EA",
+                      backgroundColor: "#FFFFFF",
+                      fontSize: "18px",
+                      padding: "16px 20px",
+                    }}
+                  />
+                  <button
+                    onClick={submitAnswer}
+                    disabled={state === "grading" || !answer.trim()}
+                    className="px-8 rounded-lg transition-colors disabled:cursor-not-allowed"
+                    style={{
+                      backgroundColor: state === "grading" || !answer.trim() ? "#E2E5EA" : "#0F2A4A",
+                      color: "#FFFFFF",
+                      fontSize: "15px",
+                    }}
+                  >
+                    Submit
+                  </button>
+                </div>
+                {state === "grading" && (
+                  <div className="flex items-center gap-2 justify-center mt-4">
+                    <div
+                      className="w-2 h-2 rounded-full animate-pulse"
+                      style={{ backgroundColor: "#D97706" }}
+                    />
+                    <span style={{ fontSize: "13px", color: "#D97706" }}>Grading answer...</span>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Result: correct or incorrect inline feedback */}
+            {state === "result" && grade && (
+              <div className="space-y-4">
+                {grade.correct ? (
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: "#059669" }}
+                    >
+                      <Check size={18} style={{ color: "#FFFFFF" }} />
+                    </div>
+                    <div className="flex-1">
+                      <p style={{ fontSize: "15px", fontWeight: 500, color: "#059669", marginBottom: "8px" }}>
+                        Correct!
+                      </p>
+                      <div className="text-sm text-body math-display mb-3">
+                        <MathRenderer content={grade.explanation} />
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <TrendingUp size={14} style={{ color: "#059669" }} />
+                          <span style={{ fontSize: "13px", color: "#059669" }}>{CORRECT_DELTA_LABEL}</span>
+                        </div>
+                        {streak > 1 && (
+                          <div className="flex items-center gap-1.5">
+                            <Flame size={14} style={{ color: "#EF4444" }} />
+                            <span style={{ fontSize: "13px", color: "#EF4444", fontWeight: 500 }}>
+                              {streak} streak!
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: "#D97706" }}
+                    >
+                      <X size={18} style={{ color: "#FFFFFF" }} />
+                    </div>
+                    <div className="flex-1">
+                      <p style={{ fontSize: "14px", color: "#1F2937", marginBottom: "8px" }}>
+                        <span style={{ textDecoration: "line-through", color: "#9CA3AF" }}>
+                          Your answer: {answer}
+                        </span>
+                      </p>
+                      <div className="text-sm text-body math-display mb-3">
+                        <MathRenderer content={grade.explanation} />
+                      </div>
+                      <div
+                        className="inline-block rounded-lg mb-3"
+                        style={{
+                          backgroundColor: "#ECFDF5",
+                          border: "1px solid #059669",
+                          padding: "8px 12px",
+                        }}
+                      >
+                        <span style={{ fontSize: "14px", color: "#059669", fontWeight: 500 }}>
+                          Correct: {grade.correct_answer}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <TrendingDown size={14} style={{ color: "#D97706" }} />
+                        <span style={{ fontSize: "13px", color: "#D97706" }}>
+                          {INCORRECT_DELTA_LABEL}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Next button */}
                 <button
                   onClick={advanceSlot}
-                  className="flex-1 py-2.5 rounded-lg bg-navy text-white text-sm font-medium hover:bg-navy-light transition"
+                  className="w-full rounded-lg transition-colors"
+                  style={{
+                    backgroundColor: "#0F2A4A",
+                    color: "#FFFFFF",
+                    fontSize: "15px",
+                    padding: "16px 24px",
+                  }}
                 >
-                  {currentIdx + 1 >= BATCH_SIZE ? "Finish batch" : "Next question"}
+                  {currentIdx + 1 >= BATCH_SIZE ? "Finish batch \u2192" : "Next question \u2192"}
                 </button>
-                <Link
-                  href="/subject/math"
-                  className="px-5 py-2.5 rounded-lg border border-border text-muted text-sm hover:text-navy hover:border-navy transition text-center"
-                >
-                  Exit
-                </Link>
               </div>
-            </>
-          )}
+            )}
+          </div>
+        )}
 
-          {/* Complete \u2014 batch summary */}
-          {state === "complete" && (
-            <CompletionSummary
-              results={results}
-              batchSize={BATCH_SIZE}
-              masteryBefore={masteryAtStart ?? 0}
-              masteryAfter={progress.mastery}
-              topicId={topicId}
-              hasQuiz={topic.quiz !== undefined}
-              onPracticeMore={restartBatch}
-            />
-          )}
-
-          {/* Error */}
-          {state === "error" && (
-            <div className="text-center py-12 space-y-3">
-              <p className="text-sm text-danger">{error}</p>
-              <button
-                onClick={generateQuiz}
-                className="text-sm px-4 py-2 rounded-lg border border-border text-muted hover:text-navy transition"
-              >
-                Try again
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Error */}
+        {state === "error" && (
+          <div
+            className="rounded-xl p-8 text-center space-y-3"
+            style={{ backgroundColor: "#FFFFFF", border: "1px solid #FCA5A5" }}
+          >
+            <p style={{ fontSize: "14px", color: "#991B1B" }}>{error}</p>
+            <button
+              onClick={generateQuiz}
+              className="px-4 py-2 rounded-lg border transition-colors"
+              style={{ borderColor: "#E2E5EA", color: "#6B7280", fontSize: "13px" }}
+            >
+              Try again
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -518,122 +674,180 @@ function CompletionSummary({
   const isMastered = masteryAfter >= MASTERY_STRONG_THRESHOLD;
   const masteryAfterPct = Math.round(masteryAfter * 100);
   const masteryBeforePct = Math.round(masteryBefore * 100);
+  const passRate = batchSize > 0 ? correctCount / batchSize : 0;
+  const isPassing = passRate >= 0.6;
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="rounded-xl bg-card border border-border/60 p-10 text-center space-y-8">
-        {/* Heading */}
-        <div>
-          <p className="text-2xl font-medium text-navy mb-2">Practice complete!</p>
-          <p className="text-lg text-body">
-            {correctCount} out of {batchSize} correct
-          </p>
-        </div>
+    <div
+      className="rounded-xl p-10 text-center"
+      style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
+    >
+      {/* Big top icon */}
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+        style={{ backgroundColor: isPassing ? "#ECFDF5" : "#FFFBEB" }}
+      >
+        {isPassing ? (
+          <Check size={40} style={{ color: "#059669" }} />
+        ) : (
+          <TrendingUp size={40} style={{ color: "#D97706" }} />
+        )}
+      </div>
 
-        {/* Mastery delta block */}
-        <div className="rounded-lg bg-surface px-6 py-5 space-y-3">
-          <p className="text-xs uppercase text-muted">Your mastery for this topic</p>
-          <div className="flex items-center justify-center gap-4">
-            <span className="text-2xl font-medium text-body">{masteryBeforePct}%</span>
-            <span className="text-xl text-muted">→</span>
-            <span className="text-2xl font-medium text-success">{masteryAfterPct}%</span>
-          </div>
-          <div className="h-2 rounded-full bg-border overflow-hidden">
+      {/* Heading */}
+      <h2
+        style={{
+          fontSize: "24px",
+          fontWeight: 500,
+          color: "#0F2A4A",
+          marginBottom: "12px",
+        }}
+      >
+        Practice complete!
+      </h2>
+      <p style={{ fontSize: "18px", color: "#1F2937", marginBottom: "32px" }}>
+        {correctCount} out of {batchSize} correct
+      </p>
+
+      {/* Mastery delta block */}
+      <div
+        className="rounded-lg p-6 mb-8"
+        style={{ backgroundColor: "#F0F3F7" }}
+      >
+        <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "12px" }}>
+          Your mastery for this topic
+        </p>
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <span style={{ fontSize: "24px", fontWeight: 500, color: "#1F2937" }}>{masteryBeforePct}%</span>
+          <span style={{ fontSize: "20px", color: "#9CA3AF" }}>→</span>
+          <span
+            style={{
+              fontSize: "24px",
+              fontWeight: 500,
+              color: masteryAfterPct >= masteryBeforePct ? "#059669" : "#D97706",
+            }}
+          >
+            {masteryAfterPct}%
+          </span>
+        </div>
+        <div className="h-2 rounded-full" style={{ backgroundColor: "#E2E5EA" }}>
+          <div
+            className="h-2 rounded-full transition-all duration-1000"
+            style={{
+              backgroundColor: masteryAfterPct >= masteryBeforePct ? "#059669" : "#D97706",
+              width: `${masteryAfterPct}%`,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Per-question dot grid */}
+      <div className="flex gap-3 justify-center mb-8">
+        {Array.from({ length: batchSize }).map((_, i) => {
+          const r = results[i];
+          const status = r ? (r.correct ? "correct" : "incorrect") : "pending";
+          return (
             <div
-              className="h-2 rounded-full bg-success transition-all"
-              style={{ width: `${masteryAfterPct}%` }}
-            />
-          </div>
-        </div>
+              key={i}
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{
+                backgroundColor:
+                  status === "correct" ? "#ECFDF5" : status === "incorrect" ? "#FFFBEB" : "#F3F4F6",
+                border: `2px solid ${
+                  status === "correct" ? "#059669" : status === "incorrect" ? "#D97706" : "#E2E5EA"
+                }`,
+              }}
+              aria-label={`Question ${i + 1}: ${status}`}
+            >
+              {status === "correct" ? (
+                <Check size={18} style={{ color: "#059669" }} />
+              ) : status === "incorrect" ? (
+                <X size={18} style={{ color: "#D97706" }} />
+              ) : (
+                <span style={{ fontSize: "13px", color: "#9CA3AF" }}>{i + 1}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
-        {/* Per-question dot grid */}
-        <div className="flex gap-3 justify-center">
-          {Array.from({ length: batchSize }).map((_, i) => {
-            const r = results[i];
-            const status = r ? (r.correct ? "correct" : "incorrect") : "pending";
-            return (
-              <div
-                key={i}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border"
-                style={{
-                  backgroundColor:
-                    status === "correct" ? "#ECFDF5" : status === "incorrect" ? "#FFFBEB" : "#F3F4F6",
-                  borderColor:
-                    status === "correct" ? "#059669" : status === "incorrect" ? "#D97706" : "#E2E5EA",
-                  color:
-                    status === "correct" ? "#059669" : status === "incorrect" ? "#D97706" : "#9CA3AF",
-                }}
-                aria-label={`Question ${i + 1}: ${status}`}
-              >
-                {status === "correct" ? "✓" : status === "incorrect" ? "✗" : i + 1}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Mistake → review link */}
-        {wrongCount > 0 && (
-          <p className="text-sm text-muted">
+      {/* Mistake → review link */}
+      {wrongCount > 0 && (
+        <div className="mb-8">
+          <p style={{ fontSize: "14px", color: "#6B7280" }}>
             {wrongCount} mistake{wrongCount > 1 ? "s" : ""} saved to your{" "}
-            <Link href="/review" className="text-blue underline hover:opacity-80">
+            <Link
+              href="/review"
+              className="underline hover:opacity-80"
+              style={{ color: "#2563EB" }}
+            >
               Review notebook
             </Link>
           </p>
-        )}
-
-        {/* Mastered callout */}
-        {isMastered && (
-          <div className="rounded-lg bg-success-bg border border-success/20 px-5 py-3">
-            <p className="text-sm text-success font-medium">
-              You&apos;ve mastered this topic. Try the quiz to lock it in.
-            </p>
-          </div>
-        )}
-
-        {/* CTA stack — hierarchy depends on mastery + has-quiz */}
-        <div className="flex gap-3 justify-center">
-          {isMastered && hasQuiz ? (
-            <>
-              <Link
-                href={`/quiz?topic=${topicId}`}
-                className="px-6 py-3 rounded-lg bg-navy text-white text-sm font-medium hover:bg-navy-light transition"
-              >
-                Go to quiz →
-              </Link>
-              <button
-                onClick={onPracticeMore}
-                className="px-6 py-3 rounded-lg border border-border text-body text-sm hover:border-navy transition"
-              >
-                Practice more
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={onPracticeMore}
-                className="px-6 py-3 rounded-lg bg-navy text-white text-sm font-medium hover:bg-navy-light transition"
-              >
-                Practice more →
-              </button>
-              <Link
-                href="/subject/math"
-                className="px-6 py-3 rounded-lg border border-border text-body text-sm hover:border-navy transition"
-              >
-                Try a different topic
-              </Link>
-            </>
-          )}
         </div>
+      )}
 
-        {/* Tertiary back link */}
-        <div>
-          <Link
-            href="/"
-            className="text-sm text-muted hover:underline"
-          >
-            Back to home
-          </Link>
+      {/* Mastered callout */}
+      {isMastered && (
+        <div
+          className="rounded-lg p-4 mb-8"
+          style={{ backgroundColor: "#ECFDF5", border: "1px solid #059669", textAlign: "left" }}
+        >
+          <p style={{ fontSize: "14px", color: "#065F46", lineHeight: 1.6 }}>
+            <strong>You&apos;ve mastered this topic.</strong>{" "}
+            {hasQuiz ? "Try the quiz to lock it in." : "Move on to a new topic."}
+          </p>
         </div>
+      )}
+
+      {/* CTA stack — hierarchy depends on mastery + has-quiz */}
+      <div className="flex gap-4 justify-center">
+        {isMastered && hasQuiz ? (
+          <>
+            <Link
+              href={`/quiz?topic=${topicId}`}
+              className="px-8 py-3 rounded-lg transition-colors"
+              style={{ backgroundColor: "#0F2A4A", color: "#FFFFFF", fontSize: "15px" }}
+            >
+              Go to quiz →
+            </Link>
+            <button
+              onClick={onPracticeMore}
+              className="px-8 py-3 rounded-lg border transition-colors hover:border-blue-500"
+              style={{ borderColor: "#E2E5EA", color: "#1F2937", fontSize: "15px" }}
+            >
+              Practice more
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={onPracticeMore}
+              className="px-8 py-3 rounded-lg transition-colors"
+              style={{ backgroundColor: "#0F2A4A", color: "#FFFFFF", fontSize: "15px" }}
+            >
+              Practice more →
+            </button>
+            <Link
+              href="/subject/math"
+              className="px-8 py-3 rounded-lg border transition-colors hover:border-blue-500"
+              style={{ borderColor: "#E2E5EA", color: "#1F2937", fontSize: "15px" }}
+            >
+              Try a different topic
+            </Link>
+          </>
+        )}
+      </div>
+
+      {/* Tertiary back link */}
+      <div className="mt-4">
+        <Link
+          href="/"
+          className="hover:underline transition-colors"
+          style={{ fontSize: "14px", color: "#6B7280" }}
+        >
+          Back to home
+        </Link>
       </div>
     </div>
   );
