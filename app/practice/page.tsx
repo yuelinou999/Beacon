@@ -65,9 +65,24 @@ export default function PracticePage() {
   );
 }
 
+// Fallback topic used when /practice is loaded without a ?topic= query.
+// The previous fallback (curriculum.topics[0].id = "what_is_scale") landed
+// on a stub topic with no phase content, which made /api/practice generate
+// noise from a sparse prompt and stranded the user on the loading screen.
+// We pick the first topic with full phases instead — robust to curriculum
+// reordering — and fall through to solving_one_step (known-good demo) if
+// somehow no non-stub topic exists.
+const KNOWN_GOOD_DEMO_TOPIC = "solving_one_step";
+
+function defaultTopicId(): string {
+  const topics = curriculum.topics as Array<{ id: string; phases?: { stub?: boolean } }>;
+  const firstReal = topics.find((t) => !t.phases?.stub);
+  return firstReal?.id ?? KNOWN_GOOD_DEMO_TOPIC;
+}
+
 function PracticeContent() {
   const searchParams = useSearchParams();
-  const topicId = searchParams.get("topic") || curriculum.topics[0].id;
+  const topicId = searchParams.get("topic") || defaultTopicId();
   const { setContext } = useAIContext();
 
   const topic = (curriculum.topics as CurriculumTopic[]).find((t) => t.id === topicId);
