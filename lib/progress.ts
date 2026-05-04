@@ -448,6 +448,24 @@ export function recordQuizAttempt(
   return newProfile;
 }
 
+// The blessed write path for profile.current_unit. Subject "Start Unit" /
+// "Continue" CTAs go through this so the active target stays in sync
+// with what the student just chose. Don't write profile.current_unit
+// directly from page components — funneling through this helper keeps
+// the persistence side-effect in one place and lets future audit logging
+// hook in cleanly.
+export function setCurrentUnit(
+  profile: StudentProfile,
+  unitId: string,
+): StudentProfile {
+  // No-op when the unit hasn't actually changed — avoids a useless save +
+  // write event for callers that fire onClick without dedup'ing themselves.
+  if (profile.current_unit === unitId) return profile;
+  const newProfile: StudentProfile = { ...profile, current_unit: unitId };
+  saveProfile(newProfile);
+  return newProfile;
+}
+
 export function markLessonComplete(
   profile: StudentProfile,
   topicId: string
