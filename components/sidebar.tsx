@@ -21,7 +21,7 @@ const navItems: NavItem[] = [
   { id: "learn", href: "/learn-v2/solving_one_step", label: "Learn", status: "ready" },
   { id: "practice", href: "/practice", label: "Practice", status: "ready" },
   { id: "quiz", href: "/quiz?topic=solving_one_step", label: "Quiz", status: "ready" },
-  { id: "review", href: "/review", label: "Review", status: "soon" },
+  { id: "review", href: "/review", label: "Review", status: "ready" },
   { id: "dashboard", href: "/dashboard", label: "Dashboard", status: "ready" },
 ];
 
