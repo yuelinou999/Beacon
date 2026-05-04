@@ -26,6 +26,7 @@ import type {
   GradeResult,
   ErrorType,
 } from "@/lib/types";
+import { getDisplayQuestion } from "@/lib/wrong-answer-key";
 import curriculum from "@/data/curriculum.json";
 
 // Practice runs in fixed-size batches. 6 = 12 ÷ 2, so each topic's bank
@@ -282,9 +283,9 @@ function PracticeContent() {
     // Question text saved to history combines `question` + `equation` when
     // both exist, so the wrong-answer card in /review shows the full prompt
     // the student actually saw — not just "Solve for x." with no equation.
-    const displayQuestion = quiz.equation
-      ? `${quiz.question} ${quiz.equation}`
-      : quiz.question;
+    // Sourced from lib/wrong-answer-key so /review's string-fallback resolver
+    // reconstructs the same string from the bank without drift.
+    const displayQuestion = getDisplayQuestion(quiz.question, quiz.equation);
 
     const isRetrySubmit = retriedSlots.has(currentIdx);
 
@@ -322,6 +323,8 @@ function PracticeContent() {
       data.error_type,
       data.explanation,
       timeSeconds,
+      quiz.id,         // bank_question_id — stamped only on incorrect writes
+      "practice",      // source — practice/page.tsx is the only practice writer
     );
     setProfile(updated);
   };

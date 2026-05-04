@@ -323,7 +323,13 @@ export function updateMasteryAfterPractice(
   correctAnswer?: string,
   errorType?: ErrorType,
   explanation?: string,
-  timeSeconds?: number
+  timeSeconds?: number,
+  // Bank-backed lookup fields. Optional so legacy callers (and future
+  // non-bank callers, if any) keep working unchanged. When provided, both
+  // are stamped onto the WrongAnswer so /review's resolveBankQuestion can
+  // find the originating bank entry by id rather than by string match.
+  bankQuestionId?: string,
+  source?: "practice" | "quiz",
 ): StudentProfile {
   const tp = { ...getTopicProgress(profile, topicId) };
   const now = new Date().toISOString();
@@ -373,6 +379,8 @@ export function updateMasteryAfterPractice(
       next_review_date: tomorrowStr(),
       last_review_correct: null,
     };
+    if (bankQuestionId) entry.bank_question_id = bankQuestionId;
+    if (source) entry.source = source;
     newProfile.wrong_answers = [...profile.wrong_answers, entry];
   }
 
