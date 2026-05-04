@@ -17,7 +17,7 @@ import {
   computeMistakePatterns,
   type MistakeReviewState,
 } from "@/lib/review";
-import type { StudentProfile, WrongAnswer } from "@/lib/types";
+import type { StudentProfile, WrongAnswer, ExplainRequest, ExplainResponse } from "@/lib/types";
 
 // Per-mistake retry state machine. Only one mistake is in retry mode at a
 // time (driven by retryingId). States:
@@ -46,6 +46,16 @@ export default function ReviewPage() {
   // Archive expanded-row state — only one row expanded at a time. Auto-collapses
   // when a retry starts on the same item to avoid double UI.
   const [expandedMistakeId, setExpandedMistakeId] = useState<string | null>(null);
+
+  // ── Alternative explanation state (per current retrying slot) ──
+  // altText is the LLM-generated different teaching angle from /api/explain.
+  // Lives only for the duration of the current retry (resets on closeRetry
+  // and startRetry); persists across try-once-more loops on the SAME slot
+  // so the user doesn't re-fetch each time they bounce back to wrong-again.
+  // Per spec: button-on-demand (no auto-fetch on entering wrong-again).
+  const [altText, setAltText] = useState<string | null>(null);
+  const [altState, setAltState] = useState<"idle" | "loading" | "error">("idle");
+  const [altError, setAltError] = useState<string>("");
 
   // ── Session tracking (one session per visit) ──
   // Mount opens a "review" session; unmount closes it with whatever stats
@@ -129,6 +139,10 @@ export default function ReviewPage() {
     setRetryingId(id);
     setRetryState("retrying");
     setRetryAnswer("");
+    // Fresh slot — drop any alt explanation from a prior retry session.
+    setAltText(null);
+    setAltState("idle");
+    setAltError("");
     // If the user clicked Try-again from inside the archive expanded view,
     // collapse it — the row swaps to a retry card and the expanded chrome
     // would otherwise sit on top of it.
@@ -139,6 +153,9 @@ export default function ReviewPage() {
     setRetryingId(null);
     setRetryState("idle");
     setRetryAnswer("");
+    setAltText(null);
+    setAltState("idle");
+    setAltError("");
   }
 
   // Local judging — trimmed case-insensitive string equality. No LLM round
@@ -186,6 +203,44 @@ export default function ReviewPage() {
     const updated = recordReviewAttempt(profile, retryingId, false);
     setProfile(updated);
     closeRetry();
+  }
+
+  // Fetch an alternative explanation from /api/explain. User-triggered (no
+  // auto-fetch on entering wrong-again); short-circuits if we already have
+  // alt text for this slot.
+  async function fetchAltExplanation() {
+    if (!profile || !retryingId) return;
+    if (altText) return; // already loaded for this slot
+    const wa = profile.wrong_answers.find((w) => w.id === retryingId);
+    if (!wa) return;
+
+    setAltState("loading");
+    setAltError("");
+    try {
+      const body: ExplainRequest = {
+        question: wa.question,
+        originalExplanation: wa.explanation,
+        correctAnswer: wa.correct_answer,
+        language: profile.language === "zh" ? "zh" : "en",
+      };
+      const res = await fetch("/api/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status}: ${text.slice(0, 160)}`);
+      }
+      const data = (await res.json()) as ExplainResponse;
+      const trimmed = (data.altExplanation ?? "").trim();
+      if (!trimmed) throw new Error("Empty alternative explanation returned.");
+      setAltText(trimmed);
+      setAltState("idle");
+    } catch (err) {
+      setAltState("error");
+      setAltError(err instanceof Error ? err.message : "Failed to fetch alt explanation.");
+    }
   }
 
   // Total-empty state — no mistakes ever recorded. Step 4 may polish this
@@ -372,6 +427,10 @@ export default function ReviewPage() {
                       onTryOnceMore={tryOnceMore}
                       onSkip={skipFromWrongAgain}
                       onClose={closeRetry}
+                      altText={altText}
+                      altState={altState}
+                      altError={altError}
+                      onFetchAlt={fetchAltExplanation}
                     />
                   );
                 }
@@ -447,6 +506,10 @@ export default function ReviewPage() {
                               onTryOnceMore={tryOnceMore}
                               onSkip={skipFromWrongAgain}
                               onClose={closeRetry}
+                              altText={altText}
+                              altState={altState}
+                              altError={altError}
+                              onFetchAlt={fetchAltExplanation}
                             />
                           </li>
                         );
@@ -603,6 +666,10 @@ function DueRetryingCard({
   onTryOnceMore,
   onSkip,
   onClose,
+  altText,
+  altState,
+  altError,
+  onFetchAlt,
 }: {
   mistake: WrongAnswer;
   retryState: RetryState;
@@ -612,6 +679,10 @@ function DueRetryingCard({
   onTryOnceMore: () => void;
   onSkip: () => void;
   onClose: () => void;
+  altText: string | null;
+  altState: "idle" | "loading" | "error";
+  altError: string;
+  onFetchAlt: () => void;
 }) {
   // borderLeft color reflects the substate
   const borderLeftColor =
@@ -708,11 +779,12 @@ function DueRetryingCard({
 
       {retryState === "wrong-again" && (
         <>
-          {/* Honest fallback — same explanation, more time. Not a "different
-              approach" callout because we don't actually have a different
-              explanation to show (no explain-differently endpoint yet). */}
+          {/* Explanation block. Renders the alt text once /api/explain has
+              returned for this slot; otherwise the original mistake.explanation.
+              Header copy reflects which one is showing. role="status" +
+              aria-live so screen readers announce the alt swap when it lands. */}
           <div
-            className="rounded-lg p-5 mb-6"
+            className="rounded-lg p-5 mb-4"
             style={{ backgroundColor: "#FFFBEB" }}
             role="status"
             aria-live="polite"
@@ -726,19 +798,78 @@ function DueRetryingCard({
                 fontWeight: 500,
               }}
             >
-              Review the explanation, then try once more.
+              {altText
+                ? "Here's another way to think about it."
+                : "Review the explanation, then try once more."}
             </p>
             <p
               className="math-display"
-              style={{ fontSize: "14px", color: "#78350F", lineHeight: 1.6, marginBottom: "8px" }}
+              style={{
+                fontSize: "14px",
+                color: "#78350F",
+                lineHeight: 1.6,
+                marginBottom: "8px",
+              }}
             >
-              <MathRenderer content={mistake.explanation || "No explanation recorded for this mistake."} />
+              <MathRenderer
+                content={
+                  altText ||
+                  mistake.explanation ||
+                  "No explanation recorded for this mistake."
+                }
+              />
             </p>
             <p style={{ fontSize: "13px", color: "#78350F" }}>
               Correct answer:{" "}
               <strong style={{ color: "#059669" }}>{mistake.correct_answer}</strong>
             </p>
           </div>
+
+          {/* "Show me a different way" — only when no alt loaded yet. After
+              the swap the button is gone (its job is done). Loading + error
+              states render in place so the user sees what happened. */}
+          {!altText && (
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={onFetchAlt}
+                disabled={altState === "loading"}
+                className="rounded-lg border transition-colors hover:border-blue-500 disabled:cursor-wait"
+                style={{
+                  borderColor: "#E2E5EA",
+                  color: "#2563EB",
+                  fontSize: "13px",
+                  padding: "8px 16px",
+                  backgroundColor: "#FFFFFF",
+                  opacity: altState === "loading" ? 0.7 : 1,
+                }}
+              >
+                {altState === "loading" ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full animate-pulse"
+                      style={{ backgroundColor: "#2563EB" }}
+                      aria-hidden="true"
+                    />
+                    Loading another explanation…
+                  </span>
+                ) : altState === "error" ? (
+                  "Try fetching again"
+                ) : (
+                  "Show me a different way"
+                )}
+              </button>
+              {altState === "error" && altError && (
+                <p
+                  className="mt-2"
+                  style={{ fontSize: "12px", color: "#991B1B" }}
+                  role="alert"
+                >
+                  Couldn&apos;t load alternative: {altError}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button
