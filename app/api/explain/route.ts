@@ -21,7 +21,7 @@ const SYSTEM_PROMPT_EN =
 const SYSTEM_PROMPT_ZH =
   "你是一位有耐心的辅导老师，用一种全新的方式重新讲解同一道题。学生用上一种解释没听懂。" +
   "请换一个角度：用图像、生活类比、先从更小的数字开始、或者一步一步的清单。" +
-  "不要重复原来的解释。最多 3 句话。仅用普通文字 — 不要项目符号、Markdown、表情符号或前置语句。";
+  "不要重复原来的解释。最多 3 句话。仅用普通文字 — 不要项目符号、Markdown、表情符号或开场白。";
 
 function buildUserPrompt(req: ExplainRequest): string {
   const cleanQuestion = req.question.trim();
@@ -31,7 +31,7 @@ function buildUserPrompt(req: ExplainRequest): string {
       `题目：${cleanQuestion}`,
       `正确答案：${req.correctAnswer}`,
       `已经讲过的解释：${cleanOriginal || "(无)"}`,
-      "请换一种方式讲解。",
+      "请换一种方式讲解，并用中文回答。",
     ].join("\n");
   }
   return [

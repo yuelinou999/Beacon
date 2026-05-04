@@ -65,6 +65,19 @@ export default function ReviewPage() {
   const sessionIdRef = useRef<string | null>(null);
   const sessionStatsRef = useRef({ attempted: 0, correct: 0 });
 
+  // Mirror of retryingId state — refs let async fetch resolutions check the
+  // CURRENT slot owner without closing over a stale value. Required for the
+  // /api/explain race fix below.
+  const retryingIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    retryingIdRef.current = retryingId;
+  }, [retryingId]);
+
+  // AbortController for the in-flight /api/explain request. Aborted when the
+  // user moves on (closeRetry / startRetry on a different slot) or when the
+  // 10s deadline elapses.
+  const inflightExplainRef = useRef<AbortController | null>(null);
+
   useEffect(() => {
     setContext({ page: "general" });
   }, [setContext]);
@@ -81,7 +94,11 @@ export default function ReviewPage() {
         });
         sessionIdRef.current = null;
       }
+      // Drop any in-flight /api/explain — no point firing setStates after
+      // the component has unmounted.
+      abortInflightExplain();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -135,7 +152,18 @@ export default function ReviewPage() {
     groupedArchive.set(skill, list);
   }
 
+  // Cancel any in-flight /api/explain request. Called when the user moves
+  // off the slot that initiated it — without this, a late response would
+  // call setAltText() and corrupt the next slot's UI state.
+  function abortInflightExplain() {
+    if (inflightExplainRef.current) {
+      inflightExplainRef.current.abort();
+      inflightExplainRef.current = null;
+    }
+  }
+
   function startRetry(id: string) {
+    abortInflightExplain();
     setRetryingId(id);
     setRetryState("retrying");
     setRetryAnswer("");
@@ -150,6 +178,7 @@ export default function ReviewPage() {
   }
 
   function closeRetry() {
+    abortInflightExplain();
     setRetryingId(null);
     setRetryState("idle");
     setRetryAnswer("");
@@ -208,11 +237,26 @@ export default function ReviewPage() {
   // Fetch an alternative explanation from /api/explain. User-triggered (no
   // auto-fetch on entering wrong-again); short-circuits if we already have
   // alt text for this slot.
+  //
+  // Race protection (codex review fix): captures the slot id at request
+  // time and checks retryingIdRef on resolve — if the user moved to a
+  // different slot mid-flight, the response is silently dropped instead of
+  // corrupting the new slot's state. AbortController also cancels the
+  // network request itself, plus enforces a 10s deadline.
+  //
+  // Error copy is product-safe; raw HTTP / Ollama detail logs to console
+  // for diagnosis but is never shown to the learner.
   async function fetchAltExplanation() {
     if (!profile || !retryingId) return;
     if (altText) return; // already loaded for this slot
     const wa = profile.wrong_answers.find((w) => w.id === retryingId);
     if (!wa) return;
+
+    abortInflightExplain();
+    const controller = new AbortController();
+    inflightExplainRef.current = controller;
+    const requestSlotId = retryingId;
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
 
     setAltState("loading");
     setAltError("");
@@ -227,6 +271,7 @@ export default function ReviewPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
       if (!res.ok) {
         const text = await res.text();
@@ -234,12 +279,33 @@ export default function ReviewPage() {
       }
       const data = (await res.json()) as ExplainResponse;
       const trimmed = (data.altExplanation ?? "").trim();
-      if (!trimmed) throw new Error("Empty alternative explanation returned.");
+      if (!trimmed) throw new Error("empty_alt_explanation");
+
+      // Ownership check: drop if the user moved on while we were waiting.
+      if (retryingIdRef.current !== requestSlotId) return;
       setAltText(trimmed);
       setAltState("idle");
     } catch (err) {
+      // Always log the technical detail — useful when debugging Ollama
+      // setup / model issues.
+      console.error("[review] /api/explain failed:", err);
+
+      // If the user moved off the slot while we were waiting (closeRetry /
+      // startRetry triggered abort), silently drop — the UI moved on.
+      if (retryingIdRef.current !== requestSlotId) return;
+
+      const isAbort = err instanceof Error && err.name === "AbortError";
       setAltState("error");
-      setAltError(err instanceof Error ? err.message : "Failed to fetch alt explanation.");
+      setAltError(
+        isAbort
+          ? "Took too long to load another explanation. Try again."
+          : "Couldn't load another explanation right now. Try again in a moment.",
+      );
+    } finally {
+      clearTimeout(timeoutId);
+      if (inflightExplainRef.current === controller) {
+        inflightExplainRef.current = null;
+      }
     }
   }
 
@@ -865,7 +931,7 @@ function DueRetryingCard({
                   style={{ fontSize: "12px", color: "#991B1B" }}
                   role="alert"
                 >
-                  Couldn&apos;t load alternative: {altError}
+                  {altError}
                 </p>
               )}
             </div>
