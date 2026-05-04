@@ -339,6 +339,11 @@ function PracticeContent() {
   // "Practice more" — reset batch-local state and start a fresh batch on the
   // same topic. Preserves profile / settings / page-level subscriptions; only
   // batch state and the session counter restart.
+  //
+  // Only reachable from the completion screen's CTA, which means the
+  // state==="complete" effect has already finalized the previous session
+  // (sessionIdRef.current is null). Safe to call startSession() directly
+  // without an explicit finalize here.
   const restartBatch = () => {
     if (!profile) return;
     setCurrentIdx(0);
@@ -830,13 +835,14 @@ function CompletionSummary({
         </div>
       </div>
 
-      {/* Per-question dot grid */}
-      <div className="flex gap-3 justify-center mb-8">
+      {/* Per-question dot grid — list semantics so screen readers announce
+          "list of 5 items" rather than 5 unrelated divs. */}
+      <ul role="list" className="flex gap-3 justify-center mb-8 list-none p-0">
         {Array.from({ length: batchSize }).map((_, i) => {
           const r = results[i];
           const status = r ? (r.correct ? "correct" : "incorrect") : "pending";
           return (
-            <div
+            <li
               key={i}
               className="w-10 h-10 rounded-full flex items-center justify-center"
               style={{
@@ -855,10 +861,10 @@ function CompletionSummary({
               ) : (
                 <span style={{ fontSize: "13px", color: "#9CA3AF" }}>{i + 1}</span>
               )}
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
       {/* Mistake → review link */}
       {wrongCount > 0 && (
@@ -956,11 +962,11 @@ function CompletionSummary({
       {/* Tertiary back link */}
       <div className="mt-4">
         <Link
-          href="/"
+          href="/subject/math"
           className="hover:underline transition-colors"
           style={{ fontSize: "14px", color: "#6B7280" }}
         >
-          Back to home
+          Back to course
         </Link>
       </div>
     </div>
