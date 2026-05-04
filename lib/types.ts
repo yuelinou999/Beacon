@@ -122,6 +122,32 @@ export interface QuizBank {
   questions: QuizQuestion[];
 }
 
+// ── Curriculum: practice bank (static, hardcoded per topic) ─
+
+// Practice-bank question. Distinct from PracticeQuestion below (which was the
+// AI-generated single-question shape from the legacy /api/practice route).
+// Bank questions are pre-authored in curriculum.json, carry a difficulty label
+// for the per-question pill, and ship an `explanation` shown on the result
+// screen — replacing the old Gemma-grader explanation.
+export interface PracticeBankQuestion {
+  id: string;
+  question: string;
+  // Optional separate equation field, mirroring QuizQuestion. Word problems
+  // put the entire prompt in `question` and omit this field.
+  equation?: string;
+  // Allowed as string OR number to keep authoring ergonomic — most answers
+  // are numeric, but topic 2 (expressions vs equations) has word answers like
+  // "expression" / "equation". Compared as a normalized string at runtime.
+  answer: string | number;
+  difficulty: "easy" | "medium" | "hard";
+  explanation: string;
+}
+
+export interface PracticeBank {
+  title: string;
+  questions: PracticeBankQuestion[];
+}
+
 // ── Curriculum: topic ──────────────────────────────────
 
 export interface TopicTitle {
@@ -139,6 +165,7 @@ export interface CurriculumTopic {
   unit_id: string;
   phases: TopicPhases;
   quiz?: QuizBank; // Only `solving_one_step` carries a quiz bank today.
+  practice?: PracticeBank; // Static practice bank — see PracticeBank above.
 }
 
 // ── Curriculum: units and grade ───────────────────────

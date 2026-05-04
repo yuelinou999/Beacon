@@ -21,6 +21,9 @@ export type {
   QuizSkill,
   QuizQuestion,
   QuizBank,
+  // Practice bank (static, fixed in curriculum.json)
+  PracticeBankQuestion,
+  PracticeBank,
   // Topic
   CurriculumTopic,
   // Legacy alias — `TopicWithPhases` is the merged `CurriculumTopic`.

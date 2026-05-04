@@ -272,6 +272,23 @@
             { "equation": "If a = 10, what is a - 4?", "answer": 6 }
           ]
         }
+      },
+      "practice": {
+        "title": "Practice — what is a variable",
+        "questions": [
+          { "id": "p1",  "question": "Evaluate the expression.", "equation": "If x = 5, what is x + 3?",  "answer": 8,  "difficulty": "easy",   "explanation": "Substitute x = 5: 5 + 3 = 8." },
+          { "id": "p2",  "question": "Evaluate the expression.", "equation": "If n = 7, what is 2n?",     "answer": 14, "difficulty": "easy",   "explanation": "2n means 2 times n: 2 × 7 = 14." },
+          { "id": "p3",  "question": "Evaluate the expression.", "equation": "If a = 10, what is a - 4?", "answer": 6,  "difficulty": "easy",   "explanation": "Substitute a = 10: 10 - 4 = 6." },
+          { "id": "p4",  "question": "Evaluate the expression.", "equation": "If y = 3, what is 4y?",     "answer": 12, "difficulty": "easy",   "explanation": "4y means 4 × y: 4 × 3 = 12." },
+          { "id": "p5",  "question": "Evaluate the expression.", "equation": "If x = 6, what is 2x + 5?", "answer": 17, "difficulty": "medium", "explanation": "Substitute first: 2(6) + 5 = 12 + 5 = 17." },
+          { "id": "p6",  "question": "Evaluate the expression.", "equation": "If n = 8, what is 3n - 4?", "answer": 20, "difficulty": "medium", "explanation": "3(8) - 4 = 24 - 4 = 20." },
+          { "id": "p7",  "question": "Evaluate the expression.", "equation": "If k = 4, what is 5k + 1?", "answer": 21, "difficulty": "medium", "explanation": "5(4) + 1 = 20 + 1 = 21." },
+          { "id": "p8",  "question": "Evaluate the expression.", "equation": "If m = 9, what is m + m?",  "answer": 18, "difficulty": "medium", "explanation": "m + m means add m to itself: 9 + 9 = 18." },
+          { "id": "p9",  "question": "Evaluate the expression.", "equation": "If x = 5, what is 2x + x?",        "answer": 15, "difficulty": "hard", "explanation": "2x + x = 2(5) + 5 = 10 + 5 = 15." },
+          { "id": "p10", "question": "Evaluate the expression.", "equation": "If a = 4 and b = 3, what is 2a + b?", "answer": 11, "difficulty": "hard", "explanation": "2(4) + 3 = 8 + 3 = 11." },
+          { "id": "p11", "question": "Evaluate the expression.", "equation": "If n = 6, what is 4n - 2n?",       "answer": 12, "difficulty": "hard", "explanation": "4n - 2n leaves 2n: 2(6) = 12." },
+          { "id": "p12", "question": "Evaluate the expression.", "equation": "If x = 0, what is 5x + 7?",        "answer": 7,  "difficulty": "hard", "explanation": "5(0) + 7 = 0 + 7 = 7. Anything times 0 is 0." }
+        ]
       }
     },
     {
@@ -343,6 +360,23 @@
             { "equation": "How many equations: '5', '5 = 5', '5 + 1', '5 + 1 = 6'?", "answer": 2 }
           ]
         }
+      },
+      "practice": {
+        "title": "Practice — expressions vs. equations",
+        "questions": [
+          { "id": "p1",  "question": "Is this an equation or an expression?", "equation": "3x + 2",     "answer": "expression", "difficulty": "easy", "explanation": "It has no equals sign, so it's an expression." },
+          { "id": "p2",  "question": "Is this an equation or an expression?", "equation": "x + 1 = 5",  "answer": "equation",   "difficulty": "easy", "explanation": "It has an equals sign, so it's an equation." },
+          { "id": "p3",  "question": "Is this an equation or an expression?", "equation": "5 = 5",      "answer": "equation",   "difficulty": "easy", "explanation": "Even though both sides are 5, the equals sign makes it an equation." },
+          { "id": "p4",  "question": "Is this an equation or an expression?", "equation": "2y",         "answer": "expression", "difficulty": "easy", "explanation": "Just 2y with no equals sign — it's an expression." },
+          { "id": "p5",  "question": "How many equations are in this list?",   "equation": "'x + 1', 'x + 1 = 5', '3 = 3'", "answer": 2, "difficulty": "medium", "explanation": "'x + 1 = 5' and '3 = 3' both have equals signs." },
+          { "id": "p6",  "question": "How many expressions are in this list?", "equation": "'2y', '2y = 8', '4 + 1', '7 = 7'", "answer": 2, "difficulty": "medium", "explanation": "'2y' and '4 + 1' have no equals signs." },
+          { "id": "p7",  "question": "How many equations are in this list?",   "equation": "'5', '5 = 5', '5 + 1', '5 + 1 = 6'", "answer": 2, "difficulty": "medium", "explanation": "'5 = 5' and '5 + 1 = 6' have equals signs." },
+          { "id": "p8",  "question": "How many expressions are in this list?", "equation": "'x', 'x = 0', '2x + 3'", "answer": 2, "difficulty": "medium", "explanation": "'x' and '2x + 3' have no equals signs." },
+          { "id": "p9",  "question": "How many of these are equations?", "equation": "'3x', '3x = 12', 'x + 5', 'x + 5 = 9', '0 = 0'", "answer": 3, "difficulty": "hard", "explanation": "'3x = 12', 'x + 5 = 9', and '0 = 0' all have equals signs." },
+          { "id": "p10", "question": "An equation must contain at least how many '=' signs?", "answer": 1, "difficulty": "hard", "explanation": "By definition, every equation needs at least one equals sign." },
+          { "id": "p11", "question": "How many of these contain BOTH a variable AND an equals sign?", "equation": "'5 = 5', 'x = 5', '3 + 2 = 5', 'x + 1 = 4'", "answer": 2, "difficulty": "hard", "explanation": "'x = 5' and 'x + 1 = 4' have both." },
+          { "id": "p12", "question": "Is this an equation or an expression?", "equation": "9 - 4 = 5", "answer": "equation", "difficulty": "hard", "explanation": "The equals sign makes it an equation, even though both sides equal a number." }
+        ]
       }
     },
     {
@@ -500,6 +534,23 @@
             "skill": "verification"
           }
         ]
+      },
+      "practice": {
+        "title": "Practice — solving one-step equations",
+        "questions": [
+          { "id": "p1",  "question": "Solve for x.", "equation": "x + 3 = 10",  "answer": 7,  "difficulty": "easy",   "explanation": "Subtract 3 from both sides: x = 10 - 3 = 7." },
+          { "id": "p2",  "question": "Solve for x.", "equation": "x + 12 = 25", "answer": 13, "difficulty": "easy",   "explanation": "Subtract 12 from both sides: x = 25 - 12 = 13." },
+          { "id": "p3",  "question": "Solve for x.", "equation": "x + 1 = 6",   "answer": 5,  "difficulty": "easy",   "explanation": "Subtract 1 from both sides: x = 6 - 1 = 5." },
+          { "id": "p4",  "question": "Solve for x.", "equation": "x + 7 = 12",  "answer": 5,  "difficulty": "easy",   "explanation": "Subtract 7 from both sides: x = 12 - 7 = 5." },
+          { "id": "p5",  "question": "Solve for x.", "equation": "x - 4 = 9",   "answer": 13, "difficulty": "medium", "explanation": "Add 4 to both sides: x = 9 + 4 = 13." },
+          { "id": "p6",  "question": "Solve for x.", "equation": "5x = 35",     "answer": 7,  "difficulty": "medium", "explanation": "Divide both sides by 5: x = 35 ÷ 5 = 7." },
+          { "id": "p7",  "question": "Solve for x.", "equation": "x - 11 = 4",  "answer": 15, "difficulty": "medium", "explanation": "Add 11 to both sides: x = 4 + 11 = 15." },
+          { "id": "p8",  "question": "Solve for x.", "equation": "6x = 24",     "answer": 4,  "difficulty": "medium", "explanation": "Divide both sides by 6: x = 24 ÷ 6 = 4." },
+          { "id": "p9",  "question": "Solve for x. Watch the sign.", "equation": "x + 8 = 2",   "answer": -6, "difficulty": "hard", "explanation": "Subtract 8: x = 2 - 8 = -6." },
+          { "id": "p10", "question": "Solve for x. Watch the sign.", "equation": "x - 12 = -5", "answer": 7,  "difficulty": "hard", "explanation": "Add 12: x = -5 + 12 = 7." },
+          { "id": "p11", "question": "Solve for x. Watch the sign.", "equation": "x - 9 = -4",  "answer": 5,  "difficulty": "hard", "explanation": "Add 9: x = -4 + 9 = 5." },
+          { "id": "p12", "question": "Solve for x. Watch the sign.", "equation": "x + 15 = 7",  "answer": -8, "difficulty": "hard", "explanation": "Subtract 15: x = 7 - 15 = -8." }
+        ]
       }
     },
     {
@@ -570,6 +621,23 @@
             { "equation": "x ÷ 2 = 6 (find x)", "answer": 12 }
           ]
         }
+      },
+      "practice": {
+        "title": "Practice — inverse operations",
+        "questions": [
+          { "id": "p1",  "question": "Pick the right inverse and solve.", "equation": "x - 4 = 9",  "answer": 13, "difficulty": "easy",   "explanation": "The inverse of subtracting 4 is adding 4: x = 9 + 4 = 13." },
+          { "id": "p2",  "question": "Pick the right inverse and solve.", "equation": "5x = 35",    "answer": 7,  "difficulty": "easy",   "explanation": "The inverse of × 5 is ÷ 5: x = 35 ÷ 5 = 7." },
+          { "id": "p3",  "question": "Pick the right inverse and solve.", "equation": "x ÷ 2 = 6",  "answer": 12, "difficulty": "easy",   "explanation": "The inverse of ÷ 2 is × 2: x = 6 × 2 = 12." },
+          { "id": "p4",  "question": "Pick the right inverse and solve.", "equation": "x + 6 = 11", "answer": 5,  "difficulty": "easy",   "explanation": "The inverse of adding 6 is subtracting 6: x = 11 - 6 = 5." },
+          { "id": "p5",  "question": "Solve for x.", "equation": "7x = 42",    "answer": 6,  "difficulty": "medium", "explanation": "Divide both sides by 7: x = 42 ÷ 7 = 6." },
+          { "id": "p6",  "question": "Solve for x.", "equation": "x ÷ 4 = 5",  "answer": 20, "difficulty": "medium", "explanation": "Multiply both sides by 4: x = 5 × 4 = 20." },
+          { "id": "p7",  "question": "Solve for x.", "equation": "x - 10 = 3", "answer": 13, "difficulty": "medium", "explanation": "Add 10 to both sides: x = 3 + 10 = 13." },
+          { "id": "p8",  "question": "Solve for x.", "equation": "8x = 56",    "answer": 7,  "difficulty": "medium", "explanation": "Divide both sides by 8: x = 56 ÷ 8 = 7." },
+          { "id": "p9",  "question": "Solve for x. Watch the sign.", "equation": "x ÷ 5 = -3", "answer": -15, "difficulty": "hard", "explanation": "Multiply by 5: x = -3 × 5 = -15." },
+          { "id": "p10", "question": "Solve for x. Watch the sign.", "equation": "4x = -28",   "answer": -7,  "difficulty": "hard", "explanation": "Divide by 4: x = -28 ÷ 4 = -7." },
+          { "id": "p11", "question": "Solve for x.",                  "equation": "x ÷ 3 = 0",  "answer": 0,   "difficulty": "hard", "explanation": "Multiply by 3: x = 0 × 3 = 0." },
+          { "id": "p12", "question": "Solve for x. Watch the sign.", "equation": "-2x = 14",   "answer": -7,  "difficulty": "hard", "explanation": "Divide both sides by -2: x = 14 ÷ (-2) = -7." }
+        ]
       }
     },
     {
@@ -641,6 +709,23 @@
             { "equation": "4x + 1 = 21", "answer": 5 }
           ]
         }
+      },
+      "practice": {
+        "title": "Practice — solving two-step equations",
+        "questions": [
+          { "id": "p1",  "question": "Solve for x.", "equation": "2x + 5 = 13", "answer": 4, "difficulty": "easy",   "explanation": "Subtract 5: 2x = 8. Divide by 2: x = 4." },
+          { "id": "p2",  "question": "Solve for x.", "equation": "3x - 2 = 13", "answer": 5, "difficulty": "easy",   "explanation": "Add 2: 3x = 15. Divide by 3: x = 5." },
+          { "id": "p3",  "question": "Solve for x.", "equation": "4x + 1 = 21", "answer": 5, "difficulty": "easy",   "explanation": "Subtract 1: 4x = 20. Divide by 4: x = 5." },
+          { "id": "p4",  "question": "Solve for x.", "equation": "2x + 7 = 17", "answer": 5, "difficulty": "easy",   "explanation": "Subtract 7: 2x = 10. Divide by 2: x = 5." },
+          { "id": "p5",  "question": "Solve for y.", "equation": "5y - 3 = 22", "answer": 5, "difficulty": "medium", "explanation": "Add 3: 5y = 25. Divide by 5: y = 5." },
+          { "id": "p6",  "question": "Solve for n.", "equation": "6n + 4 = 28", "answer": 4, "difficulty": "medium", "explanation": "Subtract 4: 6n = 24. Divide by 6: n = 4." },
+          { "id": "p7",  "question": "Solve for x.", "equation": "3x + 9 = 30", "answer": 7, "difficulty": "medium", "explanation": "Subtract 9: 3x = 21. Divide by 3: x = 7." },
+          { "id": "p8",  "question": "Solve for x.", "equation": "4x - 5 = 23", "answer": 7, "difficulty": "medium", "explanation": "Add 5: 4x = 28. Divide by 4: x = 7." },
+          { "id": "p9",  "question": "Solve for x. Watch the sign.", "equation": "2x - 11 = -3",  "answer": 4,  "difficulty": "hard", "explanation": "Add 11: 2x = 8. Divide by 2: x = 4." },
+          { "id": "p10", "question": "Solve for x. Watch the sign.", "equation": "-3x + 7 = 16",  "answer": -3, "difficulty": "hard", "explanation": "Subtract 7: -3x = 9. Divide by -3: x = -3." },
+          { "id": "p11", "question": "Solve for x. Watch the sign.", "equation": "5x + 12 = 2",   "answer": -2, "difficulty": "hard", "explanation": "Subtract 12: 5x = -10. Divide by 5: x = -2." },
+          { "id": "p12", "question": "Solve for x. Watch the sign.", "equation": "7x - 6 = -27",  "answer": -3, "difficulty": "hard", "explanation": "Add 6: 7x = -21. Divide by 7: x = -3." }
+        ]
       }
     },
     {
@@ -712,6 +797,23 @@
             { "equation": "6x - 4 = 4x + 6", "answer": 5 }
           ]
         }
+      },
+      "practice": {
+        "title": "Practice — variables on both sides",
+        "questions": [
+          { "id": "p1",  "question": "Solve for x.", "equation": "4x = x + 9",   "answer": 3, "difficulty": "easy",   "explanation": "Subtract x: 3x = 9. Divide by 3: x = 3." },
+          { "id": "p2",  "question": "Solve for x.", "equation": "5x = 2x + 6",  "answer": 2, "difficulty": "easy",   "explanation": "Subtract 2x: 3x = 6. Divide by 3: x = 2." },
+          { "id": "p3",  "question": "Solve for x.", "equation": "7x = 3x + 16", "answer": 4, "difficulty": "easy",   "explanation": "Subtract 3x: 4x = 16. Divide by 4: x = 4." },
+          { "id": "p4",  "question": "Solve for x.", "equation": "6x = x + 25",  "answer": 5, "difficulty": "easy",   "explanation": "Subtract x: 5x = 25. Divide by 5: x = 5." },
+          { "id": "p5",  "question": "Solve for x.", "equation": "5x + 1 = 2x + 10", "answer": 3, "difficulty": "medium", "explanation": "Subtract 2x: 3x + 1 = 10. Subtract 1: 3x = 9. x = 3." },
+          { "id": "p6",  "question": "Solve for x.", "equation": "6x - 4 = 4x + 6", "answer": 5, "difficulty": "medium", "explanation": "Subtract 4x: 2x - 4 = 6. Add 4: 2x = 10. x = 5." },
+          { "id": "p7",  "question": "Solve for y.", "equation": "7y - 2 = 3y + 14", "answer": 4, "difficulty": "medium", "explanation": "Subtract 3y: 4y - 2 = 14. Add 2: 4y = 16. y = 4." },
+          { "id": "p8",  "question": "Solve for n.", "equation": "4n + 5 = n + 14",  "answer": 3, "difficulty": "medium", "explanation": "Subtract n: 3n + 5 = 14. Subtract 5: 3n = 9. n = 3." },
+          { "id": "p9",  "question": "Solve for x. The variable side may flip.", "equation": "3x + 8 = 5x - 4",  "answer": 6, "difficulty": "hard", "explanation": "Subtract 3x: 8 = 2x - 4. Add 4: 12 = 2x. x = 6." },
+          { "id": "p10", "question": "Solve for x. The variable side may flip.", "equation": "2x + 11 = 7x + 1", "answer": 2, "difficulty": "hard", "explanation": "Subtract 2x: 11 = 5x + 1. Subtract 1: 10 = 5x. x = 2." },
+          { "id": "p11", "question": "Solve for a.", "equation": "8a - 3 = 3a + 12", "answer": 3, "difficulty": "hard", "explanation": "Subtract 3a: 5a - 3 = 12. Add 3: 5a = 15. a = 3." },
+          { "id": "p12", "question": "Solve for k.", "equation": "9k - 5 = 5k + 11", "answer": 4, "difficulty": "hard", "explanation": "Subtract 5k: 4k - 5 = 11. Add 5: 4k = 16. k = 4." }
+        ]
       }
     },
     {
@@ -782,6 +884,23 @@
             { "equation": "Twice a number minus 5 is 13. Find the number.", "answer": 9 }
           ]
         }
+      },
+      "practice": {
+        "title": "Practice — word problems with equations",
+        "questions": [
+          { "id": "p1",  "question": "Sara had some marbles. After her brother gave her 6 more, she has 14. How many did she start with?",        "answer": 8,  "difficulty": "easy", "explanation": "Let m = starting marbles. m + 6 = 14, so m = 8." },
+          { "id": "p2",  "question": "A box of cookies has some cookies. After Tim eats 4, there are 11 left. How many were originally in the box?", "answer": 15, "difficulty": "easy", "explanation": "Let c = original cookies. c - 4 = 11, so c = 15." },
+          { "id": "p3",  "question": "Maya read some pages on Monday. Tuesday she read 9 more. The total over the two days is 22. How many on Monday?", "answer": 13, "difficulty": "easy", "explanation": "Let p = Monday pages. p + 9 = 22, so p = 13." },
+          { "id": "p4",  "question": "A class has some students. 5 left for sports, leaving 18. How many were there to start?",                       "answer": 23, "difficulty": "easy", "explanation": "Let s = starting students. s - 5 = 18, so s = 23." },
+          { "id": "p5",  "question": "Twice a number plus 3 equals 11. Find the number.",                                                            "answer": 4,  "difficulty": "medium", "explanation": "2x + 3 = 11. Subtract 3: 2x = 8. Divide by 2: x = 4." },
+          { "id": "p6",  "question": "Three times a number minus 4 equals 14. Find the number.",                                                     "answer": 6,  "difficulty": "medium", "explanation": "3x - 4 = 14. Add 4: 3x = 18. Divide by 3: x = 6." },
+          { "id": "p7",  "question": "A movie ticket costs $7 each. With $3 popcorn, the total is $24 for n tickets and one popcorn. How many tickets?", "answer": 3, "difficulty": "medium", "explanation": "7n + 3 = 24. Subtract 3: 7n = 21. Divide by 7: n = 3." },
+          { "id": "p8",  "question": "A number doubled, then 5 added, equals 13. What is the number?",                                               "answer": 4,  "difficulty": "medium", "explanation": "2x + 5 = 13. Subtract 5: 2x = 8. x = 4." },
+          { "id": "p9",  "question": "Liam saved twice as much as Mia. Together they saved $30. How much did Mia save?",                              "answer": 10, "difficulty": "hard", "explanation": "Let m = Mia's. Liam = 2m. m + 2m = 30 → 3m = 30 → m = 10." },
+          { "id": "p10", "question": "A taxi charges $4 starting fee plus $2 per mile. Total ride: $20. How many miles?",                            "answer": 8,  "difficulty": "hard", "explanation": "4 + 2m = 20. Subtract 4: 2m = 16. Divide by 2: m = 8." },
+          { "id": "p11", "question": "Three consecutive integers sum to 24. What is the smallest?",                                                  "answer": 7,  "difficulty": "hard", "explanation": "n + (n+1) + (n+2) = 24 → 3n + 3 = 24 → 3n = 21 → n = 7." },
+          { "id": "p12", "question": "A number subtracted from 20 gives 8. Find the number.",                                                        "answer": 12, "difficulty": "hard", "explanation": "20 - n = 8. So n = 20 - 8 = 12." }
+        ]
       }
     },
     {
