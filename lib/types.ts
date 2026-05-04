@@ -364,6 +364,22 @@ export interface ExplainResponse {
   altExplanation: string;
 }
 
+// ── Translate (Gemma multilingual for bilingual mode subtitle) ──
+// Used by components/bilingual-subtitle.tsx when the user has selected a
+// secondary language other than Chinese (which is already in curriculum.json
+// as topic.title.zh and uses no API call).
+
+export type TranslateTargetLanguage = "zh" | "hi" | "es" | "sw" | "fr" | "ar";
+
+export interface TranslateRequest {
+  text: string;
+  targetLanguage: TranslateTargetLanguage;
+}
+
+export interface TranslateResponse {
+  translation: string;
+}
+
 // ── Ollama types ───────────────────────────────────────
 
 export interface OllamaMessage {
