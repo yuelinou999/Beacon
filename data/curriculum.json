@@ -468,88 +468,98 @@
             "question": "What value of x makes this equation true?",
             "equation": "x + 7 = 12",
             "answer": 5,
-            "skill": "inverse_ops"
+            "skill": "inverse_ops",
+            "alt_explanation": "Counting up: how many do you add to 7 to reach 12? Step from 7: 8, 9, 10, 11, 12 — that's 5 steps. So x = 5."
           },
           {
             "id": "q2",
             "question": "Maya had some stickers. After she got 6 more, she had 14 stickers. Let x be the number she had at the start. Find x.",
             "equation": "x + 6 = 14",
             "answer": 8,
-            "skill": "setting_up"
+            "skill": "setting_up",
+            "alt_explanation": "Picture two piles: Maya's starting pile (x) and 6 new stickers from her brother. Total: 14. Take the 6 new ones away and Maya's original pile is 14 - 6 = 8."
           },
           {
             "id": "q3",
             "question": "A student claims x = 8 solves the equation below. Verify by computing x yourself and entering the actual solution.",
             "equation": "x - 3 = 6",
             "answer": 9,
-            "skill": "verification"
+            "skill": "verification",
+            "alt_explanation": "Don't trust the claim — test it. Substitute x = 8 into x - 3: 8 - 3 = 5, not 6. So 8 is wrong. To find the real x, undo the -3 by adding 3: 6 + 3 = 9."
           },
           {
             "id": "q4",
             "question": "Combine the constants on the left side first, then solve for x.",
             "equation": "x + 2 + 5 = 16",
             "answer": 9,
-            "skill": "simplification"
+            "skill": "simplification",
+            "alt_explanation": "First simplify the left: 2 + 5 = 7, so the equation reads x + 7 = 16. Now it's a simple one-step: x = 16 - 7 = 9."
           },
           {
             "id": "q5",
             "question": "Solve for x.",
             "equation": "x - 11 = 4",
             "answer": 15,
-            "skill": "inverse_ops"
+            "skill": "inverse_ops",
+            "alt_explanation": "x lost 11 and ended at 4. To find what x started as, give the 11 back: 4 + 11 = 15."
           },
           {
             "id": "q6",
             "question": "A game score was reduced by 7 points and became 18. Let x be the original score. Find x.",
             "equation": "x - 7 = 18",
             "answer": 25,
-            "skill": "setting_up"
+            "skill": "setting_up",
+            "alt_explanation": "Picture the score as a bar chart: x at the start, then 7 chopped off, leaving 18. Add the 7 back to undo the penalty: 18 + 7 = 25."
           },
           {
             "id": "q7",
             "question": "Simplify the left side first, then solve for x.",
             "equation": "x + 9 - 4 = 13",
             "answer": 8,
-            "skill": "simplification"
+            "skill": "simplification",
+            "alt_explanation": "Combine the constants: 9 - 4 = 5, so the equation becomes x + 5 = 13. Now subtract 5 from both sides: x = 13 - 5 = 8."
           },
           {
             "id": "q8",
             "question": "Solve for x. Watch the sign carefully.",
             "equation": "x - 12 = -5",
             "answer": 7,
-            "skill": "inverse_ops"
+            "skill": "inverse_ops",
+            "alt_explanation": "x dropped by 12 and landed on -5. So x started 12 places ABOVE -5 on the number line. -5 + 12 = 7."
           },
           {
             "id": "q9",
             "question": "The temperature dropped 9 degrees and ended at -4 degrees. Let x be the starting temperature. Find x.",
             "equation": "x - 9 = -4",
             "answer": 5,
-            "skill": "setting_up"
+            "skill": "setting_up",
+            "alt_explanation": "On a thermometer: temperature x at the start, drops 9 degrees, finishes at -4. To find the start, count 9 degrees UP from -4: -4 + 9 = 5."
           },
           {
             "id": "q10",
             "question": "A classmate claims x = -10 solves the equation below. Verify by computing x yourself and entering the actual solution.",
             "equation": "x + 8 = 2",
             "answer": -6,
-            "skill": "verification"
+            "skill": "verification",
+            "alt_explanation": "Test the claim first: if x = -10, then -10 + 8 = -2, not 2. So -10 is wrong. Solve directly: x = 2 - 8 = -6."
           }
         ]
       },
       "practice": {
         "title": "Practice — solving one-step equations",
         "questions": [
-          { "id": "p1",  "question": "Solve for x.", "equation": "x + 3 = 10",  "answer": 7,  "difficulty": "easy",   "explanation": "Subtract 3 from both sides: x = 10 - 3 = 7." },
-          { "id": "p2",  "question": "Solve for x.", "equation": "x + 12 = 25", "answer": 13, "difficulty": "easy",   "explanation": "Subtract 12 from both sides: x = 25 - 12 = 13." },
-          { "id": "p3",  "question": "Solve for x.", "equation": "x + 1 = 6",   "answer": 5,  "difficulty": "easy",   "explanation": "Subtract 1 from both sides: x = 6 - 1 = 5." },
-          { "id": "p4",  "question": "Solve for x.", "equation": "x + 7 = 12",  "answer": 5,  "difficulty": "easy",   "explanation": "Subtract 7 from both sides: x = 12 - 7 = 5." },
-          { "id": "p5",  "question": "Solve for x.", "equation": "x - 4 = 9",   "answer": 13, "difficulty": "medium", "explanation": "Add 4 to both sides: x = 9 + 4 = 13." },
-          { "id": "p6",  "question": "Solve for x.", "equation": "5x = 35",     "answer": 7,  "difficulty": "medium", "explanation": "Divide both sides by 5: x = 35 ÷ 5 = 7." },
-          { "id": "p7",  "question": "Solve for x.", "equation": "x - 11 = 4",  "answer": 15, "difficulty": "medium", "explanation": "Add 11 to both sides: x = 4 + 11 = 15." },
-          { "id": "p8",  "question": "Solve for x.", "equation": "6x = 24",     "answer": 4,  "difficulty": "medium", "explanation": "Divide both sides by 6: x = 24 ÷ 6 = 4." },
-          { "id": "p9",  "question": "Solve for x. Watch the sign.", "equation": "x + 8 = 2",   "answer": -6, "difficulty": "hard", "explanation": "Subtract 8: x = 2 - 8 = -6." },
-          { "id": "p10", "question": "Solve for x. Watch the sign.", "equation": "x - 12 = -5", "answer": 7,  "difficulty": "hard", "explanation": "Add 12: x = -5 + 12 = 7." },
-          { "id": "p11", "question": "Solve for x. Watch the sign.", "equation": "x - 9 = -4",  "answer": 5,  "difficulty": "hard", "explanation": "Add 9: x = -4 + 9 = 5." },
-          { "id": "p12", "question": "Solve for x. Watch the sign.", "equation": "x + 15 = 7",  "answer": -8, "difficulty": "hard", "explanation": "Subtract 15: x = 7 - 15 = -8." }
+          { "id": "p1",  "question": "Solve for x.", "equation": "x + 3 = 10",  "answer": 7,  "difficulty": "easy",   "explanation": "Subtract 3 from both sides: x = 10 - 3 = 7.",                  "alt_explanation": "Picture a balance scale: a bag (x) plus 3 stones on one side, 10 stones on the other. Take 3 stones off BOTH sides and the bag alone weighs 7. So x = 7." },
+          { "id": "p2",  "question": "Solve for x.", "equation": "x + 12 = 25", "answer": 13, "difficulty": "easy",   "explanation": "Subtract 12 from both sides: x = 25 - 12 = 13.",                "alt_explanation": "Work backwards: start at x, add 12, end at 25. To rewind, take the 12 back off the end: 25 - 12 = 13. So x = 13." },
+          { "id": "p3",  "question": "Solve for x.", "equation": "x + 1 = 6",   "answer": 5,  "difficulty": "easy",   "explanation": "Subtract 1 from both sides: x = 6 - 1 = 5.",                    "alt_explanation": "On a number line, x + 1 lands on 6. So x is exactly one step to the LEFT of 6 — that's 5." },
+          { "id": "p4",  "question": "Solve for x.", "equation": "x + 7 = 12",  "answer": 5,  "difficulty": "easy",   "explanation": "Subtract 7 from both sides: x = 12 - 7 = 5.",                   "alt_explanation": "Ask 'what plus 7 makes 12?' Count up from 7: 8, 9, 10, 11, 12 — that's 5 jumps. So x = 5." },
+          { "id": "p5",  "question": "Solve for x.", "equation": "x - 4 = 9",   "answer": 13, "difficulty": "medium", "explanation": "Add 4 to both sides: x = 9 + 4 = 13.",                          "alt_explanation": "If something MINUS 4 lands on 9, that something must be 4 BIGGER than 9. So x = 9 + 4 = 13." },
+          { "id": "p6",  "question": "Solve for x.", "equation": "5x = 35",     "answer": 7,  "difficulty": "medium", "explanation": "Divide both sides by 5: x = 35 ÷ 5 = 7.",                       "alt_explanation": "Think groups: 5 equal groups of x add up to 35 in total. One group is 35 ÷ 5 = 7. So x = 7." },
+          { "id": "p7",  "question": "Solve for x.", "equation": "x - 11 = 4",  "answer": 15, "difficulty": "medium", "explanation": "Add 11 to both sides: x = 4 + 11 = 15.",                        "alt_explanation": "x lost 11 and ended at 4. To find x's starting point, give the 11 back: 4 + 11 = 15." },
+          { "id": "p8",  "question": "Solve for x.", "equation": "6x = 24",     "answer": 4,  "difficulty": "medium", "explanation": "Divide both sides by 6: x = 24 ÷ 6 = 4.",                       "alt_explanation": "Six copies of x stacked together total 24. Each copy is 24 ÷ 6 = 4." },
+          { "id": "p9",  "question": "Solve for x. Watch the sign.", "equation": "x + 8 = 2",   "answer": -6, "difficulty": "hard", "explanation": "Subtract 8: x = 2 - 8 = -6.",                  "alt_explanation": "On a number line, x + 8 lands on 2. So x sits 8 places to the LEFT of 2. Count 8 left of 2: 1, 0, -1, -2, -3, -4, -5, -6. So x = -6." },
+          { "id": "p10", "question": "Solve for x. Watch the sign.", "equation": "x - 12 = -5", "answer": 7,  "difficulty": "hard", "explanation": "Add 12: x = -5 + 12 = 7.",                     "alt_explanation": "x dropped by 12 and landed at -5. So x started 12 places ABOVE -5 — that's -5 + 12 = 7." },
+          { "id": "p11", "question": "Solve for x. Watch the sign.", "equation": "x - 9 = -4",  "answer": 5,  "difficulty": "hard", "explanation": "Add 9: x = -4 + 9 = 5.",                       "alt_explanation": "Imagine going DOWN 9 stairs and ending at -4. Where did you start? Nine stairs above -4: -4 + 9 = 5." },
+          { "id": "p12", "question": "Solve for x. Watch the sign.", "equation": "x + 15 = 7",  "answer": -8, "difficulty": "hard", "explanation": "Subtract 15: x = 7 - 15 = -8.",                "alt_explanation": "x + 15 lands on 7 — so x is 15 places to the LEFT of 7 on a number line. Counting 15 left of 7 takes you to -8." }
         ]
       }
     },
