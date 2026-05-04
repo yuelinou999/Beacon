@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Clock, Check, Lock, ChevronDown, ChevronRight, TrendingUp } from "lucide-react";
+import { ChevronLeft, Clock, Check, Lock, ChevronDown, ChevronRight, TrendingUp, Sparkles } from "lucide-react";
 import { loadProfile, getTopicProgress, setCurrentUnit } from "@/lib/progress";
 import { getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
@@ -16,6 +16,7 @@ import type {
   CurriculumUnit,
 } from "@/lib/types";
 import subjects from "@/data/subjects";
+import AdvisorPanel from "./_components/advisor-panel";
 
 // ── Mastery thresholds ────────────────────────────────
 // Mirrors lib/progress.ts:deriveTopicStatus and the home page semantics.
@@ -300,6 +301,14 @@ function MathCourseCatalog({
     recommendUnit?.unit.id ?? null,
   );
 
+  // ── Advisor panel: which unit's readiness check is open ──
+  // Only one panel at a time (single string id, not a Set). Toggling on the
+  // same unit closes; toggling on a different unit switches over.
+  const [advisorUnitId, setAdvisorUnitId] = useState<string | null>(null);
+  const toggleAdvisor = (unitId: string) => {
+    setAdvisorUnitId((prev) => (prev === unitId ? null : unitId));
+  };
+
   // ── Selected grade ───────────────────────────────────
   // Only REAL_GRADE (7) has real curriculum data; other grades fall through
   // to the coming-soon branch below.
@@ -583,6 +592,8 @@ function MathCourseCatalog({
                       resumeTopicId={resumeTopicId}
                       firstTopicId={topics[0]?.id ?? null}
                       onActivate={() => onActivateUnit(unit.id)}
+                      onCheckReadiness={() => toggleAdvisor(unit.id)}
+                      advisorOpen={advisorUnitId === unit.id}
                     />
                   </div>
                 </div>
@@ -706,6 +717,19 @@ function MathCourseCatalog({
 
                   </div>
                 )}
+
+                {/* Advisor panel — inline expansion, sibling to the
+                    expanded topic list. Single panel open at a time
+                    across the catalog (advisorUnitId is a single id). */}
+                {advisorUnitId === unit.id && (
+                  <AdvisorPanel
+                    profile={profile}
+                    unitId={unit.id}
+                    firstTopicId={topics[0]?.id ?? null}
+                    onActivate={() => onActivateUnit(unit.id)}
+                    onClose={() => setAdvisorUnitId(null)}
+                  />
+                )}
               </div>
             );
           })}
@@ -735,6 +759,8 @@ function UnitFooterCta({
   resumeTopicId,
   firstTopicId,
   onActivate,
+  onCheckReadiness,
+  advisorOpen,
 }: {
   status: UnitStatus;
   resumeTopicId: string | null;
@@ -747,7 +773,40 @@ function UnitFooterCta({
   // mastered material, not switching their primary track), and "locked"
   // is non-interactive.
   onActivate?: () => void;
+  // Toggles the inline AdvisorPanel for this unit. Only rendered on
+  // eligible / in-progress states (the "gate" moments where a readiness
+  // check is meaningful). Locked units don't get one — they're already
+  // hard-blocked. Completed units don't get one — gate is moot.
+  onCheckReadiness?: () => void;
+  // Whether this unit's advisor panel is currently open. Used to flip
+  // the AI button's visual state (filled when active, ghost when not)
+  // so the user has a stable signal of which panel they opened.
+  advisorOpen?: boolean;
 }) {
+  // The "Check readiness with AI" affordance — small ghost-styled
+  // sparkle button shown alongside the primary CTA on gating states.
+  // Not introduced as a "Register" replacement; the existing Continue /
+  // Start Unit CTAs still work without ever touching the advisor.
+  const advisorButton =
+    onCheckReadiness && (status === "eligible" || status === "in-progress") ? (
+      <button
+        type="button"
+        onClick={onCheckReadiness}
+        aria-pressed={advisorOpen}
+        aria-label="Check readiness with AI"
+        className="inline-flex items-center gap-1.5 rounded-lg shrink-0 transition-colors"
+        style={{
+          fontSize: "12px",
+          padding: "8px 12px",
+          color: advisorOpen ? "#FFFFFF" : "#5B21B6",
+          backgroundColor: advisorOpen ? "#5B21B6" : "#F5F3FF",
+          border: `1px solid ${advisorOpen ? "#5B21B6" : "#C4B5FD"}`,
+        }}
+      >
+        <Sparkles size={12} aria-hidden="true" />
+        <span>Check with AI</span>
+      </button>
+    ) : null;
   if (status === "locked") {
     // Intentional addition vs. design reference: reference renders a "Preview"
     // link to a UnitDetailScreen which is not ported. A disabled <button> keeps
@@ -803,40 +862,46 @@ function UnitFooterCta({
 
   if (status === "in-progress" && resumeTopicId) {
     return (
-      <Link
-        href={`/learn-v2/${resumeTopicId}`}
-        onClick={onActivate}
-        className="rounded-lg shrink-0 transition-opacity hover:opacity-90"
-        style={{
-          fontSize: "13px",
-          padding: "8px 20px",
-          color: "#FFFFFF",
-          backgroundColor: "#0F2A4A",
-          textDecoration: "none",
-        }}
-      >
-        Continue
-      </Link>
+      <div className="flex items-center gap-2 shrink-0">
+        {advisorButton}
+        <Link
+          href={`/learn-v2/${resumeTopicId}`}
+          onClick={onActivate}
+          className="rounded-lg shrink-0 transition-opacity hover:opacity-90"
+          style={{
+            fontSize: "13px",
+            padding: "8px 20px",
+            color: "#FFFFFF",
+            backgroundColor: "#0F2A4A",
+            textDecoration: "none",
+          }}
+        >
+          Continue
+        </Link>
+      </div>
     );
   }
 
   // Eligible / not-started — start at the unit's first lesson.
   if (firstTopicId) {
     return (
-      <Link
-        href={`/learn-v2/${firstTopicId}`}
-        onClick={onActivate}
-        className="rounded-lg shrink-0 transition-opacity hover:opacity-90"
-        style={{
-          fontSize: "13px",
-          padding: "8px 20px",
-          color: "#FFFFFF",
-          backgroundColor: "#0F2A4A",
-          textDecoration: "none",
-        }}
-      >
-        Start Unit
-      </Link>
+      <div className="flex items-center gap-2 shrink-0">
+        {advisorButton}
+        <Link
+          href={`/learn-v2/${firstTopicId}`}
+          onClick={onActivate}
+          className="rounded-lg shrink-0 transition-opacity hover:opacity-90"
+          style={{
+            fontSize: "13px",
+            padding: "8px 20px",
+            color: "#FFFFFF",
+            backgroundColor: "#0F2A4A",
+            textDecoration: "none",
+          }}
+        >
+          Start Unit
+        </Link>
+      </div>
     );
   }
 
