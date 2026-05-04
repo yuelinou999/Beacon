@@ -62,8 +62,6 @@ function PracticeContent() {
   const [grade, setGrade] = useState<GradeResult | null>(null);
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState("");
-  const [questionsAnswered, setQuestionsAnswered] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
   const [bilingual, setBilingual] = useState(false);
 
   // ── Batch state ────────────────────────────────────
@@ -77,6 +75,18 @@ function PracticeContent() {
   const [streak, setStreak] = useState(0);
   const [masteryAtStart, setMasteryAtStart] = useState<number | null>(null);
   const [quizDifficulty, setQuizDifficulty] = useState<"easy" | "medium" | "hard">("easy");
+
+  // questionsAnswered and correctCount are derived from results — single
+  // source of truth. Callers that need them as numbers should read these.
+  const questionsAnswered = results.length;
+  const correctCount = results.filter((r) => r.correct).length;
+
+  // Mirrors `results` so unmount and state→complete effects can read the
+  // latest stats without closing over stale state.
+  const latestResultsRef = useRef<QuestionResult[]>([]);
+  useEffect(() => {
+    latestResultsRef.current = results;
+  }, [results]);
 
   // Timing
   const questionStartRef = useRef<number>(0);
@@ -93,15 +103,8 @@ function PracticeContent() {
     // the before→after delta. Only set once per page lifetime; "Practice
     // more" reset will re-snapshot in step 5.
     setMasteryAtStart(getTopicProgress(loaded, topicId).mastery);
-
-    return () => {
-      // End session on unmount
-      if (sessionIdRef.current) {
-        // Read latest counts from refs isn't possible with state,
-        // so we end with what we have via the closure
-        endSession(sessionIdRef.current, {});
-      }
-    };
+    // Session cleanup is owned by the dedicated finalizeSession effects
+    // below — both batch-complete and unmount paths land there.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -117,41 +120,38 @@ function PracticeContent() {
     };
   }, []);
 
-  // End session with final stats when leaving
-  const endSessionWithStats = useCallback(() => {
-    if (sessionIdRef.current) {
-      endSession(sessionIdRef.current, {
-        questions_attempted: questionsAnswered,
-        questions_correct: correctCount,
-        hints_used: 0,
-        explain_differently_used: 0,
-      });
-      sessionIdRef.current = null;
-    }
-  }, [questionsAnswered, correctCount]);
+  // ── Session boundary = batch boundary ─────────────
+  // Single session per batch. Mount starts the session (above), state →
+  // "complete" closes it cleanly with full stats, unmount closes a
+  // partial-batch session with whatever stats have accumulated. Reading
+  // results via ref so neither effect closes over stale state.
 
-  // Update session stats periodically (on each result)
+  const finalizeSession = (reason: "complete" | "unmount") => {
+    if (!sessionIdRef.current) return;
+    const r = latestResultsRef.current;
+    endSession(sessionIdRef.current, {
+      questions_attempted: r.length,
+      questions_correct: r.filter((x) => x.correct).length,
+      hints_used: 0,
+      explain_differently_used: 0,
+    });
+    sessionIdRef.current = null;
+    // `reason` is unused right now but kept for future SessionLog tagging
+    // (e.g. partial vs complete) — see Beacon Dashboard plans.
+    void reason;
+  };
+
+  // Close session when batch completes.
   useEffect(() => {
-    if (state === "result" && sessionIdRef.current) {
-      // Update session in-place with latest stats
-      endSession(sessionIdRef.current, {
-        questions_attempted: questionsAnswered,
-        questions_correct: correctCount,
-        hints_used: 0,
-        explain_differently_used: 0,
-      });
-      // Re-start the session timer for continued practice
-      sessionIdRef.current = startSession("practice", topicId);
-    }
+    if (state === "complete") finalizeSession("complete");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  // Clean up on unmount
+  // Close session on unmount (partial-batch case). Mount-only — runs once.
   useEffect(() => {
-    return () => {
-      endSessionWithStats();
-    };
-  }, [endSessionWithStats]);
+    return () => finalizeSession("unmount");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const language = profile?.language || "en";
   const progress = profile ? getTopicProgress(profile, topicId) : { mastery: 0, status: "not_started" as const, attempts: 0, last_seen: null, lesson_completed: false, explain_differently_count: 0 };
@@ -245,8 +245,6 @@ function PracticeContent() {
       const data: GradeResult = await res.json();
       setGrade(data);
       setState("result");
-      setQuestionsAnswered((n) => n + 1);
-      if (data.correct) setCorrectCount((n) => n + 1);
       setStreak((s) => (data.correct ? s + 1 : 0));
 
       // Record this slot's outcome for the completion summary.
