@@ -119,6 +119,13 @@ function migrateWrongAnswerTopics(
   return { wrong_answers: kept, newlyArchived };
 }
 
+// ── Mastery deltas ────────────────────────────────────
+// Per-attempt mastery adjustment in updateMasteryAfterPractice. Exported so
+// UI surfaces (e.g. Practice's mastery-change callout) can show the same
+// numbers the formula actually applies — single source of truth.
+export const MASTERY_CORRECT_DELTA = 0.1;
+export const MASTERY_INCORRECT_DELTA = -0.05;
+
 // ── Helpers ───────────────────────────────────────────
 
 export function generateId(): string {
@@ -312,9 +319,9 @@ export function updateMasteryAfterPractice(
   tp.last_seen = now;
 
   if (correct) {
-    tp.mastery = Math.min(1.0, +(tp.mastery + 0.1).toFixed(2));
+    tp.mastery = Math.min(1.0, +(tp.mastery + MASTERY_CORRECT_DELTA).toFixed(2));
   } else {
-    tp.mastery = Math.max(0.0, +(tp.mastery - 0.05).toFixed(2));
+    tp.mastery = Math.max(0.0, +(tp.mastery + MASTERY_INCORRECT_DELTA).toFixed(2));
   }
   tp.status = deriveTopicStatus(tp);
 

@@ -19,7 +19,28 @@ import {
 import type { StudentProfile, CurriculumTopic, PracticeQuestion, GradeResult } from "@/lib/types";
 import curriculum from "@/data/curriculum.json";
 
-type PracticeState = "loading" | "question" | "grading" | "result" | "error";
+// Practice runs in fixed-size batches. 5 mirrors the design reference; if
+// adaptive sizing comes later, this becomes a per-mastery computed value.
+const BATCH_SIZE = 5;
+
+type PracticeState =
+  | "loading"   // generating next question (initial OR mid-batch)
+  | "question"  // question shown, awaiting answer
+  | "grading"   // submitted, waiting for /api/practice grade response
+  | "result"    // graded, showing inline correct/incorrect feedback
+  | "complete"  // BATCH_SIZE questions answered — show summary
+  | "error";
+
+// Per-question record kept for the completion summary's dot grid, mistake
+// count, and mastery-delta display.
+interface QuestionResult {
+  question: string;
+  correctAnswer: string;
+  studentAnswer: string;
+  correct: boolean;
+  difficulty: "easy" | "medium" | "hard";
+  timeSeconds: number;
+}
 
 export default function PracticePage() {
   return (
@@ -45,16 +66,33 @@ function PracticeContent() {
   const [correctCount, setCorrectCount] = useState(0);
   const [bilingual, setBilingual] = useState(false);
 
+  // ── Batch state ────────────────────────────────────
+  // currentIdx is 0..BATCH_SIZE-1, the slot the user is currently working on.
+  // results accumulates one entry per completed slot (excludes retries —
+  // retries don't advance the slot). streak resets between batches and on
+  // each incorrect answer. masteryAtStart is the snapshot the completion
+  // screen will use to render the before→after delta.
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [results, setResults] = useState<QuestionResult[]>([]);
+  const [streak, setStreak] = useState(0);
+  const [masteryAtStart, setMasteryAtStart] = useState<number | null>(null);
+  const [quizDifficulty, setQuizDifficulty] = useState<"easy" | "medium" | "hard">("easy");
+
   // Timing
   const questionStartRef = useRef<number>(0);
   // Session tracking
   const sessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setProfile(loadProfile());
+    const loaded = loadProfile();
+    setProfile(loaded);
     setBilingual(getBilingual());
     updateStreak();
     sessionIdRef.current = startSession("practice", topicId);
+    // Snapshot mastery at batch start so the completion screen can render
+    // the before→after delta. Only set once per page lifetime; "Practice
+    // more" reset will re-snapshot in step 5.
+    setMasteryAtStart(getTopicProgress(loaded, topicId).mastery);
 
     return () => {
       // End session on unmount
@@ -137,6 +175,12 @@ function PracticeContent() {
     setGrade(null);
     setAnswer("");
 
+    // Snapshot difficulty AT generation time. /api/practice picks difficulty
+    // from current mastery; we freeze it for display so the difficulty pill
+    // doesn't flicker mid-question as mastery shifts elsewhere.
+    const masteryNow = getTopicProgress(profile, topicId).mastery;
+    setQuizDifficulty(getDifficulty(masteryNow));
+
     try {
       const res = await fetch("/api/practice?action=generate", {
         method: "POST",
@@ -145,7 +189,7 @@ function PracticeContent() {
           topicId,
           topicTitle: topic.title[language],
           language,
-          mastery: getTopicProgress(profile, topicId).mastery,
+          mastery: masteryNow,
         }),
       });
 
@@ -203,6 +247,18 @@ function PracticeContent() {
       setState("result");
       setQuestionsAnswered((n) => n + 1);
       if (data.correct) setCorrectCount((n) => n + 1);
+      setStreak((s) => (data.correct ? s + 1 : 0));
+
+      // Record this slot's outcome for the completion summary.
+      const result: QuestionResult = {
+        question: quiz.question,
+        correctAnswer: data.correct_answer,
+        studentAnswer: answer.trim(),
+        correct: data.correct,
+        difficulty: quizDifficulty,
+        timeSeconds,
+      };
+      setResults((prev) => [...prev, result]);
 
       const updated = updateMasteryAfterPractice(
         profile,
@@ -219,6 +275,17 @@ function PracticeContent() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to grade answer");
       setState("error");
+    }
+  };
+
+  // Advance to next slot OR complete the batch. Wired to the result-phase
+  // "Next" button. retry path (refetch same slot) lands in step 5.
+  const advanceSlot = () => {
+    if (currentIdx + 1 >= BATCH_SIZE) {
+      setState("complete");
+    } else {
+      setCurrentIdx((i) => i + 1);
+      generateQuiz();
     }
   };
 
@@ -249,6 +316,9 @@ function PracticeContent() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          <span className="text-xs text-muted">
+            Slot {Math.min(currentIdx + 1, BATCH_SIZE)} of {BATCH_SIZE}
+          </span>
           {questionsAnswered > 0 && (
             <span className="text-xs text-muted">
               {correctCount} correct of {questionsAnswered}
@@ -279,7 +349,9 @@ function PracticeContent() {
           {(state === "question" || state === "grading") && quiz && (
             <>
               <div className="bg-card border border-border/60 rounded-xl px-6 py-5">
-                <p className="text-label uppercase text-muted mb-3">Question {questionsAnswered + 1}</p>
+                <p className="text-label uppercase text-muted mb-3">
+                  Question {currentIdx + 1} of {BATCH_SIZE}
+                </p>
                 <div className="text-body math-display">
                   <MathRenderer content={quiz.question} />
                 </div>
@@ -318,7 +390,9 @@ function PracticeContent() {
             <>
               {/* Question (read-only) */}
               <div className="bg-card border border-border/60 rounded-xl px-6 py-5">
-                <p className="text-label uppercase text-muted mb-3">Question {questionsAnswered}</p>
+                <p className="text-label uppercase text-muted mb-3">
+                  Question {currentIdx + 1} of {BATCH_SIZE}
+                </p>
                 <div className="text-body math-display">
                   <MathRenderer content={quiz.question} />
                 </div>
@@ -347,22 +421,47 @@ function PracticeContent() {
                 Mastery updated to {(progress.mastery * 100).toFixed(0)}%
               </p>
 
-              {/* Actions */}
+              {/* Actions \u2014 advance to next slot or finish batch */}
               <div className="flex gap-3">
                 <button
-                  onClick={generateQuiz}
+                  onClick={advanceSlot}
                   className="flex-1 py-2.5 rounded-lg bg-navy text-white text-sm font-medium hover:bg-navy-light transition"
                 >
-                  Next question
+                  {currentIdx + 1 >= BATCH_SIZE ? "Finish batch" : "Next question"}
                 </button>
                 <Link
                   href="/subject/math"
                   className="px-5 py-2.5 rounded-lg border border-border text-muted text-sm hover:text-navy hover:border-navy transition text-center"
                 >
-                  Done
+                  Exit
                 </Link>
               </div>
             </>
+          )}
+
+          {/* Complete \u2014 placeholder until step 3 builds the real summary */}
+          {state === "complete" && (
+            <div className="text-center py-12 space-y-4">
+              <p className="text-lg font-medium text-navy">Practice complete!</p>
+              <p className="text-sm text-muted">
+                {results.filter((r) => r.correct).length} of {BATCH_SIZE} correct
+                {masteryAtStart !== null && (
+                  <>
+                    {" \u00b7 mastery "}
+                    {Math.round(masteryAtStart * 100)}% \u2192 {Math.round(progress.mastery * 100)}%
+                  </>
+                )}
+              </p>
+              <p className="text-xs text-muted">
+                (Real completion summary lands in step 3)
+              </p>
+              <Link
+                href="/subject/math"
+                className="inline-block px-5 py-2.5 rounded-lg bg-navy text-white text-sm font-medium hover:bg-navy-light transition"
+              >
+                Back to course
+              </Link>
+            </div>
           )}
 
           {/* Error */}
