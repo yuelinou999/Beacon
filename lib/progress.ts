@@ -466,6 +466,17 @@ export function setCurrentUnit(
   return newProfile;
 }
 
+// Profile-independent variant. Loads from localStorage internally, applies
+// setCurrentUnit, returns the new profile. Useful for click handlers in
+// pages that don't already hold profile in React state — no risk of
+// silently dropping the activation when the host component hasn't
+// hydrated yet (closes codex round-2's early-click race for additional
+// callers beyond the subject page). loadProfile is sync; safe in click
+// handlers since clicks only fire client-side.
+export function setCurrentUnitById(unitId: string): StudentProfile {
+  return setCurrentUnit(loadProfile(), unitId);
+}
+
 export function markLessonComplete(
   profile: StudentProfile,
   topicId: string

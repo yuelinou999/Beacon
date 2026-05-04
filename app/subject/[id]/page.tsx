@@ -294,7 +294,19 @@ function MathCourseCatalog({
     };
 
     const status = deriveUnitStatus(unit, partial, unitCompletion);
-    unitCompletion.set(unit.id, status === "completed");
+    // For prereq-chain purposes, coming_soon units are NON-BLOCKING.
+    // A unit with no authored content can't be "completed" by definition;
+    // counting it as a real gate would lock every authored unit
+    // downstream of any stub-only prereq (e.g. unit_6_equations whose
+    // prereq is unit_5_rational, currently stub-only — would render as
+    // "Locked / Needs prerequisite" on every fresh profile, blocking the
+    // entire demo path). Treating coming_soon as bypassed in the
+    // completion map is honest: the gate doesn't exist yet, so it
+    // shouldn't gate anything.
+    unitCompletion.set(
+      unit.id,
+      status === "completed" || status === "coming_soon",
+    );
 
     // Resume target: first started-but-not-mastered, else first not-started, else first.
     const resumeTopicId =

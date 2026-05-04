@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { getAllTopics } from "@/lib/curriculum";
+import { getAllTopics, getUnitForTopic } from "@/lib/curriculum";
 import { isTopicStub } from "@/lib/types";
+import { setCurrentUnitById } from "@/lib/progress";
+import { resolveActiveStudyTarget } from "@/lib/active-target";
 import { getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
@@ -20,9 +22,18 @@ import CompletePhaseView from "../_components/complete-phase";
 
 type PhaseState = 1 | 2 | 3 | 4 | 5 | "complete";
 
+// The currently-authored demo unit. Stub-topic landing pages route the
+// "Try Solving Equations →" CTA here. Defined as a constant so a future
+// curriculum push that authors more units only needs to flip this value
+// (or, when multiple units are authored, derive the recommendation from
+// the curriculum tree).
+const DEMO_UNIT_ID = "unit_6_equations";
+const DEMO_UNIT_LABEL = "Solving Equations";
+
 export default function LearnV2TopicPage() {
   const params = useParams<{ topicId: string }>();
   const topicId = params.topicId;
+  const router = useRouter();
   const { setContext } = useAIContext();
 
   const [currentPhase, setCurrentPhase] = useState<PhaseState>(1);
@@ -90,54 +101,134 @@ export default function LearnV2TopicPage() {
   }
 
   // ── Stub / coming-soon state: Tier-3 topics or missing phases ─────
+  // Polished shell mirroring /subject/{id}'s coming-soon visual language —
+  // centered subject icon, h2 + unit-context subtitle, honest copy, primary
+  // CTA pointing at the demo unit, secondary back link to the catalog.
+  // The "Try Solving Equations →" CTA does TWO things on click:
+  //   1. setCurrentUnitById(DEMO_UNIT_ID) — pins the demo unit as the
+  //      student's active target, so sidebar Learn / Practice / Quiz
+  //      hrefs all realign to it on next render.
+  //   2. router.push to the resolved active topic in that unit — same
+  //      destination Subject's "Start Unit" CTA would compute.
+  // The setCurrentUnitById helper loads/saves localStorage internally,
+  // so this CTA works reliably even before the page's profile state has
+  // hydrated (no in-memory profile dependency, codex round-2 race-safe).
   if (!topic.phases || isTopicStub(topic.phases)) {
+    const parentUnit = getUnitForTopic(topic.id);
+    const unitName = parentUnit?.title ?? "Mathematics";
+
+    const handleSwitchToDemo = () => {
+      const updated = setCurrentUnitById(DEMO_UNIT_ID);
+      const target = resolveActiveStudyTarget(updated);
+      router.push(`/learn-v2/${target.topicId}`);
+    };
+
     return (
-      <div className="max-w-4xl mx-auto px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-2xl mx-auto px-8 py-12">
           <Link
             href="/subject/math"
-            className="flex items-center gap-2 transition-colors hover:opacity-70"
+            className="inline-flex items-center gap-2 mb-10 transition-colors hover:opacity-70"
             style={{ color: "#2563EB" }}
           >
             <ChevronLeft size={16} />
-            <span style={{ fontSize: "14px" }}>Back to course</span>
+            <span style={{ fontSize: "14px" }}>Back to course catalog</span>
           </Link>
-        </div>
-        <div className="mb-8 text-center">
-          <h1
-            style={{
-              fontSize: "24px",
-              fontWeight: 500,
-              color: "#0F2A4A",
-              marginBottom: "4px",
-            }}
-          >
-            {topic.title.en}
-          </h1>
-          <BilingualSubtitle
-            english={topic.title.en}
-            fallbackZh={topic.title.zh}
-            style={{ display: "block", fontSize: "14px", color: "#6B7280" }}
-          />
-        </div>
-        <div
-          className="max-w-2xl mx-auto rounded-xl p-8 text-center"
-          style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
-        >
-          <h2
-            style={{
-              fontSize: "20px",
-              fontWeight: 500,
-              color: "#0F2A4A",
-              marginBottom: "12px",
-            }}
-          >
-            Coming soon
-          </h2>
-          <p style={{ fontSize: "14px", color: "#6B7280", lineHeight: 1.6 }}>
-            This lesson hasn&apos;t been written yet. Check back soon, or
-            explore another topic from the course catalog.
-          </p>
+
+          <div className="text-center">
+            {/* Subject-icon medallion — same circle/bg/icon language as
+                /subject/{id}'s coming-soon shell. Σ for math here since
+                /learn-v2 is the math subtree today. */}
+            <div
+              className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl mb-6 mx-auto"
+              style={{ backgroundColor: "#EFF6FF", color: "#2563EB" }}
+              aria-hidden="true"
+            >
+              {"∑"}
+            </div>
+
+            <h1
+              style={{
+                fontSize: "26px",
+                fontWeight: 500,
+                color: "#0F2A4A",
+                marginBottom: "6px",
+                lineHeight: 1.3,
+              }}
+            >
+              {topic.title.en}
+            </h1>
+            <p
+              style={{
+                fontSize: "14px",
+                color: "#6B7280",
+                marginBottom: "4px",
+              }}
+            >
+              Mathematics &middot; {unitName}
+            </p>
+            <BilingualSubtitle
+              english={topic.title.en}
+              fallbackZh={topic.title.zh}
+              style={{ display: "block", fontSize: "13px", color: "#9CA3AF", marginBottom: "32px" }}
+            />
+
+            <p
+              style={{
+                fontSize: "15px",
+                color: "#1F2937",
+                lineHeight: 1.7,
+                marginBottom: "8px",
+              }}
+            >
+              This lesson is still being authored.
+            </p>
+            <p
+              style={{
+                fontSize: "14px",
+                color: "#6B7280",
+                lineHeight: 1.7,
+                marginBottom: "32px",
+                maxWidth: "440px",
+                marginLeft: "auto",
+                marginRight: "auto",
+              }}
+            >
+              We&rsquo;re shipping one fully-authored unit at a time &mdash; currently:{" "}
+              <strong style={{ color: "#1F2937" }}>{DEMO_UNIT_LABEL}</strong>.
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={handleSwitchToDemo}
+                className="rounded-lg transition-opacity hover:opacity-90"
+                style={{
+                  fontSize: "14px",
+                  padding: "10px 24px",
+                  color: "#FFFFFF",
+                  backgroundColor: "#0F2A4A",
+                  border: "none",
+                }}
+              >
+                Try {DEMO_UNIT_LABEL} &rarr;
+              </button>
+              <Link
+                href="/subject/math"
+                className="rounded-lg transition-colors hover:border-blue-500"
+                style={{
+                  fontSize: "14px",
+                  padding: "10px 24px",
+                  color: "#1F2937",
+                  backgroundColor: "#FFFFFF",
+                  border: "1px solid #E2E5EA",
+                  textDecoration: "none",
+                }}
+              >
+                Back to course catalog
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
