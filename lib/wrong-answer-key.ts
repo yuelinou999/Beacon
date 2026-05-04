@@ -71,23 +71,35 @@ export function resolveBankQuestion(
 
   // ── Path 2: normalized display-string fallback ────────
   // Walk both banks (when present) and compare against the WrongAnswer's
-  // saved question text. Practice first since it's the more common writer.
+  // saved question text. Order matters when a practice and quiz prompt
+  // happen to render to the same display string within the same topic:
+  // without a hint, we'd always return "practice" first and silently
+  // misattribute legacy quiz mistakes (or any future partial-shape row
+  // that carries `source` but not `bank_question_id`).
+  //
+  // So: honor wa.source as a fallback-order hint when it exists. Default
+  // to practice-first because practice is the common writer today.
   const target = normalize(wa.question);
 
-  if (topic.practice) {
+  const checkPractice = (): BankResolution => {
+    if (!topic.practice) return null;
     for (const q of topic.practice.questions) {
       if (normalize(getDisplayQuestion(q.question, q.equation)) === target) {
         return { source: "practice", entry: q, topic };
       }
     }
-  }
-  if (topic.quiz) {
+    return null;
+  };
+  const checkQuiz = (): BankResolution => {
+    if (!topic.quiz) return null;
     for (const q of topic.quiz.questions) {
       if (normalize(getDisplayQuestion(q.question, q.equation)) === target) {
         return { source: "quiz", entry: q, topic };
       }
     }
-  }
+    return null;
+  };
 
-  return null;
+  if (wa.source === "quiz") return checkQuiz() ?? checkPractice();
+  return checkPractice() ?? checkQuiz();
 }

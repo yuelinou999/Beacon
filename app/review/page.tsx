@@ -943,13 +943,16 @@ function DueRetryingCard({
           {/* Layer 2: pre-authored bank alt — blue, only when present.
               Sourced from PracticeBankQuestion.alt_explanation /
               QuizQuestion.alt_explanation in curriculum.json. Free,
-              instant; no LLM round-trip. */}
+              instant; no LLM round-trip.
+              Intentionally NOT a live region: bank alt is part of the
+              initial wrong-again render (synchronous, no fetch), and
+              persists across "Try once more" loops as the slot's
+              baseline alt content. Live-region announcement is reserved
+              for the freshest dynamic layer (the LLM alt below). */}
           {bankAltText && (
             <div
               className="rounded-lg p-5 mb-3"
               style={{ backgroundColor: "#EFF6FF", border: "1px solid #BFDBFE" }}
-              role="status"
-              aria-live="polite"
             >
               <p
                 style={{
