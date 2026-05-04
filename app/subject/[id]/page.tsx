@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Clock, Check, Lock, ChevronDown, ChevronRight, TrendingUp } from "lucide-react";
-import { loadProfile, getTopicProgress } from "@/lib/progress";
+import { loadProfile, getTopicProgress, setCurrentUnit } from "@/lib/progress";
 import { getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
@@ -188,17 +188,35 @@ export default function SubjectDetailPage() {
   }
 
   // ── Active subject (math) ──
-  return <MathCourseCatalog profile={profile} bilingual={bilingual} setContext={setContext} />;
+  // Activate-unit callback bundles the setCurrentUnit + setProfile pair so
+  // the catalog component doesn't need direct access to the profile state
+  // setter. No-op when profile hasn't loaded yet (early click race).
+  const handleActivateUnit = (unitId: string) => {
+    if (profile) {
+      const updated = setCurrentUnit(profile, unitId);
+      setProfile(updated);
+    }
+  };
+  return (
+    <MathCourseCatalog
+      profile={profile}
+      bilingual={bilingual}
+      setContext={setContext}
+      onActivateUnit={handleActivateUnit}
+    />
+  );
 }
 
 function MathCourseCatalog({
   profile,
   bilingual,
   setContext,
+  onActivateUnit,
 }: {
   profile: StudentProfile | null;
   bilingual: boolean;
   setContext: ReturnType<typeof useAIContext>["setContext"];
+  onActivateUnit: (unitId: string) => void;
 }) {
   const allTopics = getAllTopics();
   const grade = getGrade7();
@@ -560,7 +578,12 @@ function MathCourseCatalog({
                         </div>
                       )}
                     </div>
-                    <UnitFooterCta status={status} resumeTopicId={resumeTopicId} firstTopicId={topics[0]?.id ?? null} />
+                    <UnitFooterCta
+                      status={status}
+                      resumeTopicId={resumeTopicId}
+                      firstTopicId={topics[0]?.id ?? null}
+                      onActivate={() => onActivateUnit(unit.id)}
+                    />
                   </div>
                 </div>
 
@@ -649,6 +672,7 @@ function MathCourseCatalog({
                               <div className="flex gap-2 shrink-0">
                                 <Link
                                   href={`/learn-v2/${topic.id}`}
+                                  onClick={() => onActivateUnit(unit.id)}
                                   className="rounded-md transition-opacity hover:opacity-90"
                                   style={{
                                     backgroundColor: "#0F2A4A",
@@ -710,10 +734,19 @@ function UnitFooterCta({
   status,
   resumeTopicId,
   firstTopicId,
+  onActivate,
 }: {
   status: UnitStatus;
   resumeTopicId: string | null;
   firstTopicId: string | null;
+  // Fires when the user picks this unit as their next thing to study.
+  // Parent uses it to persist current_unit so sidebar / home / practice
+  // / quiz all re-resolve to this unit's topic on the next render.
+  // Not all CTA branches fire it: the "completed → Review" link goes to
+  // /practice without changing current_unit (the user is reviewing
+  // mastered material, not switching their primary track), and "locked"
+  // is non-interactive.
+  onActivate?: () => void;
 }) {
   if (status === "locked") {
     // Intentional addition vs. design reference: reference renders a "Preview"
@@ -772,6 +805,7 @@ function UnitFooterCta({
     return (
       <Link
         href={`/learn-v2/${resumeTopicId}`}
+        onClick={onActivate}
         className="rounded-lg shrink-0 transition-opacity hover:opacity-90"
         style={{
           fontSize: "13px",
@@ -791,6 +825,7 @@ function UnitFooterCta({
     return (
       <Link
         href={`/learn-v2/${firstTopicId}`}
+        onClick={onActivate}
         className="rounded-lg shrink-0 transition-opacity hover:opacity-90"
         style={{
           fontSize: "13px",
