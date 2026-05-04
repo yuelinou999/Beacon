@@ -79,7 +79,7 @@ export default function ReviewPage() {
   const inflightExplainRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    setContext({ page: "general" });
+    setContext({ page: "review" });
   }, [setContext]);
 
   useEffect(() => {

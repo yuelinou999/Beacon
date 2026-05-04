@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 
 export interface AIContext {
-  page: "home" | "learn" | "practice" | "general" | "quiz";
+  page: "home" | "learn" | "practice" | "quiz" | "review" | "dashboard" | "general";
   topicId?: string;
   topicTitle?: string;
   mastery?: number;

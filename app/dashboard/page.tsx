@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("student");
 
   useEffect(() => {
-    setContext({ page: "general" });
+    setContext({ page: "dashboard" });
   }, [setContext]);
 
   const loadPortrait = useCallback(async () => {

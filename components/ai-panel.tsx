@@ -36,6 +36,18 @@ const FALLBACK_SUGGESTIONS: Record<string, string[]> = {
     "Give me a hint",
     "Explain the solution step by step",
   ],
+  review: [
+    "Why do I keep making this mistake?",
+    "What pattern do you see in my errors?",
+    "How can I avoid this next time?",
+    "Walk me through one I missed",
+  ],
+  dashboard: [
+    "Tell me about myself as a learner",
+    "What am I naturally good at?",
+    "How can I study more effectively?",
+    "Am I improving?",
+  ],
   general: [
     "What should I review first?",
     "How am I doing overall?",
@@ -49,6 +61,8 @@ function contextLabel(ctx: AIContext): string {
     case "learn": return `Viewing: ${ctx.topicTitle || "Lesson"}`;
     case "practice": return `Viewing: ${ctx.topicTitle || "Practice"}`;
     case "home": return "Viewing: Learning progress";
+    case "review": return "Viewing: Mistake review";
+    case "dashboard": return "Viewing: Learner portrait";
     default: return "Viewing: General";
   }
 }
@@ -58,6 +72,8 @@ function placeholderText(ctx: AIContext): string {
     case "home": return "Ask about your progress...";
     case "learn": return `Ask about ${ctx.topicTitle || "this topic"}...`;
     case "practice": return "Need help with a question?";
+    case "review": return "Ask about a mistake or pattern...";
+    case "dashboard": return "Ask about your learner portrait...";
     default: return "Ask me anything...";
   }
 }
@@ -66,6 +82,9 @@ function placeholderText(ctx: AIContext): string {
 // chatbot. Each assistant message gets a small chip noting which signal the
 // model was given. Mapping mirrors what /api/assistant actually receives in
 // the `context` payload; if those keys change, update both sides.
+//
+// Round-2 codex add: explicit "review" and "dashboard" labels so the two
+// strongest hackathon surfaces don't fall through to "Using general context".
 function sourceContextLabel(ctx: AIContext): string {
   switch (ctx.page) {
     case "learn":
@@ -74,6 +93,10 @@ function sourceContextLabel(ctx: AIContext): string {
       return "Using current question context";
     case "home":
       return "Using your progress context";
+    case "review":
+      return "Using mistake review context";
+    case "dashboard":
+      return "Using learner portrait context";
     default:
       return "Using general context";
   }
