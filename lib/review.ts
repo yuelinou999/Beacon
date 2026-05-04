@@ -100,3 +100,71 @@ export function reviewState(wa: WrongAnswer): MistakeReviewState {
   if (wa.last_review_correct === false) return "failed";
   return "not_reviewed";
 }
+
+// ── Mistake patterns (stats-based insight) ────────────
+// Computes a short "your most common pattern" observation from raw counts.
+// Explicitly NOT an LLM call — see /review's callout, which is labelled
+// "Mistake patterns" not "AI insight" to avoid implying inference.
+//
+// Rules per codex review:
+//   - Need at least MIN_MISTAKES_FOR_PATTERN to surface anything (avoid
+//     overfitting on tiny data).
+//   - Headline: the dominant error_type label, action-oriented.
+//   - Optional tip: only when there's a clear secondary type (>=30% share)
+//     AND it differs from the dominant one. No psychological inferences.
+
+const MIN_MISTAKES_FOR_PATTERN = 3;
+const SECONDARY_SHARE_THRESHOLD = 0.3;
+
+export interface MistakePattern {
+  headline: string;
+  tip?: string;
+}
+
+const PATTERN_HEADLINES: Record<string, string> = {
+  "Calculation error":
+    "Most mistakes are calculation errors. Slow down and check arithmetic before submitting.",
+  "Concept confusion":
+    "Most mistakes are concept confusions. Revisiting the lesson would help more than another practice round.",
+  Rushing:
+    "Most mistakes happen when you move too fast. Try pausing for a beat after reading each question.",
+  Mistake: "Mistakes are spread across categories — keep practicing to surface a clearer pattern.",
+};
+
+const PATTERN_TIPS: Record<string, string> = {
+  "Calculation error": "Re-read your last step before hitting submit.",
+  "Concept confusion": "Open the lesson and re-read the key idea section.",
+  Rushing: "Treat each question like a checklist — finish the steps, then commit.",
+};
+
+export function computeMistakePatterns(mistakes: WrongAnswer[]): MistakePattern | null {
+  if (mistakes.length < MIN_MISTAKES_FOR_PATTERN) return null;
+
+  const counts = new Map<string, number>();
+  for (const m of mistakes) {
+    const label = errorTypeLabel(m.error_type);
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+
+  const entries = Array.from(counts.entries());
+
+  // Find dominant
+  let dominant: { label: string; count: number } | null = null;
+  for (const [label, count] of entries) {
+    if (!dominant || count > dominant.count) dominant = { label, count };
+  }
+  if (!dominant) return null;
+
+  const headline = PATTERN_HEADLINES[dominant.label] ?? PATTERN_HEADLINES.Mistake;
+
+  // Find secondary distinct type that crosses threshold
+  let secondary: { label: string; count: number } | null = null;
+  for (const [label, count] of entries) {
+    if (label === dominant.label) continue;
+    if (count / mistakes.length < SECONDARY_SHARE_THRESHOLD) continue;
+    if (!secondary || count > secondary.count) secondary = { label, count };
+  }
+  const tip = secondary ? PATTERN_TIPS[secondary.label] : undefined;
+
+  return { headline, tip };
+}

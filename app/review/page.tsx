@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Clock, Check, X, ChevronDown, ChevronRight, BookOpen } from "lucide-react";
+import { ChevronLeft, Clock, Check, X, ChevronDown, ChevronRight, BookOpen, Sparkles } from "lucide-react";
 import MathRenderer from "@/components/math-renderer";
 import { useAIContext } from "@/components/ai-context";
 import { loadProfile, recordReviewAttempt } from "@/lib/progress";
@@ -14,6 +14,7 @@ import {
   formatRelativeDate,
   getSkillAreaForTopic,
   reviewState,
+  computeMistakePatterns,
   type MistakeReviewState,
 } from "@/lib/review";
 import type { StudentProfile, WrongAnswer } from "@/lib/types";
@@ -84,6 +85,11 @@ export default function ReviewPage() {
     .slice()
     .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
     .filter((wa) => !(wa.id === retryingId && isMistakeDue(wa)));
+
+  // Stats-based "Mistake patterns" callout. Computed across ALL wrong_answers
+  // (not just due) so the observation reflects long-running tendencies, not
+  // just today's queue. Returns null when there's not enough signal.
+  const pattern = computeMistakePatterns(wrongAnswers);
 
   // Group archive items by skill area (= unit title via review.ts helper).
   // Insertion order preserved per first occurrence — newer mistakes within a
@@ -429,6 +435,51 @@ export default function ReviewPage() {
                   </ul>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mistake patterns callout — stats-based, NOT AI inference. Header
+            says "Mistake patterns" not "AI insight" so users don't expect a
+            personalized model-generated read. Hidden until there's enough
+            signal (see computeMistakePatterns threshold). */}
+        {pattern && (
+          <div
+            className="rounded-lg p-5 flex items-start gap-3 mb-6"
+            style={{ backgroundColor: "#EFF6FF" }}
+          >
+            <Sparkles
+              size={16}
+              style={{ color: "#2563EB", marginTop: "2px", flexShrink: 0 }}
+            />
+            <div className="flex-1">
+              <p
+                style={{
+                  fontSize: "11px",
+                  color: "#2563EB",
+                  fontWeight: 500,
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                  marginBottom: "8px",
+                }}
+              >
+                Mistake patterns
+              </p>
+              <p style={{ fontSize: "14px", color: "#1E40AF", lineHeight: 1.6 }}>
+                {pattern.headline}
+              </p>
+              {pattern.tip && (
+                <p
+                  style={{
+                    fontSize: "13px",
+                    color: "#1E3A8A",
+                    lineHeight: 1.6,
+                    marginTop: "6px",
+                  }}
+                >
+                  Tip: {pattern.tip}
+                </p>
+              )}
             </div>
           </div>
         )}
