@@ -6,8 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import type { StudentProfile } from "@/lib/types";
 import subjects from "@/data/subjects";
 import { loadProfile } from "@/lib/progress";
-import { resolveActiveStudyTarget, FALLBACK_UNIT } from "@/lib/active-target";
-import { getTopicsForUnit } from "@/lib/curriculum";
+import { resolveActiveStudyTarget } from "@/lib/active-target";
 
 type ModuleId = "home" | "learn" | "practice" | "quiz" | "review" | "dashboard";
 type ModuleStatus = "ready" | "preview" | "soon";
@@ -36,11 +35,14 @@ function buildNavItems(target: { topicId: string }): NavItem[] {
   ];
 }
 
-// SSR-safe initial target: derived from the FALLBACK_UNIT without
-// touching localStorage. resolveActiveStudyTarget(null) would do the
-// same thing but adds a getTopicProgress lookup we don't need pre-mount.
-const INITIAL_TOPIC_ID =
-  getTopicsForUnit(FALLBACK_UNIT)[0]?.id ?? "solving_one_step";
+// SSR-safe initial target. Calling the same resolveActiveStudyTarget
+// helper the post-mount effect uses keeps SSR fallback and client
+// re-resolution literally one source of truth — no parallel
+// FALLBACK_UNIT-then-getTopicsForUnit path that could drift if the
+// resolver's logic ever changes (codex round-2 polish suggestion).
+// resolveActiveStudyTarget(null) is pure and cheap to evaluate at
+// module load.
+const INITIAL_TOPIC_ID = resolveActiveStudyTarget(null).topicId;
 
 const STATUS_DOT: Record<ModuleStatus, string> = {
   ready: "#059669",
