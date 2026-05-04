@@ -33,6 +33,10 @@ function isValidLang(s: string): s is TranslateTargetLanguage {
 interface BilingualSubtitleProps {
   english: string;
   fallbackZh?: string;
+  // Optional inline separator rendered BEFORE the translated text. Use when
+  // embedding the subtitle in a sentence ("Mathematics · {topic} · {trans}").
+  // Skipped when nothing renders, so no orphan separators.
+  prefix?: string;
   className?: string;
   style?: CSSProperties;
 }
@@ -40,6 +44,7 @@ interface BilingualSubtitleProps {
 export default function BilingualSubtitle({
   english,
   fallbackZh,
+  prefix,
   className,
   style,
 }: BilingualSubtitleProps) {
@@ -107,6 +112,7 @@ export default function BilingualSubtitle({
     if (!fallbackZh) return null;
     return (
       <span className={className} style={style}>
+        {prefix}
         {fallbackZh}
       </span>
     );
@@ -115,6 +121,7 @@ export default function BilingualSubtitle({
   if (!translated) return null;
   return (
     <span className={className} style={style}>
+      {prefix}
       {translated}
     </span>
   );
