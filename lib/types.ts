@@ -347,6 +347,23 @@ export interface PracticeGradeRequest {
   timeSeconds: number;
 }
 
+// ── Explain (alternative explanation for a missed mistake) ──
+// Used by /review's wrong-again card on demand. Caller passes the original
+// LLM explanation we already showed the student; the endpoint returns a
+// genuinely different teaching approach (visual / analogy / smaller numbers
+// / step-by-step) for the SAME problem.
+
+export interface ExplainRequest {
+  question: string;
+  originalExplanation: string;
+  correctAnswer: string;
+  language: "en" | "zh";
+}
+
+export interface ExplainResponse {
+  altExplanation: string;
+}
+
 // ── Ollama types ───────────────────────────────────────
 
 export interface OllamaMessage {
