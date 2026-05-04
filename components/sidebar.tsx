@@ -6,7 +6,13 @@ import { Suspense, useEffect, useState } from "react";
 import type { StudentProfile } from "@/lib/types";
 import subjects from "@/data/subjects";
 import { loadProfile } from "@/lib/progress";
-import { resolveActiveStudyTarget } from "@/lib/active-target";
+import { resolveActiveStudyTarget, type ActiveStudyTarget } from "@/lib/active-target";
+
+// Quiz authoring is currently scoped to a single topic; sidebar Quiz href
+// falls back here when the active topic doesn't carry a quiz bank, so the
+// nav button never dead-ends at "Quiz not yet available". When more quiz
+// banks ship, swap this for a derived "first topic with a quiz" helper.
+const DEMO_QUIZ_TOPIC_ID = "solving_one_step";
 
 type ModuleId = "home" | "learn" | "practice" | "quiz" | "review" | "dashboard";
 type ModuleStatus = "ready" | "preview" | "soon";
@@ -24,12 +30,19 @@ interface NavItem {
 // profile would resolve to. After mount the build below re-runs with
 // the real profile and any href differences swap in (acceptable per
 // codex round-1 — small flicker, no skeleton chrome needed).
-function buildNavItems(target: { topicId: string }): NavItem[] {
+function buildNavItems(target: ActiveStudyTarget): NavItem[] {
+  // Quiz href: prefer the active topic's quiz when one exists; fall back
+  // to the demo quiz topic otherwise. Avoids landing the user on the bare
+  // "Quiz not yet available" page when their active topic happens to be
+  // one of the 6 unit_6 topics that don't yet carry a quiz bank.
+  const quizHref = target.topic.quiz
+    ? `/quiz?topic=${target.topicId}`
+    : `/quiz?topic=${DEMO_QUIZ_TOPIC_ID}`;
   return [
     { id: "home", href: "/", label: "Home", status: "ready" },
     { id: "learn", href: `/learn-v2/${target.topicId}`, label: "Learn", status: "ready" },
     { id: "practice", href: `/practice?topic=${target.topicId}`, label: "Practice", status: "ready" },
-    { id: "quiz", href: `/quiz?topic=${target.topicId}`, label: "Quiz", status: "ready" },
+    { id: "quiz", href: quizHref, label: "Quiz", status: "ready" },
     { id: "review", href: "/review", label: "Review", status: "ready" },
     { id: "dashboard", href: "/dashboard", label: "Dashboard", status: "ready" },
   ];
@@ -42,7 +55,7 @@ function buildNavItems(target: { topicId: string }): NavItem[] {
 // resolver's logic ever changes (codex round-2 polish suggestion).
 // resolveActiveStudyTarget(null) is pure and cheap to evaluate at
 // module load.
-const INITIAL_TOPIC_ID = resolveActiveStudyTarget(null).topicId;
+const INITIAL_TARGET: ActiveStudyTarget = resolveActiveStudyTarget(null);
 
 const STATUS_DOT: Record<ModuleStatus, string> = {
   ready: "#059669",
@@ -146,13 +159,15 @@ function SidebarInner({
   // every route change so a click on "Start Unit" in the subject page
   // (which writes current_unit and navigates) immediately refreshes the
   // Learn / Practice / Quiz hrefs here without needing a separate event.
-  const [activeTopicId, setActiveTopicId] = useState<string>(INITIAL_TOPIC_ID);
+  // We hold the full ActiveStudyTarget (not just topicId) so buildNavItems
+  // can introspect target.topic.quiz to decide whether the active topic
+  // is a valid quiz destination.
+  const [activeTarget, setActiveTarget] = useState<ActiveStudyTarget>(INITIAL_TARGET);
   useEffect(() => {
-    const target = resolveActiveStudyTarget(loadProfile());
-    setActiveTopicId(target.topicId);
+    setActiveTarget(resolveActiveStudyTarget(loadProfile()));
   }, [pathname]);
 
-  const navItems = buildNavItems({ topicId: activeTopicId });
+  const navItems = buildNavItems(activeTarget);
 
   const isNavActive = (href: string) => {
     if (href === "/") return pathname === "/";
