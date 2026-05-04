@@ -91,6 +91,14 @@ function PracticeContent() {
   const [masteryAtStart, setMasteryAtStart] = useState<number | null>(null);
   const [quizDifficulty, setQuizDifficulty] = useState<"easy" | "medium" | "hard">("easy");
 
+  // ── Retry tracking ─────────────────────────────────
+  // Per codex review: a same-slot retry is a practice signal, not a fresh
+  // mastery attempt. Each slot can be retried at most once. recoveredCount
+  // is the # of slots where the retry submit was correct after the first
+  // attempt failed — surfaced in the completion summary.
+  const [retriedSlots, setRetriedSlots] = useState<Set<number>>(new Set());
+  const [recoveredCount, setRecoveredCount] = useState(0);
+
   // questionsAnswered and correctCount are derived from results — single
   // source of truth. Callers that need them as numbers should read these.
   const questionsAnswered = results.length;
@@ -260,31 +268,45 @@ function PracticeContent() {
       const data: GradeResult = await res.json();
       setGrade(data);
       setState("result");
-      setStreak((s) => (data.correct ? s + 1 : 0));
 
-      // Record this slot's outcome for the completion summary.
-      const result: QuestionResult = {
-        question: quiz.question,
-        correctAnswer: data.correct_answer,
-        studentAnswer: answer.trim(),
-        correct: data.correct,
-        difficulty: quizDifficulty,
-        timeSeconds,
-      };
-      setResults((prev) => [...prev, result]);
+      const isRetrySubmit = retriedSlots.has(currentIdx);
 
-      const updated = updateMasteryAfterPractice(
-        profile,
-        topicId,
-        data.correct,
-        quiz.question,
-        answer.trim(),
-        data.correct_answer,
-        data.error_type,
-        data.explanation,
-        timeSeconds
-      );
-      setProfile(updated);
+      if (isRetrySubmit) {
+        // Retry path — practice signal only. No mastery write, no second
+        // results entry (the slot already has its original outcome). Track
+        // the recovery if this attempt succeeded.
+        if (data.correct) {
+          setRecoveredCount((c) => c + 1);
+        }
+        // Streak only counts first-attempt correctness, so no update here
+        // either — keeping retry isolated from the streak rhythm.
+      } else {
+        setStreak((s) => (data.correct ? s + 1 : 0));
+
+        // Record this slot's outcome for the completion summary.
+        const result: QuestionResult = {
+          question: quiz.question,
+          correctAnswer: data.correct_answer,
+          studentAnswer: answer.trim(),
+          correct: data.correct,
+          difficulty: quizDifficulty,
+          timeSeconds,
+        };
+        setResults((prev) => [...prev, result]);
+
+        const updated = updateMasteryAfterPractice(
+          profile,
+          topicId,
+          data.correct,
+          quiz.question,
+          answer.trim(),
+          data.correct_answer,
+          data.error_type,
+          data.explanation,
+          timeSeconds
+        );
+        setProfile(updated);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to grade answer");
       setState("error");
@@ -292,7 +314,7 @@ function PracticeContent() {
   };
 
   // Advance to next slot OR complete the batch. Wired to the result-phase
-  // "Next" button. retry path (refetch same slot) lands in step 5.
+  // "Next" button.
   const advanceSlot = () => {
     if (currentIdx + 1 >= BATCH_SIZE) {
       setState("complete");
@@ -300,6 +322,18 @@ function PracticeContent() {
       setCurrentIdx((i) => i + 1);
       generateQuiz();
     }
+  };
+
+  // "Try a similar one" — refetch a fresh question for the SAME slot. Marks
+  // the slot as retried so the button only renders once per slot. The next
+  // submitAnswer call branches on retriedSlots and doesn't write mastery.
+  const handleTrySimilar = () => {
+    setRetriedSlots((prev) => {
+      const next = new Set(prev);
+      next.add(currentIdx);
+      return next;
+    });
+    generateQuiz();
   };
 
   // "Practice more" — reset batch-local state and start a fresh batch on the
@@ -313,6 +347,8 @@ function PracticeContent() {
     setQuiz(null);
     setGrade(null);
     setAnswer("");
+    setRetriedSlots(new Set());
+    setRecoveredCount(0);
     setMasteryAtStart(getTopicProgress(profile, topicId).mastery);
     sessionIdRef.current = startSession("practice", topicId);
     generateQuiz();
@@ -356,6 +392,7 @@ function PracticeContent() {
             masteryAfter={progress.mastery}
             topicId={topicId}
             hasQuiz={topic.quiz !== undefined}
+            recoveredCount={recoveredCount}
             onPracticeMore={restartBatch}
           />
         </div>
@@ -601,19 +638,48 @@ function PracticeContent() {
                   </div>
                 )}
 
-                {/* Next button */}
-                <button
-                  onClick={advanceSlot}
-                  className="w-full rounded-lg transition-colors"
-                  style={{
-                    backgroundColor: "#0F2A4A",
-                    color: "#FFFFFF",
-                    fontSize: "15px",
-                    padding: "16px 24px",
-                  }}
-                >
-                  {currentIdx + 1 >= BATCH_SIZE ? "Finish batch \u2192" : "Next question \u2192"}
-                </button>
+                {/* Next + (when incorrect & not yet retried) Try-a-similar */}
+                {!grade.correct && !retriedSlots.has(currentIdx) ? (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={advanceSlot}
+                      className="flex-1 rounded-lg transition-colors"
+                      style={{
+                        backgroundColor: "#0F2A4A",
+                        color: "#FFFFFF",
+                        fontSize: "15px",
+                        padding: "16px 24px",
+                      }}
+                    >
+                      {currentIdx + 1 >= BATCH_SIZE ? "Finish batch \u2192" : "Next question \u2192"}
+                    </button>
+                    <button
+                      onClick={handleTrySimilar}
+                      className="flex-1 rounded-lg border transition-colors hover:border-blue-500"
+                      style={{
+                        borderColor: "#E2E5EA",
+                        color: "#1F2937",
+                        fontSize: "15px",
+                        padding: "16px 24px",
+                      }}
+                    >
+                      Try a similar one
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={advanceSlot}
+                    className="w-full rounded-lg transition-colors"
+                    style={{
+                      backgroundColor: "#0F2A4A",
+                      color: "#FFFFFF",
+                      fontSize: "15px",
+                      padding: "16px 24px",
+                    }}
+                  >
+                    {currentIdx + 1 >= BATCH_SIZE ? "Finish batch \u2192" : "Next question \u2192"}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -659,6 +725,7 @@ function CompletionSummary({
   masteryAfter,
   topicId,
   hasQuiz,
+  recoveredCount,
   onPracticeMore,
 }: {
   results: QuestionResult[];
@@ -667,6 +734,7 @@ function CompletionSummary({
   masteryAfter: number;
   topicId: string;
   hasQuiz: boolean;
+  recoveredCount: number;
   onPracticeMore: () => void;
 }) {
   const correctCount = results.filter((r) => r.correct).length;
@@ -676,6 +744,27 @@ function CompletionSummary({
   const masteryBeforePct = Math.round(masteryBefore * 100);
   const passRate = batchSize > 0 ? correctCount / batchSize : 0;
   const isPassing = passRate >= 0.6;
+
+  // Stats-based completion insight — NOT an LLM call. Two lines: a hard-stats
+  // line and a single-rule heuristic observation. Honest about being stats.
+  // TODO: when /review has real wrong-answer history, swap this for a proper
+  // /api/portrait insight call gated on having enough data.
+  const totalSeconds = results.reduce((s, r) => s + r.timeSeconds, 0);
+  const avgSeconds = results.length > 0 ? totalSeconds / results.length : 0;
+  const totalMins = Math.floor(totalSeconds / 60);
+  const totalSecs = Math.round(totalSeconds % 60);
+  const timeLabel = totalMins > 0 ? `${totalMins}m ${totalSecs}s` : `${totalSecs}s`;
+  const statsLine = `You finished ${batchSize} questions in ${timeLabel}. ${correctCount}/${batchSize} correct.`;
+  const heuristicLine = (() => {
+    if (correctCount === batchSize) return "Clean sweep — all correct.";
+    if (correctCount === 0) return "Tough batch. Revisit the lesson, then try again.";
+    if (recoveredCount > 0) return `You recovered on ${recoveredCount} after a retry — good persistence.`;
+    if (avgSeconds < 15) return "Quick rhythm — you trusted your answers.";
+    if (avgSeconds >= 30 && correctCount >= Math.ceil(batchSize * 0.8)) {
+      return "Steady pace — you took your time and it paid off.";
+    }
+    return "Mixed pace across the batch.";
+  })();
 
   return (
     <div
@@ -799,6 +888,31 @@ function CompletionSummary({
           </p>
         </div>
       )}
+
+      {/* Stats summary — explicitly labelled "Session stats", not AI insight */}
+      <div
+        className="rounded-lg p-5 mb-8"
+        style={{ backgroundColor: "#EFF6FF", textAlign: "left" }}
+      >
+        <p
+          style={{
+            fontSize: "11px",
+            color: "#2563EB",
+            fontWeight: 500,
+            letterSpacing: "0.5px",
+            textTransform: "uppercase",
+            marginBottom: "8px",
+          }}
+        >
+          Session stats
+        </p>
+        <p style={{ fontSize: "14px", color: "#1E40AF", lineHeight: 1.6, marginBottom: "4px" }}>
+          {statsLine}
+        </p>
+        <p style={{ fontSize: "14px", color: "#1E3A8A", lineHeight: 1.6 }}>
+          {heuristicLine}
+        </p>
+      </div>
 
       {/* CTA stack — hierarchy depends on mastery + has-quiz */}
       <div className="flex gap-4 justify-center">
