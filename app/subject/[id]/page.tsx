@@ -9,7 +9,7 @@ import { getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
 import BilingualSubtitle from "@/components/bilingual-subtitle";
-import { getAllTopics, getGrade7 } from "@/lib/curriculum";
+import { getAllTopics, getGrade7, isUnitAuthored } from "@/lib/curriculum";
 import type {
   StudentProfile,
   CurriculumTopic,
@@ -33,7 +33,13 @@ function masteryBarColor(m: number): string {
 // ── Unit status derivation ────────────────────────────
 // Status drives the pill, the action button, and the lock state.
 
-type UnitStatus = "completed" | "in-progress" | "eligible" | "locked";
+// "coming_soon" is the catalog-side recognition that a unit exists in the
+// curriculum tree but has no authored lesson content yet (every topic is a
+// `phases: { stub: true }` placeholder). Distinct from "locked" — locked
+// means a real unit gated by prereq mastery; coming_soon means the unit
+// hasn't been built. Stub-only units render with all CTAs disabled so users
+// can't click into a /learn-v2 dead-end.
+type UnitStatus = "completed" | "in-progress" | "eligible" | "locked" | "coming_soon";
 
 interface UnitView {
   unit: CurriculumUnit;
@@ -55,6 +61,12 @@ function deriveUnitStatus(
   view: Omit<UnitView, "status" | "resumeTopicId">,
   unitCompletion: Map<string, boolean>,
 ): UnitStatus {
+  // Coming-soon takes precedence over every other status. A unit with no
+  // authored content can't be "eligible", "in-progress", etc., regardless
+  // of prereq state — the entire concept of progress is moot until lessons
+  // are written. Checking first also keeps the chain readable: stub-only
+  // units short-circuit before any progress-derived logic runs.
+  if (!isUnitAuthored(unit.id)) return "coming_soon";
   if (isUnitCompleted(view)) return "completed";
   if (view.startedTopics > 0) return "in-progress";
   // Has the prerequisite unit been completed?
@@ -67,6 +79,7 @@ const STATUS_LABEL: Record<UnitStatus, string> = {
   "in-progress": "In progress",
   eligible: "Eligible",
   locked: "Needs prerequisite",
+  coming_soon: "Coming soon",
 };
 
 const STATUS_COLOR: Record<UnitStatus, { fg: string; bg: string }> = {
@@ -74,6 +87,11 @@ const STATUS_COLOR: Record<UnitStatus, { fg: string; bg: string }> = {
   "in-progress": { fg: "#2563EB", bg: "#EFF6FF" },
   eligible: { fg: "#6B7280", bg: "#F3F4F6" },
   locked: { fg: "#D97706", bg: "#FEF3C7" },
+  // Neutral gray — the affordance is clearly non-actionable, not a
+  // user-correctable gate like "locked". Distinct from "eligible" gray
+  // by being slightly cooler (#6B7280 fg on #F0F2F5 bg) so the two
+  // states aren't confusable at a glance.
+  coming_soon: { fg: "#6B7280", bg: "#F0F2F5" },
 };
 
 // ── Grade selector ───────────────────────────────────
@@ -627,6 +645,12 @@ function MathCourseCatalog({
                         };
                         const mastery = tp.mastery;
                         const isLocked = status === "locked";
+                        const isComingSoon = status === "coming_soon";
+                        // CTA-disabling combination: locked AND coming-soon
+                        // both replace the Start/Practice buttons with a
+                        // text-only label. Different reason, same affordance
+                        // posture (non-actionable, dimmed row).
+                        const isInert = isLocked || isComingSoon;
                         // Within-unit prereq enforcement: a topic's prerequisite
                         // is another topic id; we let the user open any topic
                         // whose unit is unlocked (the unit gate is the primary
@@ -645,7 +669,7 @@ function MathCourseCatalog({
                             style={{
                               backgroundColor: "#FAFBFC",
                               border: "0.5px solid #E8EBF0",
-                              opacity: isLocked ? 0.55 : 1,
+                              opacity: isInert ? 0.55 : 1,
                             }}
                           >
                             <div
@@ -686,6 +710,10 @@ function MathCourseCatalog({
                             {isLocked ? (
                               <span style={{ fontSize: "11px", color: "#D97706" }} className="shrink-0">
                                 Locked
+                              </span>
+                            ) : isComingSoon ? (
+                              <span style={{ fontSize: "11px", color: "#6B7280" }} className="shrink-0">
+                                Coming soon
                               </span>
                             ) : (
                               <div className="flex gap-2 shrink-0">
@@ -815,6 +843,30 @@ function UnitFooterCta({
         <span>Check with AI</span>
       </button>
     ) : null;
+  if (status === "coming_soon") {
+    // Stub-only unit. No active CTA — the user shouldn't be able to click
+    // through to a /learn-v2 page that just renders "Coming soon" itself.
+    // Single visually-passive pill matches the locked branch's affordance
+    // weight so the catalog row stays balanced.
+    return (
+      <button
+        type="button"
+        disabled
+        aria-disabled="true"
+        className="rounded-lg shrink-0 inline-flex items-center"
+        style={{
+          fontSize: "13px",
+          padding: "8px 20px",
+          color: "#6B7280",
+          backgroundColor: "#F0F2F5",
+          cursor: "not-allowed",
+        }}
+      >
+        Preview only
+      </button>
+    );
+  }
+
   if (status === "locked") {
     // Intentional addition vs. design reference: reference renders a "Preview"
     // link to a UnitDetailScreen which is not ported. A disabled <button> keeps

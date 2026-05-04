@@ -56,3 +56,19 @@ export function getTopicsForUnit(unitId: string): CurriculumTopic[] {
 export function getUnitForTopic(topicId: string): CurriculumUnit | undefined {
   return getUnits().find((u) => u.topics.includes(topicId));
 }
+
+/** Is this unit authored? — true when at least one topic is non-stub.
+ *
+ * Used by the catalog to differentiate "Eligible / Locked / etc." (units
+ * the student can actually start) from stub-only units that exist in the
+ * curriculum tree but have no real lesson content yet. The catalog routes
+ * stub-only units to a "Coming soon" status so /learn-v2 dead ends don't
+ * happen by clicking an apparently-startable unit.
+ *
+ * Pure function over curriculum.json; returns false for unknown unit ids
+ * (they have no topics, so nothing is authored). */
+export function isUnitAuthored(unitId: string): boolean {
+  return getTopicsForUnit(unitId).some(
+    (t) => !("stub" in t.phases && t.phases.stub === true),
+  );
+}
