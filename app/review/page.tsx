@@ -2,12 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Clock, Check } from "lucide-react";
+import { ChevronLeft, Clock, Check, X, ChevronDown, ChevronRight, BookOpen } from "lucide-react";
 import MathRenderer from "@/components/math-renderer";
 import { useAIContext } from "@/components/ai-context";
 import { loadProfile, recordReviewAttempt } from "@/lib/progress";
 import { onSettingsChanged } from "@/lib/settings-events";
-import { isMistakeDue, errorTypeLabel, errorTypeColor, formatRelativeDate } from "@/lib/review";
+import {
+  isMistakeDue,
+  errorTypeLabel,
+  errorTypeColor,
+  formatRelativeDate,
+  getSkillAreaForTopic,
+  reviewState,
+  type MistakeReviewState,
+} from "@/lib/review";
 import type { StudentProfile, WrongAnswer } from "@/lib/types";
 
 // Per-mistake retry state machine. Only one mistake is in retry mode at a
@@ -33,6 +41,10 @@ export default function ReviewPage() {
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [retryState, setRetryState] = useState<RetryState>("idle");
   const [retryAnswer, setRetryAnswer] = useState("");
+
+  // Archive expanded-row state — only one row expanded at a time. Auto-collapses
+  // when a retry starts on the same item to avoid double UI.
+  const [expandedMistakeId, setExpandedMistakeId] = useState<string | null>(null);
 
   useEffect(() => {
     setContext({ page: "general" });
@@ -64,10 +76,34 @@ export default function ReviewPage() {
   const reviewedCount = wrongAnswers.filter((wa) => wa.last_review_correct === true).length;
   const remainingCount = totalMistakes - reviewedCount;
 
+  // Archive: ALL mistakes, sorted timestamp DESC. If a mistake is currently
+  // in retry AND it's also in the due list, suppress it here so the retry UI
+  // only renders once (in the due section above). Items in retry that aren't
+  // due render their retry UI inline at the archive position.
+  const archiveItems = wrongAnswers
+    .slice()
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+    .filter((wa) => !(wa.id === retryingId && isMistakeDue(wa)));
+
+  // Group archive items by skill area (= unit title via review.ts helper).
+  // Insertion order preserved per first occurrence — newer mistakes within a
+  // group still come first because the input is already DESC.
+  const groupedArchive = new Map<string, WrongAnswer[]>();
+  for (const wa of archiveItems) {
+    const skill = getSkillAreaForTopic(wa.topic);
+    const list = groupedArchive.get(skill) ?? [];
+    list.push(wa);
+    groupedArchive.set(skill, list);
+  }
+
   function startRetry(id: string) {
     setRetryingId(id);
     setRetryState("retrying");
     setRetryAnswer("");
+    // If the user clicked Try-again from inside the archive expanded view,
+    // collapse it — the row swaps to a retry card and the expanded chrome
+    // would otherwise sit on top of it.
+    if (expandedMistakeId === id) setExpandedMistakeId(null);
   }
 
   function closeRetry() {
@@ -304,6 +340,98 @@ export default function ReviewPage() {
             </div>
           )}
         </div>
+
+        {/* ALL MISTAKES archive — grouped by skill area, sorted DESC */}
+        {archiveItems.length > 0 && (
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <BookOpen size={14} style={{ color: "#6B7280" }} />
+                <h2
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 500,
+                    color: "#6B7280",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  ALL MISTAKES
+                </h2>
+              </div>
+              {/* figma had a "Most recent" pseudo-button with no toggle. We
+                  show it as a static label for visual parity, no UI alts. */}
+              <span
+                className="px-3 py-1.5 rounded-lg"
+                style={{ backgroundColor: "#EFF6FF", color: "#2563EB", fontSize: "12px" }}
+              >
+                Most recent
+              </span>
+            </div>
+            <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "20px" }}>
+              Grouped by skill area
+            </p>
+
+            <div className="space-y-6">
+              {Array.from(groupedArchive.entries()).map(([skill, items]) => (
+                <div key={skill}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 style={{ fontSize: "15px", fontWeight: 500, color: "#0F2A4A" }}>
+                      {skill}
+                    </h3>
+                    <div
+                      className="px-3 py-1 rounded-full"
+                      style={{
+                        backgroundColor: "#F5F6F8",
+                        color: "#6B7280",
+                        fontSize: "12px",
+                      }}
+                    >
+                      {items.length} mistake{items.length !== 1 ? "s" : ""}
+                    </div>
+                  </div>
+
+                  <ul role="list" className="space-y-2 list-none p-0">
+                    {items.map((wa) => {
+                      // If this archive item is currently the retry target
+                      // AND it's not in the due section (we already filtered
+                      // those out), render the retry card inline here.
+                      if (wa.id === retryingId) {
+                        return (
+                          <li key={wa.id}>
+                            <DueRetryingCard
+                              mistake={wa}
+                              retryState={retryState}
+                              retryAnswer={retryAnswer}
+                              onAnswerChange={setRetryAnswer}
+                              onSubmit={submitRetry}
+                              onTryOnceMore={tryOnceMore}
+                              onSkip={skipFromWrongAgain}
+                              onClose={closeRetry}
+                            />
+                          </li>
+                        );
+                      }
+                      return (
+                        <li key={wa.id}>
+                          <ArchiveRow
+                            mistake={wa}
+                            expanded={expandedMistakeId === wa.id}
+                            onToggle={() =>
+                              setExpandedMistakeId(
+                                expandedMistakeId === wa.id ? null : wa.id,
+                              )
+                            }
+                            onTryAgain={() => startRetry(wa.id)}
+                          />
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -551,6 +679,148 @@ function DueRetryingCard({
             </button>
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+// ── Archive row: collapsed-by-default, click-to-expand ──
+// Status of last review attempt (reviewed | failed | not_reviewed) drives the
+// status icon + status text. Reviewed items render the same row layout as
+// pending — just with a different icon — so the archive looks uniform.
+
+function ArchiveRow({
+  mistake,
+  expanded,
+  onToggle,
+  onTryAgain,
+}: {
+  mistake: WrongAnswer;
+  expanded: boolean;
+  onToggle: () => void;
+  onTryAgain: () => void;
+}) {
+  const label = errorTypeLabel(mistake.error_type);
+  const labelColors = errorTypeColor(label);
+  const status: MistakeReviewState = reviewState(mistake);
+
+  const statusIcon =
+    status === "reviewed" ? (
+      <Check size={14} style={{ color: "#059669" }} />
+    ) : status === "failed" ? (
+      <X size={14} style={{ color: "#EF4444" }} />
+    ) : (
+      <Clock size={14} style={{ color: "#D97706" }} />
+    );
+  const statusBg =
+    status === "reviewed" ? "#ECFDF5" : status === "failed" ? "#FEF2F2" : "#FFFBEB";
+  const statusText =
+    status === "reviewed" ? "Reviewed ✓" : status === "failed" ? "Failed review" : "Not reviewed";
+  const statusTextColor =
+    status === "reviewed" ? "#059669" : status === "failed" ? "#EF4444" : "#D97706";
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className="w-full flex items-center justify-between p-4 rounded-lg border transition-colors hover:border-blue-500 text-left"
+        style={{ borderColor: "#E2E5EA", backgroundColor: "#FFFFFF" }}
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: statusBg }}
+          >
+            {statusIcon}
+          </div>
+          <span
+            className="truncate"
+            style={{ fontSize: "14px", color: "#1F2937", flex: 1, minWidth: 0 }}
+          >
+            {mistake.question}
+          </span>
+          <div
+            className="px-2 py-0.5 rounded-full shrink-0"
+            style={{
+              backgroundColor: labelColors.bg,
+              color: labelColors.fg,
+              fontSize: "10px",
+              fontWeight: 500,
+            }}
+          >
+            {label}
+          </div>
+          <span style={{ fontSize: "12px", color: "#9CA3AF" }} className="shrink-0">
+            {formatRelativeDate(mistake.timestamp)}
+          </span>
+          <span
+            style={{ fontSize: "12px", color: statusTextColor }}
+            className="shrink-0"
+          >
+            {statusText}
+          </span>
+        </div>
+        {expanded ? (
+          <ChevronDown size={16} style={{ color: "#6B7280" }} />
+        ) : (
+          <ChevronRight size={16} style={{ color: "#6B7280" }} />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="p-5 mt-2 rounded-lg" style={{ backgroundColor: "#F5F6F8" }}>
+          <div
+            className="rounded-lg p-4 mb-4 text-center math-display"
+            style={{ backgroundColor: "#FFFFFF" }}
+          >
+            <MathRenderer content={mistake.question} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div>
+              <span style={{ fontSize: "12px", color: "#9CA3AF" }}>Your answer: </span>
+              <span
+                style={{
+                  fontSize: "14px",
+                  color: "#D97706",
+                  textDecoration: "line-through",
+                }}
+              >
+                {mistake.student_answer}
+              </span>
+            </div>
+            <div>
+              <span style={{ fontSize: "12px", color: "#9CA3AF" }}>Correct: </span>
+              <span style={{ fontSize: "14px", color: "#059669", fontWeight: 500 }}>
+                {mistake.correct_answer}
+              </span>
+            </div>
+          </div>
+
+          {mistake.explanation && (
+            <p
+              className="math-display"
+              style={{
+                fontSize: "14px",
+                color: "#1F2937",
+                lineHeight: 1.6,
+                marginBottom: "16px",
+              }}
+            >
+              <MathRenderer content={mistake.explanation} />
+            </p>
+          )}
+
+          <button
+            onClick={onTryAgain}
+            className="px-6 py-2.5 rounded-lg transition-colors"
+            style={{ backgroundColor: "#0F2A4A", color: "#FFFFFF", fontSize: "14px" }}
+          >
+            Try again →
+          </button>
+        </div>
       )}
     </div>
   );
