@@ -144,6 +144,12 @@
   </p>
   <button id="load-btn">Load model</button>
   <button id="reset-btn" class="secondary">Reset (clear engine, keep cache)</button>
+  <label
+    style="display: inline-flex; align-items: center; gap: 6px; margin-left: 12px; font-size: 12px; color: #92400E; font-weight: 400;"
+  >
+    <input id="skip-preflight" type="checkbox" />
+    Skip asset preflight (offline L2 / L2-cold validation only)
+  </label>
   <div class="status" id="load-status">Idle. Paste a model URL above and click "Load model".</div>
 </fieldset>
 
@@ -380,17 +386,36 @@
     // the cost of WASM resolver + MediaPipe init. Saves the operator
     // from staring at a frozen tab for minutes only to discover the URL
     // was wrong.
-    setStatus(`Preflight checking ${url}…`);
-    const pre = await preflightModelAsset(url);
-    if (!pre.ok) {
+    //
+    // Operator-controlled bypass: the "Skip asset preflight" checkbox
+    // exists specifically for L2 / L2-cold offline phases, where the
+    // browser's HTTP cache may legitimately serve the .litertlm even
+    // when our fetch-based HEAD/Range probes fail. Without bypass, the
+    // operator could see "Preflight failed" and conclude the offline
+    // path is broken — when in reality MediaPipe's own asset loader
+    // would have hit the cache and succeeded. Box stays unchecked for
+    // baseline (Phase 1) testing.
+    const skipPreflight = $("skip-preflight").checked;
+    if (skipPreflight) {
       setStatus(
-        `❌ Preflight failed (${pre.kind}): ${pre.detail}\n\n` +
-        `This is an asset-setup issue, NOT a MediaPipe runtime issue. Fix the URL/file/CORS, then retry.`,
+        `⚠️ Preflight SKIPPED (offline-mode bypass).\n` +
+        `Asset reachability NOT verified — proceeding straight to MediaPipe init.\n` +
+        `If this fails, you cannot tell whether the URL was bad or MediaPipe broke; only use this for L2 / L2-cold phases.`,
       );
-      loadBtn.disabled = false;
-      return;
+    } else {
+      setStatus(`Preflight checking ${url}…`);
+      const pre = await preflightModelAsset(url);
+      if (!pre.ok) {
+        setStatus(
+          `❌ Preflight failed (${pre.kind}): ${pre.detail}\n\n` +
+          `This is an asset-setup issue, NOT a MediaPipe runtime issue. Fix the URL/file/CORS, then retry.\n` +
+          `If you're trying to validate an OFFLINE phase (L2 / L2-cold), check "Skip asset preflight" — fetch-based probes can't reliably see browser HTTP cache while you're offline.`,
+        );
+        loadBtn.disabled = false;
+        return;
+      }
+      setStatus(`✅ Preflight ok: ${pre.detail}\nResolving GenAI WASM fileset…`);
     }
-    setStatus(`✅ Preflight ok: ${pre.detail}\nResolving GenAI WASM fileset…`);
 
     const t0 = performance.now();
     try {

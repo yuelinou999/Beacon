@@ -135,16 +135,31 @@ the modelAssetPath field. Caveats:
 ### Phase 3 — L2 offline
 7. With DevTools still in offline mode, **refresh the page**.
 8. Re-paste the same modelAssetPath URL (page state isn't preserved
-   across refresh — only the saved snapshots are). Click **Load
-   model**. Watch DevTools Network — should be no successful outgoing
-   requests.
-9. Run inference. Record L2 pass/fail.
+   across refresh — only the saved snapshots are).
+9. **Check "Skip asset preflight (offline L2 / L2-cold validation
+   only)"** before clicking Load model. The preflight uses fetch HEAD
+   / Range GET, which can't reliably see the browser's HTTP cache
+   while DevTools is in offline mode — if you leave preflight enabled
+   here, it can fail even when MediaPipe's own asset loader would
+   succeed from cache, giving you a false negative on the L2 test.
+10. Click **Load model**. Watch DevTools Network — should be no
+    successful outgoing requests. Run inference. Record L2 pass/fail.
 
 ### Phase 4 — L2 cold restart
-10. Close the tab. Turn wifi OFF (real network, not just DevTools).
-11. Reopen browser → paste localhost URL → does the page load? If
-    yes, paste model URL again → Load model. Inference works = pass.
-12. Note the exact failure step if anything 404s.
+11. Close the tab. Turn wifi OFF (real network, not just DevTools).
+12. Reopen browser → paste localhost URL → does the page load? If
+    yes, paste model URL again. **Keep "Skip asset preflight"
+    checked** for the same reason as Phase 3 — fetch-based reachability
+    probes are not a fair proxy for browser-cached asset availability.
+13. Click Load model. Inference works = pass. Note the exact failure
+    step if anything 404s.
+
+> **Preflight is for baseline only.** Phase 1 (the initial Plan A
+> baseline test) MUST run with preflight enabled, since that's the
+> phase where bad URLs / CORS / wrong files are most likely. Once
+> baseline passes and the model is in cache, switch the checkbox on
+> for the offline phases and leave it on until you reset cache or
+> start testing a new model.
 
 ### Phase 5 — Save Plan A snapshot
 13. In Observation log: confirm "Model under test" = Plan A. Mismatch
