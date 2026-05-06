@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Beacon · WebLLM Spike</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    max-width: 880px;
+    margin: 40px auto;
+    padding: 0 24px;
+    color: #1F2937;
+    line-height: 1.55;
+  }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 8px; color: #0F2A4A; }
+  .subtitle { color: #6B7280; font-size: 13px; margin-bottom: 32px; }
+  fieldset {
+    border: 1px solid #E2E5EA;
+    border-radius: 8px;
+    padding: 16px 20px 20px;
+    margin: 0 0 24px;
+  }
+  legend { font-size: 12px; font-weight: 500; color: #6B7280; padding: 0 8px; letter-spacing: 0.4px; text-transform: uppercase; }
+  label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: #374151; }
+  select, textarea, input[type=text] {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid #E2E5EA;
+    border-radius: 6px;
+    font-family: inherit;
+    margin-bottom: 12px;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  button {
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    background: #0F2A4A;
+    color: #FFFFFF;
+    cursor: pointer;
+    margin-right: 8px;
+  }
+  button:disabled { background: #E2E5EA; color: #9CA3AF; cursor: not-allowed; }
+  button.secondary { background: #FFFFFF; color: #0F2A4A; border: 1px solid #E2E5EA; }
+  .status {
+    background: #F0F3F7;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    white-space: pre-wrap;
+    min-height: 38px;
+  }
+  .output {
+    background: #FFFFFF;
+    border: 1px solid #E2E5EA;
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 14px;
+    min-height: 60px;
+    margin-bottom: 12px;
+    white-space: pre-wrap;
+  }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .metric {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .metric-label { font-size: 11px; color: #1E40AF; letter-spacing: 0.4px; text-transform: uppercase; }
+  .metric-value { font-size: 16px; color: #1E3A8A; font-weight: 500; margin-top: 2px; font-family: ui-monospace, SFMono-Regular, monospace; }
+  .quick-prompts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .quick-prompts button {
+    background: #FFFFFF;
+    color: #2563EB;
+    border: 1px solid #BFDBFE;
+    font-size: 12px;
+    padding: 6px 10px;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>Beacon · WebLLM Spike</h1>
+<p class="subtitle">
+  De-risk pillar A of the 14-day plan: confirm browser-side Gemma inference is viable on the demo target hardware.
+  Plan A: <code>gemma3-1b-it-q4f16_1-MLC</code> (~711 MB VRAM, low-resource recommended).
+  This page does not depend on Ollama or the Beacon dev server — close the network tab after model download to verify true offline.
+</p>
+
+<fieldset>
+  <legend>Model</legend>
+  <label for="model">Model variant</label>
+  <select id="model">
+    <option value="gemma3-1b-it-q4f16_1-MLC" selected>gemma3-1b-it-q4f16_1-MLC · ~711 MB · Plan A</option>
+    <option value="gemma-2-2b-it-q4f16_1-MLC-1k">gemma-2-2b-it-q4f16_1-MLC-1k · ~1.6 GB · Plan B</option>
+    <option value="SmolLM2-360M-Instruct-q4f16_1-MLC">SmolLM2-360M-Instruct · &lt;500 MB · Plan C (non-Gemma fallback)</option>
+  </select>
+  <button id="load-btn">Load model</button>
+  <button id="reset-btn" class="secondary">Reset cache (force redownload)</button>
+  <div class="status" id="load-status">Idle. Click "Load model" to begin.</div>
+</fieldset>
+
+<fieldset>
+  <legend>Inference test</legend>
+  <div class="quick-prompts">
+    <button data-prompt="If x + 5 = 12, what is x? Explain step by step.">Math · English</button>
+    <button data-prompt="यदि x + 5 = 12, तो x क्या है? चरण दर चरण समझाएं।">Math · Hindi</button>
+    <button data-prompt="Si x + 5 = 12, ¿cuánto es x? Explica paso a paso.">Math · Spanish</button>
+    <button data-prompt="A bag has some marbles. After 6 more are added, there are 14. How many were in the bag at first? Explain in Hindi.">Word problem · Hindi answer</button>
+  </div>
+  <label for="prompt">Prompt</label>
+  <textarea id="prompt" placeholder="Type a question…">If x + 5 = 12, what is x? Explain step by step.</textarea>
+  <button id="run-btn" disabled>Run inference</button>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Cold load</div>
+      <div class="metric-value" id="m-coldload">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Time to first token</div>
+      <div class="metric-value" id="m-ttft">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Tokens/sec</div>
+      <div class="metric-value" id="m-tps">—</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Total inference</div>
+      <div class="metric-value" id="m-total">—</div>
+    </div>
+  </div>
+  <div class="output" id="output">Output will stream here.</div>
+</fieldset>
+
+<script type="module">
+  // WebLLM via CDN — no npm install needed for the spike. If this proves out,
+  // the Day 7 task will install @mlc-ai/web-llm properly into the Next bundle.
+  import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+
+  const $ = (id) => document.getElementById(id);
+  const loadBtn = $("load-btn");
+  const resetBtn = $("reset-btn");
+  const runBtn = $("run-btn");
+  const modelSel = $("model");
+  const promptEl = $("prompt");
+  const statusEl = $("load-status");
+  const outputEl = $("output");
+  const mColdload = $("m-coldload");
+  const mTtft = $("m-ttft");
+  const mTps = $("m-tps");
+  const mTotal = $("m-total");
+
+  let engine = null;
+  let coldLoadMs = null;
+
+  // Quick-prompt buttons
+  document.querySelectorAll(".quick-prompts button").forEach((b) => {
+    b.addEventListener("click", () => {
+      promptEl.value = b.dataset.prompt;
+    });
+  });
+
+  function setStatus(text) {
+    statusEl.textContent = text;
+  }
+
+  async function loadModel() {
+    const modelId = modelSel.value;
+    loadBtn.disabled = true;
+    runBtn.disabled = true;
+    setStatus(`Initializing engine for ${modelId}…`);
+
+    const t0 = performance.now();
+    try {
+      engine = await webllm.CreateMLCEngine(modelId, {
+        initProgressCallback: (p) => {
+          // p: { progress: 0..1, timeElapsed: number, text: string }
+          setStatus(`${p.text}  ·  ${(p.progress * 100).toFixed(1)}%  ·  ${p.timeElapsed.toFixed(1)}s`);
+        },
+      });
+      coldLoadMs = performance.now() - t0;
+      mColdload.textContent = `${(coldLoadMs / 1000).toFixed(1)} s`;
+      setStatus(`✅ Loaded ${modelId} in ${(coldLoadMs / 1000).toFixed(1)}s. Ready for inference.`);
+      runBtn.disabled = false;
+    } catch (err) {
+      setStatus(`❌ Load failed: ${err.message || err}`);
+      console.error(err);
+    } finally {
+      loadBtn.disabled = false;
+    }
+  }
+
+  async function runInference() {
+    if (!engine) return;
+    const prompt = promptEl.value.trim();
+    if (!prompt) return;
+
+    runBtn.disabled = true;
+    outputEl.textContent = "";
+    mTtft.textContent = "—";
+    mTps.textContent = "—";
+    mTotal.textContent = "—";
+
+    const t0 = performance.now();
+    let firstTokenAt = null;
+    let tokenCount = 0;
+
+    try {
+      const messages = [
+        { role: "user", content: prompt },
+      ];
+      const stream = await engine.chat.completions.create({
+        messages,
+        stream: true,
+        // Keep generation budget modest for the spike.
+        max_tokens: 400,
+        temperature: 0.7,
+      });
+
+      for await (const chunk of stream) {
+        const delta = chunk?.choices?.[0]?.delta?.content;
+        if (delta) {
+          if (firstTokenAt === null) {
+            firstTokenAt = performance.now();
+            mTtft.textContent = `${((firstTokenAt - t0) / 1000).toFixed(2)} s`;
+          }
+          outputEl.textContent += delta;
+          tokenCount += Math.max(1, delta.split(/\s+/).filter(Boolean).length); // rough estimate
+        }
+      }
+
+      const totalMs = performance.now() - t0;
+      mTotal.textContent = `${(totalMs / 1000).toFixed(2)} s`;
+      // tokens/sec is approximate — using whitespace-token count vs the
+      // generation phase only (post first-token).
+      const generationMs = firstTokenAt ? performance.now() - firstTokenAt : totalMs;
+      const tps = tokenCount / (generationMs / 1000);
+      mTps.textContent = `~${tps.toFixed(1)}`;
+    } catch (err) {
+      outputEl.textContent = `❌ Inference failed: ${err.message || err}`;
+      console.error(err);
+    } finally {
+      runBtn.disabled = false;
+    }
+  }
+
+  async function resetCache() {
+    if (!confirm("Clear WebLLM IndexedDB cache and reload? Next load will redownload weights.")) return;
+    try {
+      // Clear all IndexedDB databases. Brutal but effective for spike use.
+      const dbs = await indexedDB.databases();
+      await Promise.all(dbs.map((db) => new Promise((resolve) => {
+        const req = indexedDB.deleteDatabase(db.name);
+        req.onsuccess = req.onerror = req.onblocked = () => resolve();
+      })));
+      setStatus("Cache cleared. Reloading…");
+      setTimeout(() => location.reload(), 500);
+    } catch (err) {
+      setStatus(`Cache clear failed: ${err.message || err}`);
+    }
+  }
+
+  loadBtn.addEventListener("click", loadModel);
+  resetBtn.addEventListener("click", resetCache);
+  runBtn.addEventListener("click", runInference);
+
+  // Quick environment check
+  if (!navigator.gpu) {
+    setStatus("❌ This browser does not expose WebGPU. WebLLM requires WebGPU. Try Chrome 113+ or Safari 17+.");
+    loadBtn.disabled = true;
+  } else {
+    setStatus("WebGPU available. Click 'Load model' to start.");
+  }
+</script>
+
+</body>
+</html>
