@@ -490,7 +490,7 @@ export default function ResultsPhaseView({
           className="mt-2 text-center"
           style={{ fontSize: "13px", color: "#6B7280", lineHeight: 1.5 }}
         >
-          Mistake review is coming soon — for now, retake to practice the questions you missed.
+          Your mistakes are saved to Review automatically.
         </p>
       )}
       <div className="mt-4 text-center">
