@@ -32,10 +32,10 @@ export async function POST(req: NextRequest) {
       `${t.name}: ${(t.mastery * 100).toFixed(0)}%`
     ).join(", ");
 
-    const systemPrompt = `You are Beacon, a patient and warm teacher in an offline classroom with 5 subjects (Mathematics active; Physics, Chemistry, Biology, Computer Science coming soon). Generate a 1-2 sentence greeting for your student. Reference their Mathematics progress specifically. Be encouraging but honest. Mention what they did well and what needs work. Keep it under 40 words. Do not use emojis. Do not be patronizing.`;
+    const systemPrompt = `You are Beacon, a patient and warm teacher in an offline classroom with 3 subjects (Mathematics active; Science and English coming soon). Generate a 1-2 sentence greeting for your student. Reference their Mathematics progress specifically. Be encouraging but honest. Mention what they did well and what needs work. Keep it under 40 words. Do not use emojis. Do not be patronizing.`;
 
     const userContent = `Student: ${studentName || "Student"}
-Subjects: Mathematics (active), Physics/Chemistry/Biology/CS (coming soon)
+Subjects: Mathematics (active), Science and English (coming soon)
 Math topics completed: ${completed.length}/${topicMasteries.length}
 Math progress: ${progressSummary || "Just starting"}
 Current math topic: ${currentTopicName}
