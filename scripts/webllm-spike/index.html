@@ -167,6 +167,12 @@
     <option value="A">Plan A — gemma3-1b-it-q4f16_1-MLC</option>
     <option value="B">Plan B — gemma-2-2b-it-q4f16_1-MLC-1k</option>
   </select>
+  <div
+    id="obs-align-warning"
+    style="display: none; font-size: 12px; color: #991B1B; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 4px; padding: 8px 10px; margin-top: -4px; margin-bottom: 12px;"
+  >
+    ⚠️ Mismatch — top "Model variant" is set to <strong id="obs-align-loaded">?</strong> but this snapshot slot is set to <strong id="obs-align-slot">?</strong>. If you save now you will write the wrong model's metrics into the wrong slot. Switch one of them.
+  </div>
 
   <div class="metrics" style="grid-template-columns: 1fr 1fr;">
     <div>
@@ -521,6 +527,38 @@
     snapBState.textContent = snapshots.B ? "saved ✓" : "not saved";
   }
 
+  // Map top "Model variant" dropdown value → expected snapshot slot.
+  // Plan A is the 1B model, Plan B is the 2B model. When the top
+  // selector disagrees with the bottom "Model under test" selector, the
+  // operator is one click away from writing model B's metrics into
+  // slot A (or vice versa) — surface this loudly.
+  function expectedSlotFromLoadedModel() {
+    const v = modelSel.value;
+    if (v === "gemma3-1b-it-q4f16_1-MLC") return "A";
+    if (v === "gemma-2-2b-it-q4f16_1-MLC-1k") return "B";
+    return null;
+  }
+
+  const obsAlignWarning = $("obs-align-warning");
+  const obsAlignLoaded = $("obs-align-loaded");
+  const obsAlignSlot = $("obs-align-slot");
+  function refreshAlignmentWarning() {
+    const expected = expectedSlotFromLoadedModel();
+    const slotSel = $("obs-which-model").value;
+    if (expected && expected !== slotSel) {
+      obsAlignLoaded.textContent = `Plan ${expected}`;
+      obsAlignSlot.textContent = `Plan ${slotSel}`;
+      obsAlignWarning.style.display = "block";
+    } else {
+      obsAlignWarning.style.display = "none";
+    }
+  }
+  modelSel.addEventListener("change", refreshAlignmentWarning);
+  $("obs-which-model").addEventListener("change", refreshAlignmentWarning);
+  // Run once on first paint so a default mismatch (unlikely but possible
+  // if defaults ever diverge) is visible without the operator clicking.
+  refreshAlignmentWarning();
+
   obsSaveBtn.addEventListener("click", () => {
     const snap = gatherCurrentSnapshot();
     if (snapshots[snap.which]) {
@@ -532,21 +570,46 @@
 
   obsExportBtn.addEventListener("click", async () => {
     const blocks = [];
+    const header = ["Beacon WebLLM Spike — Observation log"];
+    const havePair = snapshots.A && snapshots.B;
+    const havePartial = (snapshots.A || snapshots.B) && !havePair;
+    const haveNone = !snapshots.A && !snapshots.B;
+
+    if (havePartial) {
+      // Exactly one slot saved. Export still proceeds (the data we have
+      // is real and worth preserving) but BOTH the pasted text AND the
+      // status line have to surface that the A/B comparison is
+      // incomplete, so the decision-gate evaluator doesn't read "Plan
+      // A passes everything" and forget Plan B was never tested.
+      const missing = snapshots.A ? "B" : "A";
+      header.push(`⚠️ A/B COMPARISON INCOMPLETE — Plan ${missing} snapshot was NOT saved before export.`);
+      header.push(`This export contains only Plan ${snapshots.A ? "A" : "B"}. Decision gate cannot fairly compare without the other model.`);
+    }
+
     if (snapshots.A) blocks.push(snapshotToText(snapshots.A));
     if (snapshots.B) blocks.push(snapshotToText(snapshots.B));
-    if (blocks.length === 0) {
-      // Nothing saved — fall back to current screen state so a one-model
-      // test still has something to copy. Note this in the export so the
-      // decision-gate evaluator knows it's incomplete.
+
+    if (haveNone) {
+      // No snapshots at all — fall back to whatever's on screen, with a
+      // strong warning. Operator probably forgot to click Save.
       const fallback = gatherCurrentSnapshot();
       blocks.push(snapshotToText(fallback));
-      blocks.push("(NOTE: only current screen exported — neither snapshot saved. Did you forget to click Save?)");
+      header.push("⚠️ NEITHER snapshot was saved. Falling back to current screen state. Did you forget to click 'Save snapshot for current model'?");
     }
-    const text = ["Beacon WebLLM Spike — Observation log", ""].concat(blocks).join("\n\n");
+
+    const text = header.concat([""]).concat(blocks).join("\n\n");
     try {
       await navigator.clipboard.writeText(text);
-      const which = blocks.length === 2 ? "both snapshots" : "one snapshot";
-      $("obs-export-status").innerHTML = `✅ Copied ${which} to clipboard. Paste into chat.<br>Plan A: ${snapshots.A ? "saved ✓" : "not saved"} · Plan B: ${snapshots.B ? "saved ✓" : "not saved"}`;
+      let banner;
+      if (havePair) {
+        banner = "✅ Copied both snapshots to clipboard. Paste into chat.";
+      } else if (havePartial) {
+        const missing = snapshots.A ? "B" : "A";
+        banner = `⚠️ Copied — but Plan ${missing} is MISSING. Export marks the comparison as incomplete. Save Plan ${missing} and re-export if you want a full A/B.`;
+      } else {
+        banner = "⚠️ Copied — but NEITHER snapshot was saved. Export contains current screen only and is flagged as incomplete.";
+      }
+      $("obs-export-status").innerHTML = `${banner}<br>Plan A: ${snapshots.A ? "saved ✓" : "not saved"} · Plan B: ${snapshots.B ? "saved ✓" : "not saved"}`;
     } catch {
       $("obs-export-status").textContent = "Clipboard blocked. Manually copy from below:\n\n" + text;
     }
