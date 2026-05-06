@@ -98,7 +98,13 @@
 <p class="subtitle">
   De-risk pillar A of the 14-day plan: confirm browser-side Gemma inference holds up to a demo claim of "truly offline".
   Plan A: <code>gemma3-1b-it-q4f16_1-MLC</code> (~711 MB). Plan B: <code>gemma-2-2b-it-q4f16_1-MLC-1k</code> (~1.6 GB).
-  Test BOTH — pick on data, not narrative. Per codex round-1: heads-up that Gemma 3 1B may block the main thread on init in MediaPipe; watch this tab for unresponsiveness during load.
+  Test <strong>both</strong> in parallel — pick on data, not narrative.
+</p>
+<p class="subtitle" style="background: #FFFBEB; border-left: 3px solid #D97706; padding: 10px 14px; border-radius: 4px;">
+  <strong style="color: #92400E;">Verification levels:</strong>
+  <strong>L1 offline</strong> = same-tab inference after model has finished downloading (DevTools → Offline → Run inference).
+  <strong>L2 offline</strong> = refresh page while offline, page must boot AND model must load from IndexedDB AND infer.
+  Only L2 honestly defends the demo claim. Also watch for <strong>main-thread freeze</strong> during load (per codex; the script runs on main thread today, so any freeze you feel here would feel worse on Anaya's old Android).
 </p>
 
 <fieldset>
@@ -145,6 +151,89 @@
     </div>
   </div>
   <div class="output" id="output">Output will stream here.</div>
+</fieldset>
+
+<fieldset>
+  <legend>Observation log (fill in manually as you test)</legend>
+  <p style="font-size: 12px; color: #6B7280; margin: 0 0 14px;">
+    Auto-captured metrics above only cover what the spike script can measure. The fields below
+    capture the things only a human can judge: pass/fail of offline tests, perceived freeze, Hindi
+    quality. Fill one block per model (A and B). When done, copy this whole panel's contents into
+    the chat for the decision gate.
+  </p>
+
+  <label for="obs-which-model">Model under test for this entry</label>
+  <select id="obs-which-model">
+    <option value="A">Plan A — gemma3-1b-it-q4f16_1-MLC</option>
+    <option value="B">Plan B — gemma-2-2b-it-q4f16_1-MLC-1k</option>
+  </select>
+
+  <div class="metrics" style="grid-template-columns: 1fr 1fr;">
+    <div>
+      <label for="obs-warmload">Warm load (refresh-with-cache, page reload after first download)</label>
+      <input id="obs-warmload" type="text" placeholder="e.g. 4.2 s" />
+    </div>
+    <div>
+      <label for="obs-hindi-quality">Hindi math quality (1-5, demo-critical)</label>
+      <input id="obs-hindi-quality" type="text" placeholder="e.g. 3" />
+    </div>
+  </div>
+
+  <div class="metrics" style="grid-template-columns: 1fr 1fr 1fr;">
+    <div>
+      <label for="obs-l1">L1 offline — DevTools offline + same tab</label>
+      <select id="obs-l1">
+        <option value="">— pick —</option>
+        <option value="pass">pass</option>
+        <option value="fail">fail</option>
+      </select>
+    </div>
+    <div>
+      <label for="obs-l2">L2 offline — refresh page with network off</label>
+      <select id="obs-l2">
+        <option value="">— pick —</option>
+        <option value="pass">pass</option>
+        <option value="fail">fail</option>
+      </select>
+    </div>
+    <div>
+      <label for="obs-l2cold">L2 cold restart — close+reopen, network off entire time</label>
+      <select id="obs-l2cold">
+        <option value="">— pick —</option>
+        <option value="pass">pass</option>
+        <option value="fail">fail</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="metrics" style="grid-template-columns: 1fr 1fr;">
+    <div>
+      <label for="obs-mainthread">Main-thread freeze during init</label>
+      <select id="obs-mainthread">
+        <option value="">— pick —</option>
+        <option value="none">none — tab stayed responsive</option>
+        <option value="brief">brief (&lt;5 s)</option>
+        <option value="moderate">moderate (5-15 s)</option>
+        <option value="severe">severe / unbearable (&gt;15 s)</option>
+      </select>
+    </div>
+    <div>
+      <label for="obs-multiturn">3-turn stability (after running the button above)</label>
+      <select id="obs-multiturn">
+        <option value="">— pick —</option>
+        <option value="all-good">all 3 turns completed cleanly</option>
+        <option value="degrade">completed but quality decayed by turn 3</option>
+        <option value="freeze">tab froze / required reload</option>
+        <option value="error">turn errored out</option>
+      </select>
+    </div>
+  </div>
+
+  <label for="obs-notes">Free-form notes (anything weird, error messages, devtools console errors, slow paint, etc.)</label>
+  <textarea id="obs-notes" placeholder="e.g. saw 'WebGPU adapter lost' once during turn 2; recovered after retry"></textarea>
+
+  <button id="obs-export-btn" class="secondary">Copy observation log as text</button>
+  <div class="status" id="obs-export-status" style="margin-top: 8px;">Export: clipboard contents will replace this line.</div>
 </fieldset>
 
 <script type="module">
@@ -330,6 +419,46 @@
     multiBtn.disabled = false;
     runBtn.disabled = false;
   }
+
+  // Observation log → clipboard. Bundles auto-captured metrics
+  // (cold load / TTFT / tps / total) with manual observations
+  // (warm load / L1 / L2 / L2 cold restart / main-thread / multi-turn /
+  // Hindi quality / notes) into a single paste-ready block. The decision
+  // gate in the next session needs all of these to evaluate the spike.
+  const obsExportBtn = $("obs-export-btn");
+  const obsExportStatus = $("obs-export-status");
+  obsExportBtn.addEventListener("click", async () => {
+    const which = $("obs-which-model").value;
+    const lines = [
+      `Beacon WebLLM Spike — Observation log`,
+      `Model under test: ${which === "A" ? "Plan A (gemma3-1b-it-q4f16_1-MLC)" : "Plan B (gemma-2-2b-it-q4f16_1-MLC-1k)"}`,
+      ``,
+      `Auto-captured:`,
+      `  Cold load:        ${mColdload.textContent}`,
+      `  Time to first tok:${mTtft.textContent}`,
+      `  Tokens/sec:       ${mTps.textContent}`,
+      `  Total inference:  ${mTotal.textContent}`,
+      ``,
+      `Manual observations:`,
+      `  Warm load:        ${$("obs-warmload").value || "—"}`,
+      `  Hindi quality:    ${$("obs-hindi-quality").value || "—"} / 5`,
+      `  L1 offline:       ${$("obs-l1").value || "—"}`,
+      `  L2 offline:       ${$("obs-l2").value || "—"}`,
+      `  L2 cold restart:  ${$("obs-l2cold").value || "—"}`,
+      `  Main-thread:      ${$("obs-mainthread").value || "—"}`,
+      `  3-turn stability: ${$("obs-multiturn").value || "—"}`,
+      ``,
+      `Free-form notes:`,
+      `  ${$("obs-notes").value.replace(/\n/g, "\n  ") || "(none)"}`,
+    ];
+    const text = lines.join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      obsExportStatus.textContent = "✅ Copied to clipboard. Paste this back into the chat.";
+    } catch (err) {
+      obsExportStatus.textContent = "Clipboard blocked. Manually copy from below:\n\n" + text;
+    }
+  });
 
   loadBtn.addEventListener("click", loadModel);
   resetBtn.addEventListener("click", resetCache);

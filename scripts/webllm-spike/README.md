@@ -3,10 +3,11 @@
 Day-1 de-risking: confirm browser-side Gemma inference holds up to a
 demo claim of "truly offline". Plan A is **gemma3-1b-it-q4f16_1-MLC**
 (~711 MB), Plan B is **gemma-2-2b-it-q4f16_1-MLC-1k** (~1.6 GB). Test
-both — pick on data, not narrative. Per codex round-1: SmolLM2 was
-removed as a fallback because non-Gemma fallback undermines Gemma-track
-credibility. If both Gemma options fail the gate below, drop pillar A
-entirely; do not substitute.
+both — pick on data, not narrative. There is no Plan C: this is a
+Gemma hackathon track, so a non-Gemma browser fallback is not an
+acceptable substitute for Gemma-track credibility. If both Gemma
+options fail the gate below, drop pillar A entirely and replan the
+strategic thesis before Day 3.
 
 ## What this proves (and what it doesn't)
 
