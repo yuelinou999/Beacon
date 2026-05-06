@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   ChevronLeft,
   ChevronDown,
@@ -459,20 +460,18 @@ export default function ResultsPhaseView({
       {/* Action buttons */}
       <div className="flex gap-4">
         {!isPerfect && (
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Mistake review coming soon"
-            className="flex-1 px-8 py-4 rounded-lg text-center opacity-60 cursor-not-allowed"
+          <Link
+            href="/review"
+            className="flex-1 px-8 py-4 rounded-lg text-center transition-opacity hover:opacity-90"
             style={{
               backgroundColor: "#0F2A4A",
               color: "#FFFFFF",
               fontSize: "15px",
+              textDecoration: "none",
             }}
           >
             Review your mistakes &rarr;
-          </button>
+          </Link>
         )}
         <button
           onClick={isPerfect ? onMoveToNext : onRetake}
@@ -486,6 +485,14 @@ export default function ResultsPhaseView({
           {isPerfect ? "Move to next unit →" : "Retake quiz →"}
         </button>
       </div>
+      {!isPerfect && (
+        <p
+          className="mt-2 text-center"
+          style={{ fontSize: "13px", color: "#6B7280", lineHeight: 1.5 }}
+        >
+          Mistake review is coming soon — for now, retake to practice the questions you missed.
+        </p>
+      )}
       <div className="mt-4 text-center">
         <button
           onClick={onBack}

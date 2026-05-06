@@ -436,12 +436,69 @@ export function recordQuizAttempt(
     explain_differently_used: 0,
   };
 
+  // Quiz wrong answers flow into the review notebook so /review's SR queue
+  // reflects ALL incorrect work, not just practice errors. Look each wrong
+  // answer up in the topic's quiz bank to recover the canonical question +
+  // correct answer + bank id; the bank id is what /review's
+  // resolveBankQuestion needs to find the matching QuizQuestion and pull
+  // alt_explanation for the three-layer wrong-again card.
+  //
+  // explanation is left empty: the quiz bank doesn't author primary
+  // per-question explanations (only optional alt_explanation), so /review's
+  // amber block falls back to "No explanation recorded for this mistake."
+  // and the bank-resolved alt_explanation lights up the blue block as the
+  // genuine teaching content. Both layers stay honest about their content.
+  //
+  // Idempotency carries through: the early-return on duplicate attempt_id
+  // above means repeated calls with the same attempt won't re-append these
+  // entries. Different attempts (e.g. retakes) DO each contribute their own
+  // wrong-answer rows — same shape as practice's per-attempt writes.
+  const quizTopic = (curriculumData.topics as Array<{
+    id: string;
+    quiz?: {
+      questions: Array<{
+        id: string;
+        question: string;
+        equation?: string;
+        answer: number;
+      }>;
+    };
+  }>).find((t) => t.id === attempt.topic_id);
+
+  const quizWrongAnswers: WrongAnswer[] = [];
+  if (quizTopic?.quiz) {
+    for (const ans of attempt.answers) {
+      if (ans.correct) continue;
+      const bankQ = quizTopic.quiz.questions.find((q) => q.id === ans.question_id);
+      if (!bankQ) continue;
+      const displayQuestion = bankQ.equation
+        ? `${bankQ.question} ${bankQ.equation}`
+        : bankQ.question;
+      quizWrongAnswers.push({
+        id: generateId(),
+        topic: attempt.topic_id,
+        question: displayQuestion,
+        student_answer: ans.student_answer,
+        correct_answer: String(bankQ.answer),
+        error_type: "concept",
+        explanation: "",
+        timestamp: attempt.finished_at,
+        review_count: 0,
+        next_review_date: tomorrowStr(),
+        last_review_correct: null,
+        bank_question_id: bankQ.id,
+        source: "quiz",
+      });
+    }
+  }
+
   const newProfile: StudentProfile = {
     ...profile,
     topics: { ...profile.topics, [attempt.topic_id]: tp },
     quiz_results: [...(profile.quiz_results ?? []), attempt],
     session_logs: [...(profile.session_logs ?? []), sessionLog],
     total_study_time_minutes: (profile.total_study_time_minutes ?? 0) + sessionMinutes,
+    wrong_answers: [...profile.wrong_answers, ...quizWrongAnswers],
   };
 
   saveProfile(newProfile);
