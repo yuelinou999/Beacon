@@ -139,8 +139,25 @@ server sidesteps that.
 If you forget to save one of the snapshots, the export will fall
 back to whatever's on screen and append a "did you forget to click
 Save?" warning so the decision-gate evaluator knows the data is
-incomplete. Snapshots live only for the current page session — a
-hard reload wipes them.
+incomplete.
+
+**Snapshot persistence**: Saved snapshots are stored in the page's
+sessionStorage, so they DO survive `location.reload()` — including
+the reload triggered by the "Reset cache (force redownload)" button.
+This means the documented Plan-A-then-Plan-B workflow (Save A → Reset
+cache → switch to Plan B → test → Save B → Export) is reliable: the
+Plan A snapshot you saved before clicking Reset cache will still be
+there after the reload.
+
+What sessionStorage does NOT survive: closing the tab, closing the
+window, or quitting the browser. If you finish Plan A, save the
+snapshot, and close the tab to come back tomorrow, the snapshot is
+gone — sessionStorage scope is per-tab. For the spike this is
+intentional (clean slate per session) and acceptable since the full
+A + B test fits in one ~30-90 minute sitting. If you need to
+deliberately wipe saved snapshots without closing the tab (e.g.
+restarting a botched Plan A run), use the "Clear saved snapshots"
+button in the Observation log.
 
 ## Decision gate
 

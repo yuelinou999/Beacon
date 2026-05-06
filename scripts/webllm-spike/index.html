@@ -241,7 +241,8 @@
   <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
     <button id="obs-save-btn">Save snapshot for current model</button>
     <button id="obs-export-btn" class="secondary">Export both snapshots</button>
-    <button id="obs-clear-btn" class="secondary" style="margin-left: auto;">Clear current form</button>
+    <button id="obs-clear-btn" class="secondary">Clear current form</button>
+    <button id="obs-wipe-btn" class="secondary" style="margin-left: auto;">Clear saved snapshots</button>
   </div>
   <div class="status" id="obs-export-status" style="margin-top: 8px;">
     Plan A: <span id="snap-a-state">not saved</span>
@@ -464,15 +465,40 @@
   //   3. Click "Export both snapshots" — bundles whichever slots are
   //      populated. Paste back into chat for decision gate.
   // "Clear current form" is escape-hatch — clears form fields without
-  // touching saved snapshots. Snapshots live in module-scope variables;
-  // page reload wipes them (acceptable: user can save+export within a
-  // single session).
+  // touching saved snapshots.
+  // "Clear saved snapshots" is a separate escape-hatch — wipes A + B
+  // from sessionStorage so a fresh test session starts clean.
+  // Snapshots persist via sessionStorage so the "Reset cache" button
+  // (which calls location.reload()) doesn't destroy a saved Plan A
+  // before Plan B has been tested. sessionStorage scope = this tab,
+  // this origin: closing the tab/window still wipes them, which is
+  // intentional for spike hygiene across separate test sessions.
   const obsSaveBtn = $("obs-save-btn");
   const obsExportBtn = $("obs-export-btn");
   const obsClearBtn = $("obs-clear-btn");
+  const obsWipeBtn = $("obs-wipe-btn");
   const snapAState = $("snap-a-state");
   const snapBState = $("snap-b-state");
   const snapshots = { A: null, B: null };
+
+  // sessionStorage hydration — runs once at page load. If the operator
+  // saved Plan A then triggered Reset cache, the page reloads and lands
+  // back here; this rehydration brings the saved snapshot back into
+  // memory so Export still has it.
+  const STORAGE_KEY_A = "beacon-spike-snapshot-A";
+  const STORAGE_KEY_B = "beacon-spike-snapshot-B";
+  function hydrateSnapshotsFromStorage() {
+    try {
+      const a = sessionStorage.getItem(STORAGE_KEY_A);
+      if (a) snapshots.A = JSON.parse(a);
+      const b = sessionStorage.getItem(STORAGE_KEY_B);
+      if (b) snapshots.B = JSON.parse(b);
+    } catch (err) {
+      console.warn("[spike] sessionStorage hydration failed:", err);
+      // Don't block the spike — fall through with empty snapshots.
+    }
+  }
+  hydrateSnapshotsFromStorage();
 
   function gatherCurrentSnapshot() {
     const which = $("obs-which-model").value;
@@ -526,6 +552,11 @@
     snapAState.textContent = snapshots.A ? "saved ✓" : "not saved";
     snapBState.textContent = snapshots.B ? "saved ✓" : "not saved";
   }
+  // Reflect any sessionStorage-hydrated snapshots in the initial paint —
+  // hydration ran above before this function was defined, so the first
+  // status line is still showing the HTML default "not saved" until we
+  // call this explicitly.
+  refreshSnapStateLine();
 
   // Map top "Model variant" dropdown value → expected snapshot slot.
   // Plan A is the 1B model, Plan B is the 2B model. When the top
@@ -565,6 +596,29 @@
       if (!confirm(`Plan ${snap.which} already has a saved snapshot. Overwrite?`)) return;
     }
     snapshots[snap.which] = snap;
+    // Persist to sessionStorage so location.reload() (e.g. from Reset
+    // cache) doesn't destroy the snapshot before the operator finishes
+    // testing the other model. Wrapped in try/catch so a quota error
+    // or disabled-storage edge case doesn't break the in-memory save.
+    try {
+      const key = snap.which === "A" ? STORAGE_KEY_A : STORAGE_KEY_B;
+      sessionStorage.setItem(key, JSON.stringify(snap));
+    } catch (err) {
+      console.warn("[spike] sessionStorage write failed:", err);
+    }
+    refreshSnapStateLine();
+  });
+
+  obsWipeBtn.addEventListener("click", () => {
+    if (!confirm("Clear BOTH saved Plan A and Plan B snapshots? Form fields are NOT affected.")) return;
+    snapshots.A = null;
+    snapshots.B = null;
+    try {
+      sessionStorage.removeItem(STORAGE_KEY_A);
+      sessionStorage.removeItem(STORAGE_KEY_B);
+    } catch (err) {
+      console.warn("[spike] sessionStorage clear failed:", err);
+    }
     refreshSnapStateLine();
   });
 
