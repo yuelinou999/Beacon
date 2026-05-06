@@ -908,38 +908,72 @@ function DueRetryingCard({
               learner saw this once already at submit time; reshowing it
               here keeps the original framing available even after they
               ask for a "different way" alt. Per codex review guidance:
-              don't let alt content REPLACE the original. */}
+              don't let alt content REPLACE the original.
+              When mistake.explanation is empty (quiz wrong-answers, which
+              are written without a primary authored explanation — see
+              recordQuizAttempt in lib/progress.ts), the heading +
+              body swap to honest copy that points the student at the
+              actually-available content (bank alt below if present,
+              Gemma alt button either way) instead of leaving the amber
+              card half-empty with the placeholder "No explanation
+              recorded for this mistake." stuck under a heading that
+              implies an explanation exists. */}
           <div
             className="rounded-lg p-5 mb-3"
             style={{ backgroundColor: "#FFFBEB" }}
           >
-            <p
-              style={{
-                fontSize: "15px",
-                color: "#92400E",
-                lineHeight: 1.7,
-                marginBottom: "12px",
-                fontWeight: 500,
-              }}
-            >
-              Review the explanation, then try once more.
-            </p>
-            <p
-              className="math-display"
-              style={{
-                fontSize: "14px",
-                color: "#78350F",
-                lineHeight: 1.6,
-                marginBottom: "8px",
-              }}
-            >
-              <MathRenderer
-                content={
-                  mistake.explanation ||
-                  "No explanation recorded for this mistake."
-                }
-              />
-            </p>
+            {mistake.explanation ? (
+              <>
+                <p
+                  style={{
+                    fontSize: "15px",
+                    color: "#92400E",
+                    lineHeight: 1.7,
+                    marginBottom: "12px",
+                    fontWeight: 500,
+                  }}
+                >
+                  Review the explanation, then try once more.
+                </p>
+                <p
+                  className="math-display"
+                  style={{
+                    fontSize: "14px",
+                    color: "#78350F",
+                    lineHeight: 1.6,
+                    marginBottom: "8px",
+                  }}
+                >
+                  <MathRenderer content={mistake.explanation} />
+                </p>
+              </>
+            ) : (
+              <>
+                <p
+                  style={{
+                    fontSize: "15px",
+                    color: "#92400E",
+                    lineHeight: 1.7,
+                    marginBottom: "12px",
+                    fontWeight: 500,
+                  }}
+                >
+                  No original explanation was recorded for this mistake.
+                </p>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "#78350F",
+                    lineHeight: 1.6,
+                    marginBottom: "8px",
+                  }}
+                >
+                  {bankAltText
+                    ? "Try the alternative explanation below, or ask Gemma for another angle."
+                    : "Ask Gemma for another angle below."}
+                </p>
+              </>
+            )}
             <p style={{ fontSize: "13px", color: "#78350F" }}>
               Correct answer:{" "}
               <strong style={{ color: "#059669" }}>{mistake.correct_answer}</strong>
