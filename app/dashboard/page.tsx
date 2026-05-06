@@ -88,7 +88,7 @@ export default function DashboardPage() {
           </p>
           <BilingualSubtitle
             english="Understanding you as a learner"
-            fallbackZh="读懂你作为学习者的样子"
+            fallbackZh="了解你作为学习者的特点"
             style={{ display: "block", fontSize: "12px", color: "#9CA3AF", marginTop: "2px" }}
           />
         </div>
