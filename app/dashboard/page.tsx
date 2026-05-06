@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { useAIContext } from "@/components/ai-context";
+import BilingualSubtitle from "@/components/bilingual-subtitle";
 import type { PortraitResponse } from "@/lib/portrait";
 import ViewToggle, { type ViewMode } from "./_components/view-toggle";
 import Section1Portrait from "./_components/section1-portrait";
@@ -74,12 +75,22 @@ export default function DashboardPage() {
 
         {/* Header */}
         <div className="mb-10">
-          <h1 style={{ fontSize: "24px", fontWeight: 500, color: "#0F2A4A", marginBottom: "8px" }}>
+          <h1 style={{ fontSize: "24px", fontWeight: 500, color: "#0F2A4A", marginBottom: "2px" }}>
             Dashboard
           </h1>
+          <BilingualSubtitle
+            english="Dashboard"
+            fallbackZh="学习仪表盘"
+            style={{ display: "block", fontSize: "13px", color: "#9CA3AF", marginBottom: "6px" }}
+          />
           <p style={{ fontSize: "14px", color: "#6B7280" }}>
             Understanding you as a learner
           </p>
+          <BilingualSubtitle
+            english="Understanding you as a learner"
+            fallbackZh="读懂你作为学习者的样子"
+            style={{ display: "block", fontSize: "12px", color: "#9CA3AF", marginTop: "2px" }}
+          />
         </div>
 
         {/* Body */}

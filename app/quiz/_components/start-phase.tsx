@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, Clock, FileText, BarChart3, Lock } from "lucide-react";
 import type { QuizBank, TopicWithPhases } from "@/lib/curriculum-types";
+import BilingualSubtitle from "@/components/bilingual-subtitle";
 
 interface StartPhaseProps {
   quiz: QuizBank;
@@ -33,9 +34,19 @@ export default function StartPhaseView({ quiz, topic, onStart }: StartPhaseProps
           <FileText size={32} style={{ color: "#2563EB" }} />
         </div>
 
-        <h1 style={{ fontSize: "24px", fontWeight: 500, color: "#0F2A4A", marginBottom: "8px" }}>
+        <h1 style={{ fontSize: "24px", fontWeight: 500, color: "#0F2A4A", marginBottom: "4px" }}>
           {quiz.title}
         </h1>
+        <BilingualSubtitle
+          english={quiz.title}
+          fallbackZh={`${topic.title.zh} 测验`}
+          style={{
+            display: "block",
+            fontSize: "13px",
+            color: "#9CA3AF",
+            marginBottom: "12px",
+          }}
+        />
         <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "32px" }}>
           {quiz.description}
         </p>

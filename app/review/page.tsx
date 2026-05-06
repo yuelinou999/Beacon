@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, Clock, Check, X, ChevronDown, ChevronRight, BookOpen, Sparkles } from "lucide-react";
 import MathRenderer from "@/components/math-renderer";
+import BilingualSubtitle from "@/components/bilingual-subtitle";
 import { useAIContext } from "@/components/ai-context";
 import { loadProfile, recordReviewAttempt, startSession, endSession } from "@/lib/progress";
 import { onSettingsChanged } from "@/lib/settings-events";
@@ -439,10 +440,20 @@ export default function ReviewPage() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 style={{ fontSize: "24px", fontWeight: 500, color: "#0F2A4A", marginBottom: "4px" }}>
+          <h1 style={{ fontSize: "24px", fontWeight: 500, color: "#0F2A4A", marginBottom: "2px" }}>
             Review
           </h1>
+          <BilingualSubtitle
+            english="Review"
+            fallbackZh="复习"
+            style={{ display: "block", fontSize: "13px", color: "#9CA3AF", marginBottom: "4px" }}
+          />
           <p style={{ fontSize: "14px", color: "#6B7280" }}>Your mistake notebook</p>
+          <BilingualSubtitle
+            english="Your mistake notebook"
+            fallbackZh="你的错题本"
+            style={{ display: "block", fontSize: "12px", color: "#9CA3AF", marginTop: "2px" }}
+          />
         </div>
 
         {/* Summary bar */}
