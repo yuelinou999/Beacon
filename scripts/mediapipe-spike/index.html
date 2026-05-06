@@ -309,6 +309,63 @@
 
   function setStatus(t) { statusEl.textContent = t; }
 
+  // Lightweight preflight on the operator-supplied modelAssetPath URL.
+  // Goal: when load fails, separate "MediaPipe runtime broken" from
+  // "operator pasted a bad URL / CORS / wrong file" — those have very
+  // different implications for the Day-7 integration call.
+  //
+  // Best-effort hints, not certainties: in browsers, CORS-blocked and
+  // genuinely unreachable both surface as "TypeError: Failed to fetch"
+  // with no distinguishing info. We try HEAD first (cheapest), fall
+  // back to a tiny range GET if HEAD is rejected, and surface a hint
+  // based on URL shape when both fail.
+  async function preflightModelAsset(url) {
+    if (!url || !url.trim()) {
+      return { ok: false, kind: "empty", detail: "modelAssetPath is empty" };
+    }
+    if (!/\.litertlm(\?|$)/i.test(url) && !/\.task(\?|$)/i.test(url)) {
+      // Warn (not block) — operator may have a non-standard extension.
+      console.warn("[mp-spike] preflight: URL extension is not .litertlm or .task — verify the file format matches MediaPipe's web runtime expectation.");
+    }
+    try {
+      const head = await fetch(url, { method: "HEAD" });
+      if (!head.ok) {
+        return { ok: false, kind: "non-2xx", detail: `HEAD ${head.status} ${head.statusText || ""}` };
+      }
+      const cl = head.headers.get("content-length");
+      if (cl && parseInt(cl, 10) < 1_000_000) {
+        return {
+          ok: false,
+          kind: "tiny",
+          detail: `Asset is only ${cl} bytes — almost certainly the wrong file (Gemma .litertlm should be 500 MB to 2 GB)`,
+        };
+      }
+      return { ok: true, detail: `HEAD ok${cl ? ` · ~${(parseInt(cl, 10) / 1e6).toFixed(0)} MB` : ""}` };
+    } catch (headErr) {
+      // HEAD threw — try a 1KB Range GET as fallback. Some CDNs /
+      // HF endpoints reject HEAD but allow GET.
+      try {
+        const ranged = await fetch(url, { headers: { Range: "bytes=0-1023" } });
+        if (!ranged.ok && ranged.status !== 206 && ranged.status !== 200) {
+          return { ok: false, kind: "non-2xx", detail: `Range GET ${ranged.status} ${ranged.statusText || ""}` };
+        }
+        return { ok: true, detail: "Range GET ok (HEAD was rejected)" };
+      } catch (rangeErr) {
+        // Both methods threw. Distinguish CORS from unreachable by URL
+        // shape only — error messages don't reliably differ.
+        const isCrossOrigin = /^https?:\/\//.test(url) && !url.startsWith(location.origin);
+        const hint = isCrossOrigin
+          ? "Likely CORS block (cross-origin URL). Download the file and serve from localhost via python3 -m http.server."
+          : "URL unreachable from this origin.";
+        return {
+          ok: false,
+          kind: "fetch-failed",
+          detail: `${hint} Raw: ${String(rangeErr.message || rangeErr)}`,
+        };
+      }
+    }
+  }
+
   async function loadModel() {
     const url = urlInput.value.trim();
     if (!url) {
@@ -318,7 +375,23 @@
     loadBtn.disabled = true;
     runBtn.disabled = true;
     multiBtn.disabled = true;
-    setStatus(`Resolving GenAI WASM fileset…`);
+
+    // Preflight first — fail fast with a categorized error before paying
+    // the cost of WASM resolver + MediaPipe init. Saves the operator
+    // from staring at a frozen tab for minutes only to discover the URL
+    // was wrong.
+    setStatus(`Preflight checking ${url}…`);
+    const pre = await preflightModelAsset(url);
+    if (!pre.ok) {
+      setStatus(
+        `❌ Preflight failed (${pre.kind}): ${pre.detail}\n\n` +
+        `This is an asset-setup issue, NOT a MediaPipe runtime issue. Fix the URL/file/CORS, then retry.`,
+      );
+      loadBtn.disabled = false;
+      return;
+    }
+    setStatus(`✅ Preflight ok: ${pre.detail}\nResolving GenAI WASM fileset…`);
+
     const t0 = performance.now();
     try {
       const genai = await FilesetResolver.forGenAiTasks(
@@ -338,7 +411,13 @@
       runBtn.disabled = false;
       multiBtn.disabled = false;
     } catch (err) {
-      setStatus(`❌ Load failed: ${err.message || err}\n(common causes: bad URL, CORS block, unsupported model file format, WebGPU unavailable)`);
+      // Preflight passed but createFromOptions still failed → likely a
+      // genuine MediaPipe runtime issue (WASM init, WebGPU adapter,
+      // unsupported model format / quantization, OOM during init).
+      setStatus(
+        `❌ MediaPipe runtime error after preflight passed: ${err.message || err}\n\n` +
+        `Asset reachability looked fine, so this is more likely a runtime/format/WebGPU problem than a URL/CORS one. Common causes: file is .task in an unsupported quantization, WebGPU adapter lost, model too large for available VRAM, browser version mismatch.`,
+      );
       console.error(err);
     } finally {
       loadBtn.disabled = false;

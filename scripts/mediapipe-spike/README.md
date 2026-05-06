@@ -180,6 +180,16 @@ all of these must hold:
 | Main-thread freeze ≤ WebLLM's category | ⚠️ desirable |
 | Operator setup is documentable in submission writeup | ✅ |
 
+> ⚠️ **3-turn stability is NOT in the criteria above on purpose.**
+> Per the comparison-table caveat below, MediaPipe's 3-turn test in
+> this spike uses transcript concatenation as a substitute for
+> structured chat history. That's not a fair lever to make a Day-7
+> integration call on. Use 3-turn data only as a soft "is the model
+> falling apart entirely" check — not as a precision compare against
+> WebLLM. If 3-turn fails badly on MediaPipe but other criteria pass,
+> the right Day-7 fix is to inject the chat template manually, not
+> to reject MediaPipe.
+
 **MediaPipe should be locked for Day 7 if all ✅ are met AND a
 plurality of ⚠️ are met.**
 
@@ -211,7 +221,20 @@ Build a comparison table from the two exports:
 | L2 offline |  |  |  |  |
 | L2 cold restart |  |  |  |  |
 | Main-thread freeze |  |  |  |  |
-| 3-turn stability |  |  |  |  |
+| 3-turn stability ⚠️ |  |  |  |  |
+
+> ⚠️ **The "3-turn stability" row is NOT apples-to-apples.** WebLLM
+> exposes an OpenAI-compatible `messages: [...]` array, so its
+> multi-turn test passes structured user/assistant turns through the
+> model's native chat template. MediaPipe LLM Inference web's API
+> takes a single string per call, so this spike approximates
+> multi-turn by concatenating the conversation as plain text
+> (`User: ... \n\nAssistant: ... \n\nUser: ...`). That's a real test
+> of model context retention but ALSO a test of the prompt-shape
+> approximation. Quality decay on this row could come from either
+> the model OR the concat scheme — don't read it as pure model
+> capability. The other 9 rows in this table are direct compares;
+> this one needs interpretation.
 
 The decision-gate evaluator (next session) reads both exports + this
 table to make the Day-7 integration call.
