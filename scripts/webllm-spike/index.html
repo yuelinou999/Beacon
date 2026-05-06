@@ -232,8 +232,16 @@
   <label for="obs-notes">Free-form notes (anything weird, error messages, devtools console errors, slow paint, etc.)</label>
   <textarea id="obs-notes" placeholder="e.g. saw 'WebGPU adapter lost' once during turn 2; recovered after retry"></textarea>
 
-  <button id="obs-export-btn" class="secondary">Copy observation log as text</button>
-  <div class="status" id="obs-export-status" style="margin-top: 8px;">Export: clipboard contents will replace this line.</div>
+  <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+    <button id="obs-save-btn">Save snapshot for current model</button>
+    <button id="obs-export-btn" class="secondary">Export both snapshots</button>
+    <button id="obs-clear-btn" class="secondary" style="margin-left: auto;">Clear current form</button>
+  </div>
+  <div class="status" id="obs-export-status" style="margin-top: 8px;">
+    Plan A: <span id="snap-a-state">not saved</span>
+    &nbsp;·&nbsp;
+    Plan B: <span id="snap-b-state">not saved</span>
+  </div>
 </fieldset>
 
 <script type="module">
@@ -366,29 +374,43 @@
     }
   }
 
-  // Multi-turn: 3 consecutive prompts, log per-turn TTFT + tps. Catches
-  // quality decay / context overflow / tab freeze that a single-turn
-  // test would miss. Per codex round-1.
+  // Multi-turn stability: a TRUE conversation (history accumulates), not
+  // 3 isolated calls. Each turn appends the prior user message AND the
+  // streamed assistant reply back into the messages array so turn 2 sees
+  // turn 1's full context, and turn 3 sees turns 1 + 2. This is what
+  // catches context-growth issues, KV-cache pressure, and conversational
+  // coherence — not just repeated single-turn inference.
+  //
+  // Prompts deliberately reference prior turns ("Now solve…", "the same
+  // method as before") so quality decay shows up as the model losing the
+  // thread, not just per-turn latency drift.
   const multiBtn = $("multi-btn");
   async function runMultiTurn() {
     if (!engine) return;
     multiBtn.disabled = true;
     runBtn.disabled = true;
-    const prompts = [
+    const userPrompts = [
       "If x + 5 = 12, what is x? Explain step by step.",
-      "Now solve: 3y - 4 = 14. Show your work.",
-      "Why does adding the same number to both sides keep an equation balanced?",
+      "Now using the same method, solve: 3y - 4 = 14. Show your work.",
+      "Why did the inverse-operation step we used in both problems keep the equation balanced?",
     ];
     outputEl.textContent = "";
     const turnLog = [];
-    for (let i = 0; i < prompts.length; i++) {
-      outputEl.textContent += `\n\n=== Turn ${i + 1} ===\nPrompt: ${prompts[i]}\n\nResponse: `;
+    // Accumulating history — passed to each successive engine call so the
+    // model genuinely sees the conversation, not 3 unrelated requests.
+    const history = [];
+
+    for (let i = 0; i < userPrompts.length; i++) {
+      const userMsg = { role: "user", content: userPrompts[i] };
+      history.push(userMsg);
+      outputEl.textContent += `\n\n=== Turn ${i + 1} (history size: ${history.length} msgs) ===\nUser: ${userPrompts[i]}\n\nAssistant: `;
       const t0 = performance.now();
       let firstTokenAt = null;
       let tokens = 0;
+      let assistantReply = "";
       try {
         const stream = await engine.chat.completions.create({
-          messages: [{ role: "user", content: prompts[i] }],
+          messages: history,
           stream: true,
           max_tokens: 250,
           temperature: 0.7,
@@ -398,66 +420,142 @@
           if (delta) {
             if (firstTokenAt === null) firstTokenAt = performance.now();
             outputEl.textContent += delta;
+            assistantReply += delta;
             tokens += Math.max(1, delta.split(/\s+/).filter(Boolean).length);
           }
         }
+        // Append assistant reply to history so the NEXT turn sees it.
+        history.push({ role: "assistant", content: assistantReply });
         const totalMs = performance.now() - t0;
         const genMs = firstTokenAt ? performance.now() - firstTokenAt : totalMs;
         const tps = tokens / (genMs / 1000);
         const ttft = firstTokenAt ? (firstTokenAt - t0) / 1000 : null;
-        turnLog.push({ turn: i + 1, ttft, tps, totalMs: totalMs / 1000 });
+        turnLog.push({ turn: i + 1, ttft, tps, totalMs: totalMs / 1000, historyMsgs: history.length });
       } catch (err) {
         outputEl.textContent += `\n[Turn ${i + 1} failed: ${err.message || err}]`;
         turnLog.push({ turn: i + 1, error: String(err) });
+        // If a turn errors, still try the next one but flag it. Don't push
+        // an empty assistant message; let the model see only completed turns.
       }
     }
     outputEl.textContent += "\n\n=== Stability summary ===\n" + turnLog.map((t) =>
       t.error
         ? `Turn ${t.turn}: ERROR ${t.error}`
-        : `Turn ${t.turn}: TTFT ${t.ttft?.toFixed(2)}s · ${t.tps?.toFixed(1)} tps · total ${t.totalMs.toFixed(2)}s`,
+        : `Turn ${t.turn}: TTFT ${t.ttft?.toFixed(2)}s · ${t.tps?.toFixed(1)} tps · total ${t.totalMs.toFixed(2)}s · ${t.historyMsgs} msgs in context`,
     ).join("\n");
     multiBtn.disabled = false;
     runBtn.disabled = false;
   }
 
-  // Observation log → clipboard. Bundles auto-captured metrics
-  // (cold load / TTFT / tps / total) with manual observations
-  // (warm load / L1 / L2 / L2 cold restart / main-thread / multi-turn /
-  // Hindi quality / notes) into a single paste-ready block. The decision
-  // gate in the next session needs all of these to evaluate the spike.
+  // Observation log — snapshot-per-model so switching the model selector
+  // doesn't silently destroy previously-recorded metrics. Operator
+  // workflow:
+  //   1. Test Plan A end-to-end. Fill manual fields. Click "Save
+  //      snapshot for current model" — records A.
+  //   2. Reset cache (or skip if testing warm-cache scenarios).
+  //      Switch dropdown to Plan B. Reload model. Test end-to-end.
+  //      Fill manual fields. Click Save again — records B.
+  //   3. Click "Export both snapshots" — bundles whichever slots are
+  //      populated. Paste back into chat for decision gate.
+  // "Clear current form" is escape-hatch — clears form fields without
+  // touching saved snapshots. Snapshots live in module-scope variables;
+  // page reload wipes them (acceptable: user can save+export within a
+  // single session).
+  const obsSaveBtn = $("obs-save-btn");
   const obsExportBtn = $("obs-export-btn");
-  const obsExportStatus = $("obs-export-status");
-  obsExportBtn.addEventListener("click", async () => {
+  const obsClearBtn = $("obs-clear-btn");
+  const snapAState = $("snap-a-state");
+  const snapBState = $("snap-b-state");
+  const snapshots = { A: null, B: null };
+
+  function gatherCurrentSnapshot() {
     const which = $("obs-which-model").value;
-    const lines = [
-      `Beacon WebLLM Spike — Observation log`,
-      `Model under test: ${which === "A" ? "Plan A (gemma3-1b-it-q4f16_1-MLC)" : "Plan B (gemma-2-2b-it-q4f16_1-MLC-1k)"}`,
-      ``,
+    return {
+      which,
+      auto: {
+        coldLoad: mColdload.textContent,
+        ttft: mTtft.textContent,
+        tps: mTps.textContent,
+        total: mTotal.textContent,
+      },
+      manual: {
+        warmLoad: $("obs-warmload").value || "—",
+        hindiQuality: $("obs-hindi-quality").value || "—",
+        l1: $("obs-l1").value || "—",
+        l2: $("obs-l2").value || "—",
+        l2cold: $("obs-l2cold").value || "—",
+        mainthread: $("obs-mainthread").value || "—",
+        multiturn: $("obs-multiturn").value || "—",
+        notes: $("obs-notes").value || "",
+      },
+    };
+  }
+
+  function snapshotToText(snap) {
+    if (!snap) return null;
+    const modelLabel = snap.which === "A"
+      ? "Plan A (gemma3-1b-it-q4f16_1-MLC)"
+      : "Plan B (gemma-2-2b-it-q4f16_1-MLC-1k)";
+    return [
+      `--- ${modelLabel} ---`,
       `Auto-captured:`,
-      `  Cold load:        ${mColdload.textContent}`,
-      `  Time to first tok:${mTtft.textContent}`,
-      `  Tokens/sec:       ${mTps.textContent}`,
-      `  Total inference:  ${mTotal.textContent}`,
-      ``,
+      `  Cold load:        ${snap.auto.coldLoad}`,
+      `  Time to first tok:${snap.auto.ttft}`,
+      `  Tokens/sec:       ${snap.auto.tps}`,
+      `  Total inference:  ${snap.auto.total}`,
       `Manual observations:`,
-      `  Warm load:        ${$("obs-warmload").value || "—"}`,
-      `  Hindi quality:    ${$("obs-hindi-quality").value || "—"} / 5`,
-      `  L1 offline:       ${$("obs-l1").value || "—"}`,
-      `  L2 offline:       ${$("obs-l2").value || "—"}`,
-      `  L2 cold restart:  ${$("obs-l2cold").value || "—"}`,
-      `  Main-thread:      ${$("obs-mainthread").value || "—"}`,
-      `  3-turn stability: ${$("obs-multiturn").value || "—"}`,
-      ``,
+      `  Warm load:        ${snap.manual.warmLoad}`,
+      `  Hindi quality:    ${snap.manual.hindiQuality} / 5`,
+      `  L1 offline:       ${snap.manual.l1}`,
+      `  L2 offline:       ${snap.manual.l2}`,
+      `  L2 cold restart:  ${snap.manual.l2cold}`,
+      `  Main-thread:      ${snap.manual.mainthread}`,
+      `  3-turn stability: ${snap.manual.multiturn}`,
       `Free-form notes:`,
-      `  ${$("obs-notes").value.replace(/\n/g, "\n  ") || "(none)"}`,
-    ];
-    const text = lines.join("\n");
+      `  ${snap.manual.notes.replace(/\n/g, "\n  ") || "(none)"}`,
+    ].join("\n");
+  }
+
+  function refreshSnapStateLine() {
+    snapAState.textContent = snapshots.A ? "saved ✓" : "not saved";
+    snapBState.textContent = snapshots.B ? "saved ✓" : "not saved";
+  }
+
+  obsSaveBtn.addEventListener("click", () => {
+    const snap = gatherCurrentSnapshot();
+    if (snapshots[snap.which]) {
+      if (!confirm(`Plan ${snap.which} already has a saved snapshot. Overwrite?`)) return;
+    }
+    snapshots[snap.which] = snap;
+    refreshSnapStateLine();
+  });
+
+  obsExportBtn.addEventListener("click", async () => {
+    const blocks = [];
+    if (snapshots.A) blocks.push(snapshotToText(snapshots.A));
+    if (snapshots.B) blocks.push(snapshotToText(snapshots.B));
+    if (blocks.length === 0) {
+      // Nothing saved — fall back to current screen state so a one-model
+      // test still has something to copy. Note this in the export so the
+      // decision-gate evaluator knows it's incomplete.
+      const fallback = gatherCurrentSnapshot();
+      blocks.push(snapshotToText(fallback));
+      blocks.push("(NOTE: only current screen exported — neither snapshot saved. Did you forget to click Save?)");
+    }
+    const text = ["Beacon WebLLM Spike — Observation log", ""].concat(blocks).join("\n\n");
     try {
       await navigator.clipboard.writeText(text);
-      obsExportStatus.textContent = "✅ Copied to clipboard. Paste this back into the chat.";
-    } catch (err) {
-      obsExportStatus.textContent = "Clipboard blocked. Manually copy from below:\n\n" + text;
+      const which = blocks.length === 2 ? "both snapshots" : "one snapshot";
+      $("obs-export-status").innerHTML = `✅ Copied ${which} to clipboard. Paste into chat.<br>Plan A: ${snapshots.A ? "saved ✓" : "not saved"} · Plan B: ${snapshots.B ? "saved ✓" : "not saved"}`;
+    } catch {
+      $("obs-export-status").textContent = "Clipboard blocked. Manually copy from below:\n\n" + text;
     }
+  });
+
+  obsClearBtn.addEventListener("click", () => {
+    if (!confirm("Clear all form fields? Saved snapshots are NOT affected.")) return;
+    ["obs-warmload", "obs-hindi-quality", "obs-notes"].forEach((id) => { $(id).value = ""; });
+    ["obs-l1", "obs-l2", "obs-l2cold", "obs-mainthread", "obs-multiturn"].forEach((id) => { $(id).value = ""; });
   });
 
   loadBtn.addEventListener("click", loadModel);

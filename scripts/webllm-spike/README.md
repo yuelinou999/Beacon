@@ -29,11 +29,20 @@ Without L2 passing, the submission narrative cannot honestly say
 "truly offline in browser." A spike that only proves L1 is a spike
 that mis-sells the product.
 
-This page also adds a 3-turn multi-turn test because:
+This page also adds a true multi-turn conversation test because:
 - single-turn doesn't catch context overflow / quality decay
 - single-turn doesn't catch tab freeze under sustained inference
 - single-turn doesn't tell you whether the demo can actually run a
   3-message conversation
+
+The "Run 3-turn stability test" button accumulates conversation history
+across all 3 turns — turn 2 sees turn 1's user message AND assistant
+reply, turn 3 sees both prior turns. Prompts are crafted to reference
+prior turns ("Now using the same method…", "Why did the inverse-
+operation step we used in both problems…") so quality decay shows up
+as the model losing the conversational thread, not just per-turn
+latency drift. Per-turn metrics include the history size in messages
+so you can see context growing.
 
 ## Run
 
@@ -96,12 +105,42 @@ server sidesteps that.
    integration requirement (we'll need to bundle WebLLM into the
    Next.js build, not import from CDN).
 
-### Phase 4 — Plan B comparison
+### Phase 4 — Save the Plan A snapshot BEFORE switching models
 
-8. Click "Reset cache (force redownload)" to clear Plan A weights.
-9. Switch to Plan B (`gemma-2-2b-it-q4f16_1-MLC-1k`). Repeat
-   Phase 1 + 2 + 3 with this larger model. Compare against Plan A on
-   Hindi math quality, multi-turn stability, and load time.
+8. In the Observation log fieldset: confirm "Model under test" is set
+   to **Plan A**. Fill in all the manual fields (warm load, Hindi
+   quality, L1 / L2 / L2 cold restart pass-fail, main-thread freeze
+   level, 3-turn stability, free-form notes).
+9. Click **"Save snapshot for current model"**. Status line should
+   read `Plan A: saved ✓`. Do NOT skip this step — the form fields
+   only persist on screen until you switch models or reload the page.
+
+### Phase 5 — Plan B comparison
+
+10. Click "Reset cache (force redownload)" to clear Plan A weights.
+11. Switch the **Model variant** dropdown to Plan B
+    (`gemma-2-2b-it-q4f16_1-MLC-1k`). Click "Load model" — first load
+    redownloads ~1.6 GB (larger than A by 2x).
+12. Repeat Phase 1 + 2 + 3 with Plan B.
+13. Switch the **Observation log "Model under test"** selector to
+    Plan B. Click "Clear current form" if you want to start fresh
+    (this does NOT touch the saved Plan A snapshot). Fill the manual
+    fields for Plan B.
+14. Click **"Save snapshot for current model"** again. Status line
+    should now read `Plan A: saved ✓ · Plan B: saved ✓`.
+
+### Phase 6 — Export
+
+15. Click **"Export both snapshots"**. Both A + B observations bundle
+    into one paste-ready block on your clipboard. Paste into the
+    chat. The status line confirms which snapshots made it into the
+    export.
+
+If you forget to save one of the snapshots, the export will fall
+back to whatever's on screen and append a "did you forget to click
+Save?" warning so the decision-gate evaluator knows the data is
+incomplete. Snapshots live only for the current page session — a
+hard reload wipes them.
 
 ## Decision gate
 
