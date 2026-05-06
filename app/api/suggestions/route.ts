@@ -1,11 +1,21 @@
 import { NextRequest } from "next/server";
 import { OLLAMA_URL, OLLAMA_MODEL } from "@/lib/config";
+import {
+  buildLanguageSuffix,
+  isLearnerLanguage,
+  type LearnerLanguage,
+} from "@/lib/learner-language";
 
 interface SuggestionsRequest {
   page: "home" | "learn" | "practice" | "general" | "quiz";
   currentTopicName?: string;
   topicMasteries?: Array<{ name: string; mastery: number }>;
   recentWrongAnswers?: string[];
+  // Output language for the suggestion strings. When set to a non-en
+  // value, Gemma renders the suggestion chips in that language so a
+  // bilingual-mode student doesn't see English chips next to their
+  // multilingual chat output. Optional — defaults to "en".
+  language?: LearnerLanguage;
 }
 
 const FALLBACK_SUGGESTIONS: Record<string, string[]> = {
@@ -39,12 +49,21 @@ export async function POST(req: NextRequest) {
   try {
     const body: SuggestionsRequest = await req.json();
     const { page, currentTopicName, topicMasteries, recentWrongAnswers } = body;
+    const lang: LearnerLanguage = isLearnerLanguage(body.language)
+      ? body.language
+      : "en";
 
     const completed = topicMasteries?.filter((t) => t.mastery >= 0.3) || [];
     const current = currentTopicName || "linear equations";
     const wrongSample = recentWrongAnswers?.slice(0, 2).join("; ") || "";
 
-    const systemPrompt = `Based on this student's learning progress, generate exactly 4 short practice questions or discussion prompts. Each should be under 15 words. Mix question types: one review question from a completed topic, one about the current topic, one common confusion point, one fun or curious question. Return ONLY a JSON array of 4 strings. No numbering, no labels, no explanation.`;
+    // System prompt stays English for instruction reliability; the suffix
+    // tells Gemma to write the OUTPUT strings (each suggestion chip) in
+    // the learner's chosen language. JSON array shape is unchanged so the
+    // existing parser keeps working.
+    const systemPrompt =
+      `Based on this student's learning progress, generate exactly 4 short practice questions or discussion prompts. Each should be under 15 words. Mix question types: one review question from a completed topic, one about the current topic, one common confusion point, one fun or curious question. Return ONLY a JSON array of 4 strings. No numbering, no labels, no explanation.` +
+      buildLanguageSuffix(lang);
 
     const userContent = `Page: ${page}
 Current topic: ${current}

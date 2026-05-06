@@ -412,9 +412,12 @@ export interface AdvisorAnalysis {
 
 // /api/advisor request: caller sends the analysis IT already computed
 // client-side. Server doesn't repeat the computation; it just narrates.
+// language widened from en/zh to LearnerLanguage so bilingual-mode
+// students reading in Hindi / Spanish / Swahili / French / Arabic see
+// the verdict narration in their reading language.
 export interface AdvisorNarrateRequest {
   analysis: AdvisorAnalysis;
-  language?: "en" | "zh";
+  language?: import("./learner-language").LearnerLanguage;
 }
 
 // /api/advisor streams plaintext narration (newlines preserved). No
@@ -431,7 +434,10 @@ export interface ExplainRequest {
   question: string;
   originalExplanation: string;
   correctAnswer: string;
-  language: "en" | "zh";
+  // Widened from en/zh to all LearnerLanguage values so bilingual-mode
+  // students reading in Hindi / Spanish / Swahili / French / Arabic see
+  // the alt explanation in their reading language.
+  language: import("./learner-language").LearnerLanguage;
 }
 
 export interface ExplainResponse {

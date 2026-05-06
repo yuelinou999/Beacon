@@ -1,6 +1,10 @@
 import { NextRequest } from "next/server";
 import { OLLAMA_URL, OLLAMA_MODEL } from "@/lib/config";
 import type { ExplainRequest, ExplainResponse } from "@/lib/types";
+import {
+  buildLanguageSuffix,
+  isLearnerLanguage,
+} from "@/lib/learner-language";
 
 // POST /api/explain — produce a NEW teaching approach for a problem the
 // student already missed once with one explanation. Used by /review's
@@ -10,15 +14,15 @@ import type { ExplainRequest, ExplainResponse } from "@/lib/types";
 // alt explanation, not a structured object. Mirrors the no-tools shape the
 // quiz-take route uses for narrative output.
 //
-// Language note: en/zh prompts both exist, but the only caller today
-// (Review's fetchAltExplanation) hardcodes profile.language as the source.
-// profile.language defaults to "en" in student.json and there is no UI yet
-// to switch it — Settings' bilingual toggle is a separate concept (display
-// of zh subtitles alongside en titles, not primary content language). The
-// zh path is intentionally future-ready for an eventual primary-language
-// selector; do NOT wire it to the bilingual toggle.
+// Multilingual note: system prompt is authored in English regardless of
+// target language so Gemma reliably parses the instruction set, then a
+// "Respond in {Language}" suffix steers the OUTPUT into the learner's
+// chosen language. Same strategy /api/advisor uses. The zh-specific
+// SYSTEM_PROMPT_ZH was retained originally for prompt-quality concerns
+// but the suffix approach generalizes cleanly to all 7 supported
+// languages without needing per-language hand-tuned prompts.
 
-const SYSTEM_PROMPT_EN =
+const SYSTEM_PROMPT_BASE =
   "You are a patient tutor explaining the SAME problem in a NEW way. The " +
   "student's first explanation didn't click. Try a different angle: a " +
   "visual, a physical analogy, smaller numbers first, or a step-by-step " +
@@ -26,22 +30,9 @@ const SYSTEM_PROMPT_EN =
   "short sentences. Plain prose only — no bullet lists, no markdown, no " +
   "emoji, no preamble like \"Here's another way\".";
 
-const SYSTEM_PROMPT_ZH =
-  "你是一位有耐心的辅导老师，用一种全新的方式重新讲解同一道题。学生用上一种解释没听懂。" +
-  "请换一个角度：用图像、生活类比、先从更小的数字开始、或者一步一步的清单。" +
-  "不要重复原来的解释。最多 3 句话。仅用普通文字 — 不要项目符号、Markdown、表情符号或开场白。";
-
 function buildUserPrompt(req: ExplainRequest): string {
   const cleanQuestion = req.question.trim();
   const cleanOriginal = req.originalExplanation.trim();
-  if (req.language === "zh") {
-    return [
-      `题目：${cleanQuestion}`,
-      `正确答案：${req.correctAnswer}`,
-      `已经讲过的解释：${cleanOriginal || "(无)"}`,
-      "请换一种方式讲解，并用中文回答。",
-    ].join("\n");
-  }
   return [
     `Question: ${cleanQuestion}`,
     `Correct answer: ${req.correctAnswer}`,
@@ -57,7 +48,7 @@ function isExplainRequest(body: unknown): body is ExplainRequest {
     typeof b.question === "string" &&
     typeof b.originalExplanation === "string" &&
     typeof b.correctAnswer === "string" &&
-    (b.language === "en" || b.language === "zh")
+    isLearnerLanguage(b.language)
   );
 }
 
@@ -76,7 +67,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body: ExplainRequest = parsed;
-  const systemPrompt = body.language === "zh" ? SYSTEM_PROMPT_ZH : SYSTEM_PROMPT_EN;
+  const systemPrompt = SYSTEM_PROMPT_BASE + buildLanguageSuffix(body.language);
   const userPrompt = buildUserPrompt(body);
 
   let ollamaRes: Response;

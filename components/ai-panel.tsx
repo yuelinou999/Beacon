@@ -5,6 +5,8 @@ import { Plus, Maximize2, Minimize2, Lock, Camera, Send } from "lucide-react";
 import MathRenderer from "@/components/math-renderer";
 import { useAIContext, type AIContext } from "@/components/ai-context";
 import { loadProfile } from "@/lib/progress";
+import { resolveLearnerOutputLanguage } from "@/lib/learner-language";
+import { getBilingual, getSecondLanguage } from "@/components/settings-modal";
 import type { CurriculumTopic } from "@/lib/types";
 import curriculum from "@/data/curriculum.json";
 
@@ -146,6 +148,13 @@ export default function AIPanel() {
             currentTopicName: context.topicTitle || "",
             topicMasteries,
             recentWrongAnswers: recentWrong,
+            // Mirror learner reading language so suggestion chips don't
+            // stay English while the rest of the chat does multilingual.
+            language: resolveLearnerOutputLanguage({
+              profile,
+              bilingualOn: getBilingual(),
+              secondLang: getSecondLanguage(),
+            }),
           }),
         });
         const data = await res.json();

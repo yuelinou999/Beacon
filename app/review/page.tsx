@@ -20,6 +20,8 @@ import {
 import { getAllTopics } from "@/lib/curriculum";
 import { resolveBankQuestion } from "@/lib/wrong-answer-key";
 import { resolveActiveStudyTarget } from "@/lib/active-target";
+import { resolveLearnerOutputLanguage } from "@/lib/learner-language";
+import { getBilingual, getSecondLanguage } from "@/components/settings-modal";
 import type { StudentProfile, WrongAnswer, ExplainRequest, ExplainResponse } from "@/lib/types";
 
 // Per-mistake retry state machine. Only one mistake is in retry mode at a
@@ -305,17 +307,20 @@ export default function ReviewPage() {
     setAltState("loading");
     setAltError("");
     try {
+      // Multilingual: alt explanation now mirrors the learner's reading
+      // language rather than just profile.language. When bilingual mode is
+      // on with a non-en second language picked (Hindi / Spanish / etc.),
+      // Gemma narrates the alt in that language — same surface treatment
+      // as the AI panel's chat output.
       const body: ExplainRequest = {
         question: wa.question,
         originalExplanation: wa.explanation,
         correctAnswer: wa.correct_answer,
-        // profile.language defaults to "en" and has no UI to flip today.
-        // Settings' bilingual toggle is a separate concept (display garnish
-        // for zh subtitles on topic titles) and intentionally does NOT
-        // route here — alt explanations stay in the learner's primary
-        // content language. The "zh" branch is reachable only by a future
-        // primary-language selector; see /api/explain route comment.
-        language: profile.language === "zh" ? "zh" : "en",
+        language: resolveLearnerOutputLanguage({
+          profile,
+          bilingualOn: getBilingual(),
+          secondLang: getSecondLanguage(),
+        }),
       };
       const res = await fetch("/api/explain", {
         method: "POST",

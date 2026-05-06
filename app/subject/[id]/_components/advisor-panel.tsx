@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Sparkles, Check, AlertTriangle, AlertCircle, X } from "lucide-react";
 import { analyzeReadiness } from "@/lib/advisor";
+import { resolveLearnerOutputLanguage } from "@/lib/learner-language";
+import { getBilingual, getSecondLanguage } from "@/components/settings-modal";
 import type {
   AdvisorAnalysis,
   AdvisorVerdict,
@@ -106,7 +108,17 @@ export default function AdvisorPanel({
         const res = await fetch("/api/advisor", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ analysis, language: profile?.language ?? "en" }),
+          body: JSON.stringify({
+            analysis,
+            // Mirror learner reading language: bilingual second-lang when
+            // set, else profile primary, else en. Same pattern review
+            // uses for /api/explain.
+            language: resolveLearnerOutputLanguage({
+              profile,
+              bilingualOn: getBilingual(),
+              secondLang: getSecondLanguage(),
+            }),
+          }),
           signal: controller.signal,
         });
         if (!res.ok || !res.body) {

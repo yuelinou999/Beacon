@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { OLLAMA_URL, OLLAMA_MODEL } from "@/lib/config";
 import type { AdvisorAnalysis, AdvisorNarrateRequest } from "@/lib/types";
+import { buildLanguageSuffix, isLearnerLanguage } from "@/lib/learner-language";
 
 // POST /api/advisor — narrate (NOT decide) a readiness check.
 //
@@ -16,7 +17,13 @@ import type { AdvisorAnalysis, AdvisorNarrateRequest } from "@/lib/types";
 // the live token stream as it arrives. Cold-load is 5-15s; streaming
 // hides that wait behind visible progress.
 
-const SYSTEM_PROMPT_EN =
+// Multilingual: system prompt authored in English regardless of target
+// language so Gemma reliably parses the structured constraints (NOT
+// markdown, NOT a summary opener, MUST not contradict the verdict).
+// buildLanguageSuffix appends "Respond in {Language}" for non-en targets,
+// which steers the OUTPUT into the learner's reading language while
+// keeping the instruction set Gemma is trained to follow most reliably.
+const SYSTEM_PROMPT_BASE =
   "You are Beacon AI, the student's offline study advisor. The student is " +
   "considering starting a unit. A deterministic check has already evaluated " +
   "their readiness against the unit's prerequisites — your job is to NARRATE " +
@@ -25,13 +32,6 @@ const SYSTEM_PROMPT_EN =
   "NOT contradict the verdict. Do NOT use markdown, bullets, headings, or " +
   "emoji. Do NOT say things like \"Here's a summary\" — just speak directly to " +
   "the student.";
-
-const SYSTEM_PROMPT_ZH =
-  "你是 Beacon AI，学生的本地学习顾问。学生正在考虑开始一个新单元。系统已经" +
-  "用确定性算法评估过他对前置内容的掌握情况——你的任务只是用 2-3 句普通话" +
-  "把这个评估温和地讲给学生听，肯定他的强项，指出他的薄弱点，并给出一个具体" +
-  "的下一步建议。不要推翻评估结论。不要使用 Markdown、项目符号、标题或表情" +
-  "符号。不要写'以下是总结'这类开场白——直接对学生说话。";
 
 function verdictLabel(v: AdvisorAnalysis["verdict"]): string {
   if (v === "ready") return "ready to start";
@@ -42,30 +42,9 @@ function verdictLabel(v: AdvisorAnalysis["verdict"]): string {
 function buildUserPrompt(req: AdvisorNarrateRequest): string {
   const a = req.analysis;
   const lines: string[] = [];
-
-  if (req.language === "zh") {
-    lines.push(`目标单元：${a.targetUnitTitle}`);
-    lines.push(`系统判断：${a.verdict === "ready" ? "可以开始" : a.verdict === "almost_ready" ? "基本就绪" : "建议先复习前置内容"}`);
-    if (a.noPrereqs) {
-      lines.push("这个单元没有前置要求。");
-    } else {
-      lines.push("前置单元情况：");
-      for (const p of a.prerequisites) {
-        const pct = Math.round(p.avgMastery * 100);
-        lines.push(`- ${p.unitTitle}：平均掌握 ${pct}%（${p.status === "completed" ? "已完成" : p.status === "in_progress" ? "学习中" : "未开始"}）`);
-        if (p.status !== "completed" && p.weakestTopics.length > 0) {
-          const tops = p.weakestTopics
-            .map((t) => `${t.topicTitle}（${Math.round(t.mastery * 100)}%）`)
-            .join("、");
-          lines.push(`  最薄弱的几个 topic：${tops}`);
-        }
-      }
-    }
-    lines.push("");
-    lines.push("请用 2-3 句中文给出建议。");
-    return lines.join("\n");
-  }
-
+  // User prompt stays English-structured regardless of target language —
+  // Gemma reads the brief in English, outputs prose in target language
+  // per the SYSTEM_PROMPT_BASE + suffix instruction.
   lines.push(`Target unit: ${a.targetUnitTitle}`);
   lines.push(`System verdict: ${verdictLabel(a.verdict)}`);
   if (a.noPrereqs) {
@@ -95,6 +74,8 @@ function isAdvisorNarrateRequest(body: unknown): body is AdvisorNarrateRequest {
   const b = body as Record<string, unknown>;
   if (!b.analysis || typeof b.analysis !== "object") return false;
   const a = b.analysis as Record<string, unknown>;
+  // language is optional; if present, must be a valid LearnerLanguage.
+  if (b.language !== undefined && !isLearnerLanguage(b.language)) return false;
   return (
     typeof a.targetUnitId === "string" &&
     typeof a.targetUnitTitle === "string" &&
@@ -116,7 +97,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body: AdvisorNarrateRequest = parsed;
-  const systemPrompt = body.language === "zh" ? SYSTEM_PROMPT_ZH : SYSTEM_PROMPT_EN;
+  const systemPrompt = SYSTEM_PROMPT_BASE + buildLanguageSuffix(body.language ?? "en");
   const userPrompt = buildUserPrompt(body);
 
   let ollamaRes: Response;
