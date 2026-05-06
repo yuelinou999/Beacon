@@ -17,14 +17,8 @@
 
 import { getTopicsForUnit, getUnits } from "./curriculum";
 import { getTopicProgress } from "./progress";
+import { DEMO_UNIT_ID } from "./demo-targets";
 import type { CurriculumTopic, StudentProfile } from "./types";
-
-// The default unit when profile is null or carries an unknown current_unit.
-// unit_6_equations is the only fully-authored unit (all 7 topics non-stub,
-// 84 practice questions, 10 quiz questions, 94 alt explanations) — landing
-// new users here gives them an actual learning experience instead of a
-// stub fallback.
-export const FALLBACK_UNIT = "unit_6_equations";
 
 export interface ActiveStudyTarget {
   unitId: string;
@@ -40,7 +34,7 @@ export interface ActiveStudyTarget {
 export function resolveActiveStudyTarget(
   profile: StudentProfile | null,
 ): ActiveStudyTarget {
-  const requestedUnitId = profile?.current_unit || FALLBACK_UNIT;
+  const requestedUnitId = profile?.current_unit || DEMO_UNIT_ID;
   let unitId = requestedUnitId;
   let unitTopics = getTopicsForUnit(unitId);
   let fellBack = false;
@@ -53,7 +47,7 @@ export function resolveActiveStudyTarget(
     const unitWithProgress = units.find((u) =>
       u.topics.some((tid) => (profile?.topics?.[tid]?.mastery ?? 0) > 0),
     );
-    unitId = unitWithProgress?.id ?? FALLBACK_UNIT;
+    unitId = unitWithProgress?.id ?? DEMO_UNIT_ID;
     unitTopics = getTopicsForUnit(unitId);
 
     // Last-resort: any unit with topics. Curriculum regression — should

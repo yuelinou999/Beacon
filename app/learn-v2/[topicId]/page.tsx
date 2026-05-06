@@ -8,6 +8,7 @@ import { getAllTopics, getUnitForTopic } from "@/lib/curriculum";
 import { isTopicStub } from "@/lib/types";
 import { setCurrentUnitById } from "@/lib/progress";
 import { resolveActiveStudyTarget } from "@/lib/active-target";
+import { DEMO_UNIT_ID, DEMO_LABEL } from "@/lib/demo-targets";
 import { getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
@@ -21,14 +22,6 @@ import IndependentPhaseView from "../_components/independent-phase";
 import CompletePhaseView from "../_components/complete-phase";
 
 type PhaseState = 1 | 2 | 3 | 4 | 5 | "complete";
-
-// The currently-authored demo unit. Stub-topic landing pages route the
-// "Try Solving Equations →" CTA here. Defined as a constant so a future
-// curriculum push that authors more units only needs to flip this value
-// (or, when multiple units are authored, derive the recommendation from
-// the curriculum tree).
-const DEMO_UNIT_ID = "unit_6_equations";
-const DEMO_UNIT_LABEL = "Solving Equations";
 
 export default function LearnV2TopicPage() {
   const params = useParams<{ topicId: string }>();
@@ -195,7 +188,7 @@ export default function LearnV2TopicPage() {
               }}
             >
               We&rsquo;re shipping one fully-authored unit at a time &mdash; currently:{" "}
-              <strong style={{ color: "#1F2937" }}>{DEMO_UNIT_LABEL}</strong>.
+              <strong style={{ color: "#1F2937" }}>{DEMO_LABEL}</strong>.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3">
@@ -211,7 +204,7 @@ export default function LearnV2TopicPage() {
                   border: "none",
                 }}
               >
-                Try {DEMO_UNIT_LABEL} &rarr;
+                Try {DEMO_LABEL} &rarr;
               </button>
               <Link
                 href="/subject/math"

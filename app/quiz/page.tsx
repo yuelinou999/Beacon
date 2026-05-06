@@ -7,13 +7,7 @@ import { ChevronLeft } from "lucide-react";
 import { getAllTopics, getUnitForTopic } from "@/lib/curriculum";
 import { loadProfile } from "@/lib/progress";
 import { resolveActiveStudyTarget } from "@/lib/active-target";
-
-// The currently-authored quiz target. Topics without a quiz bank route
-// the "Try the demo quiz →" CTA here. Single-constant lookup is honest
-// while only one quiz is authored — when more banks ship, derive
-// dynamically (first topic with a quiz, etc.).
-const DEMO_QUIZ_TOPIC_ID = "solving_one_step";
-const DEMO_QUIZ_LABEL = "Solving Equations";
+import { DEMO_TOPIC_ID, DEMO_LABEL } from "@/lib/demo-targets";
 import type { QuizAttempt } from "@/lib/types";
 import { useAIContext } from "@/components/ai-context";
 import StartPhaseView from "./_components/start-phase";
@@ -146,14 +140,14 @@ function QuizContent() {
               }}
             >
               We&rsquo;ve authored{" "}
-              <strong style={{ color: "#1F2937" }}>{DEMO_QUIZ_LABEL}</strong>{" "}
+              <strong style={{ color: "#1F2937" }}>{DEMO_LABEL}</strong>{" "}
               as the demo quiz target — try that, or keep practicing this
               topic to lock it in.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
-                href={`/quiz?topic=${DEMO_QUIZ_TOPIC_ID}`}
+                href={`/quiz?topic=${DEMO_TOPIC_ID}`}
                 className="rounded-lg transition-opacity hover:opacity-90"
                 style={{
                   fontSize: "14px",
@@ -163,7 +157,7 @@ function QuizContent() {
                   textDecoration: "none",
                 }}
               >
-                Try {DEMO_QUIZ_LABEL} Quiz &rarr;
+                Try {DEMO_LABEL} Quiz &rarr;
               </Link>
               <Link
                 href={`/practice?topic=${topic.id}`}

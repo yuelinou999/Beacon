@@ -28,6 +28,7 @@ import type {
 } from "@/lib/types";
 import { getDisplayQuestion } from "@/lib/wrong-answer-key";
 import { resolveActiveStudyTarget } from "@/lib/active-target";
+import { DEMO_TOPIC_ID } from "@/lib/demo-targets";
 import curriculum from "@/data/curriculum.json";
 
 // Practice runs in fixed-size batches. 6 = 12 ÷ 2, so each topic's bank
@@ -78,8 +79,9 @@ export default function PracticePage() {
 // of truth as Learn / Home / Quiz. Falls back to the first topic with a
 // practice bank if the active target's topic doesn't have one (e.g. user
 // registered a unit whose topics are all stubs — they'll still land on
-// SOMETHING usable). Last-ditch fallback: the known-good demo topic.
-const KNOWN_GOOD_DEMO_TOPIC = "solving_one_step";
+// SOMETHING usable). Last-ditch fallback: DEMO_TOPIC_ID from
+// lib/demo-targets — the canonical demo topic that's guaranteed to
+// have a practice bank.
 
 function defaultTopicId(): string {
   // Prefer the active study target. resolveActiveStudyTarget needs a
@@ -99,7 +101,7 @@ function defaultTopicId(): string {
   const firstWithBank = topics.find((t) => t.practice !== undefined);
   if (firstWithBank) return firstWithBank.id;
   const firstReal = topics.find((t) => !t.phases?.stub);
-  return firstReal?.id ?? KNOWN_GOOD_DEMO_TOPIC;
+  return firstReal?.id ?? DEMO_TOPIC_ID;
 }
 
 // Compare a student's free-text answer against the bank's authored answer.

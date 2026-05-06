@@ -7,12 +7,7 @@ import type { StudentProfile } from "@/lib/types";
 import subjects from "@/data/subjects";
 import { loadProfile } from "@/lib/progress";
 import { resolveActiveStudyTarget, type ActiveStudyTarget } from "@/lib/active-target";
-
-// Quiz authoring is currently scoped to a single topic; sidebar Quiz href
-// falls back here when the active topic doesn't carry a quiz bank, so the
-// nav button never dead-ends at "Quiz not yet available". When more quiz
-// banks ship, swap this for a derived "first topic with a quiz" helper.
-const DEMO_QUIZ_TOPIC_ID = "solving_one_step";
+import { DEMO_TOPIC_ID } from "@/lib/demo-targets";
 
 type ModuleId = "home" | "learn" | "practice" | "quiz" | "review" | "dashboard";
 type ModuleStatus = "ready" | "preview" | "soon";
@@ -26,7 +21,7 @@ interface NavItem {
 
 // Static fallback nav — used during SSR + first paint before profile
 // hydrates from localStorage. resolveActiveStudyTarget(null) lands on
-// FALLBACK_UNIT's first topic, so the fallback hrefs match what a fresh
+// DEMO_UNIT_ID's first topic, so the fallback hrefs match what a fresh
 // profile would resolve to. After mount the build below re-runs with
 // the real profile and any href differences swap in (acceptable per
 // codex round-1 — small flicker, no skeleton chrome needed).
@@ -37,7 +32,7 @@ function buildNavItems(target: ActiveStudyTarget): NavItem[] {
   // one of the 6 unit_6 topics that don't yet carry a quiz bank.
   const quizHref = target.topic.quiz
     ? `/quiz?topic=${target.topicId}`
-    : `/quiz?topic=${DEMO_QUIZ_TOPIC_ID}`;
+    : `/quiz?topic=${DEMO_TOPIC_ID}`;
   return [
     { id: "home", href: "/", label: "Home", status: "ready" },
     { id: "learn", href: `/learn-v2/${target.topicId}`, label: "Learn", status: "ready" },
@@ -51,7 +46,7 @@ function buildNavItems(target: ActiveStudyTarget): NavItem[] {
 // SSR-safe initial target. Calling the same resolveActiveStudyTarget
 // helper the post-mount effect uses keeps SSR fallback and client
 // re-resolution literally one source of truth — no parallel
-// FALLBACK_UNIT-then-getTopicsForUnit path that could drift if the
+// DEMO_UNIT_ID-then-getTopicsForUnit path that could drift if the
 // resolver's logic ever changes (codex round-2 polish suggestion).
 // resolveActiveStudyTarget(null) is pure and cheap to evaluate at
 // module load.
