@@ -96,9 +96,9 @@
 
 <h1>Beacon · WebLLM Spike</h1>
 <p class="subtitle">
-  De-risk pillar A of the 14-day plan: confirm browser-side Gemma inference is viable on the demo target hardware.
-  Plan A: <code>gemma3-1b-it-q4f16_1-MLC</code> (~711 MB VRAM, low-resource recommended).
-  This page does not depend on Ollama or the Beacon dev server — close the network tab after model download to verify true offline.
+  De-risk pillar A of the 14-day plan: confirm browser-side Gemma inference holds up to a demo claim of "truly offline".
+  Plan A: <code>gemma3-1b-it-q4f16_1-MLC</code> (~711 MB). Plan B: <code>gemma-2-2b-it-q4f16_1-MLC-1k</code> (~1.6 GB).
+  Test BOTH — pick on data, not narrative. Per codex round-1: heads-up that Gemma 3 1B may block the main thread on init in MediaPipe; watch this tab for unresponsiveness during load.
 </p>
 
 <fieldset>
@@ -107,7 +107,6 @@
   <select id="model">
     <option value="gemma3-1b-it-q4f16_1-MLC" selected>gemma3-1b-it-q4f16_1-MLC · ~711 MB · Plan A</option>
     <option value="gemma-2-2b-it-q4f16_1-MLC-1k">gemma-2-2b-it-q4f16_1-MLC-1k · ~1.6 GB · Plan B</option>
-    <option value="SmolLM2-360M-Instruct-q4f16_1-MLC">SmolLM2-360M-Instruct · &lt;500 MB · Plan C (non-Gemma fallback)</option>
   </select>
   <button id="load-btn">Load model</button>
   <button id="reset-btn" class="secondary">Reset cache (force redownload)</button>
@@ -125,6 +124,7 @@
   <label for="prompt">Prompt</label>
   <textarea id="prompt" placeholder="Type a question…">If x + 5 = 12, what is x? Explain step by step.</textarea>
   <button id="run-btn" disabled>Run inference</button>
+  <button id="multi-btn" class="secondary" disabled>Run 3-turn stability test</button>
 
   <div class="metrics">
     <div class="metric">
@@ -197,6 +197,8 @@
       mColdload.textContent = `${(coldLoadMs / 1000).toFixed(1)} s`;
       setStatus(`✅ Loaded ${modelId} in ${(coldLoadMs / 1000).toFixed(1)}s. Ready for inference.`);
       runBtn.disabled = false;
+      const mBtn = document.getElementById("multi-btn");
+      if (mBtn) mBtn.disabled = false;
     } catch (err) {
       setStatus(`❌ Load failed: ${err.message || err}`);
       console.error(err);
@@ -275,9 +277,64 @@
     }
   }
 
+  // Multi-turn: 3 consecutive prompts, log per-turn TTFT + tps. Catches
+  // quality decay / context overflow / tab freeze that a single-turn
+  // test would miss. Per codex round-1.
+  const multiBtn = $("multi-btn");
+  async function runMultiTurn() {
+    if (!engine) return;
+    multiBtn.disabled = true;
+    runBtn.disabled = true;
+    const prompts = [
+      "If x + 5 = 12, what is x? Explain step by step.",
+      "Now solve: 3y - 4 = 14. Show your work.",
+      "Why does adding the same number to both sides keep an equation balanced?",
+    ];
+    outputEl.textContent = "";
+    const turnLog = [];
+    for (let i = 0; i < prompts.length; i++) {
+      outputEl.textContent += `\n\n=== Turn ${i + 1} ===\nPrompt: ${prompts[i]}\n\nResponse: `;
+      const t0 = performance.now();
+      let firstTokenAt = null;
+      let tokens = 0;
+      try {
+        const stream = await engine.chat.completions.create({
+          messages: [{ role: "user", content: prompts[i] }],
+          stream: true,
+          max_tokens: 250,
+          temperature: 0.7,
+        });
+        for await (const chunk of stream) {
+          const delta = chunk?.choices?.[0]?.delta?.content;
+          if (delta) {
+            if (firstTokenAt === null) firstTokenAt = performance.now();
+            outputEl.textContent += delta;
+            tokens += Math.max(1, delta.split(/\s+/).filter(Boolean).length);
+          }
+        }
+        const totalMs = performance.now() - t0;
+        const genMs = firstTokenAt ? performance.now() - firstTokenAt : totalMs;
+        const tps = tokens / (genMs / 1000);
+        const ttft = firstTokenAt ? (firstTokenAt - t0) / 1000 : null;
+        turnLog.push({ turn: i + 1, ttft, tps, totalMs: totalMs / 1000 });
+      } catch (err) {
+        outputEl.textContent += `\n[Turn ${i + 1} failed: ${err.message || err}]`;
+        turnLog.push({ turn: i + 1, error: String(err) });
+      }
+    }
+    outputEl.textContent += "\n\n=== Stability summary ===\n" + turnLog.map((t) =>
+      t.error
+        ? `Turn ${t.turn}: ERROR ${t.error}`
+        : `Turn ${t.turn}: TTFT ${t.ttft?.toFixed(2)}s · ${t.tps?.toFixed(1)} tps · total ${t.totalMs.toFixed(2)}s`,
+    ).join("\n");
+    multiBtn.disabled = false;
+    runBtn.disabled = false;
+  }
+
   loadBtn.addEventListener("click", loadModel);
   resetBtn.addEventListener("click", resetCache);
   runBtn.addEventListener("click", runInference);
+  multiBtn.addEventListener("click", runMultiTurn);
 
   // Quick environment check
   if (!navigator.gpu) {
