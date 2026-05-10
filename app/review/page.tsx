@@ -22,7 +22,12 @@ import { getAllTopics } from "@/lib/curriculum";
 import { resolveBankQuestion } from "@/lib/wrong-answer-key";
 import { resolveActiveStudyTarget } from "@/lib/active-target";
 import { resolveLearnerOutputLanguage } from "@/lib/learner-language";
-import { getBilingual, getSecondLanguage } from "@/components/settings-modal";
+import { getBilingual, getSecondLanguage, getBrowserAI } from "@/components/settings-modal";
+import {
+  buildExplainSystemPrompt,
+  buildExplainUserPrompt,
+} from "@/lib/explain-prompt";
+import { isWebGpuAvailable } from "@/lib/webllm-engine";
 import type { StudentProfile, WrongAnswer, ExplainRequest, ExplainResponse } from "@/lib/types";
 
 // Per-mistake retry state machine. Only one mistake is in retry mode at a
@@ -303,7 +308,22 @@ export default function ReviewPage() {
     const controller = new AbortController();
     inflightExplainRef.current = controller;
     const requestSlotId = retryingId;
-    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+    // Browser-AI requires BOTH the persisted toggle AND a runtime
+    // WebGPU capability check. The settings-modal capability check
+    // only runs when the modal is opened — by the time the user
+    // reaches /review, capability could differ (e.g., flag persisted
+    // on a desktop session, then opened on mobile Safari). Without
+    // the runtime gate the WebLLM path would fail loudly instead of
+    // falling back to /api/explain.
+    const useBrowserAI = getBrowserAI() && isWebGpuAvailable();
+    // Server path uses 10s; browser-AI first inference can take longer
+    // because of just-in-time JIT/warmup. Spike data showed worst-case
+    // ~7s on M4 main thread; 30s gives Xiaomei's old Android headroom.
+    // The browser-AI generate() now respects controller.signal so
+    // this timeout actually enforces (previously it only aborted the
+    // unused fetch on the server path).
+    const timeoutMs = useBrowserAI ? 30_000 : 10_000;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     setAltState("loading");
     setAltError("");
@@ -322,19 +342,47 @@ export default function ReviewPage() {
           bilingualOn: getBilingual(),
           secondLang: getSecondLanguage(),
         }),
+        // Curriculum-grounded RAG fields. `topic` is always present on
+        // a WrongAnswer (stamped when the mistake was recorded). bank
+        // fields are optional — legacy mistakes from before the
+        // bank-id pivot will fall through to topic-only grounding.
+        topicId: wa.topic,
+        bankQuestionId: wa.bank_question_id,
+        source: wa.source,
       };
-      const res = await fetch("/api/explain", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`HTTP ${res.status}: ${text.slice(0, 160)}`);
+
+      let trimmed: string;
+      if (useBrowserAI) {
+        // Browser-side path: bypass /api/explain entirely and run
+        // Gemma 2 2B locally via WebLLM. Same prompt construction
+        // (lib/explain-prompt) so the two backends behave identically.
+        // First call after toggle-on triggers the ~1.6 GB download —
+        // BrowserAIDownloadModal at app-shell level renders progress.
+        // controller.signal is passed through so the 30 s timeout
+        // and the slot-change abort both actually cancel generation.
+        const { generate } = await import("@/lib/webllm-engine");
+        trimmed = (
+          await generate({
+            system: buildExplainSystemPrompt(body),
+            user: buildExplainUserPrompt(body),
+            signal: controller.signal,
+          })
+        ).trim();
+      } else {
+        // Server-side path: existing /api/explain → Ollama on host.
+        const res = await fetch("/api/explain", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`HTTP ${res.status}: ${text.slice(0, 160)}`);
+        }
+        const data = (await res.json()) as ExplainResponse;
+        trimmed = (data.altExplanation ?? "").trim();
       }
-      const data = (await res.json()) as ExplainResponse;
-      const trimmed = (data.altExplanation ?? "").trim();
       if (!trimmed) throw new Error("empty_alt_explanation");
 
       // Ownership check: drop if the user moved on while we were waiting.

@@ -3,6 +3,7 @@ import type {
   CurriculumUnit,
   CurriculumGrade,
 } from "./types";
+import { isTopicStub } from "./types";
 import curriculumData from "@/data/curriculum.json";
 
 // Legacy alias — older imports referred to `GradeCurriculum`.
@@ -71,4 +72,24 @@ export function isUnitAuthored(unitId: string): boolean {
   return getTopicsForUnit(unitId).some(
     (t) => !("stub" in t.phases && t.phases.stub === true),
   );
+}
+
+/** Can this topic actually accumulate mastery? — non-stub AND has a
+ * practice or quiz bank (the only mastery channels per
+ * lib/progress.ts:341,408).
+ *
+ * Used by:
+ *   - app/subject/[id]/page.tsx for completion math (denominators) and
+ *     resume-target selection — bridge/stub topics shouldn't gate unit
+ *     completion or steer learners into dead ends.
+ *   - lib/efficacy.ts for the Teacher view's mastery distribution and
+ *     KPI denominators — same reasoning, same predicate.
+ *
+ * Single source so the two surfaces don't drift if completion semantics
+ * ever change again. */
+export function isTopicProgressable(t: CurriculumTopic): boolean {
+  if (isTopicStub(t.phases)) return false;
+  const practiceCount = t.practice?.questions?.length ?? 0;
+  const quizCount = t.quiz?.questions?.length ?? 0;
+  return practiceCount > 0 || quizCount > 0;
 }

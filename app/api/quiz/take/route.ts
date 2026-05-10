@@ -23,12 +23,20 @@ function buildUserPrompt(req: QuizTakeRequest): string {
     "inverse_ops",
     "simplification",
     "verification",
+    "common_denominators",
+    "multiplying",
+    "dividing",
+    "mixed_numbers",
   ];
   const stats: Record<QuizSkill, { correct: number; total: number }> = {
     setting_up: { correct: 0, total: 0 },
     inverse_ops: { correct: 0, total: 0 },
     simplification: { correct: 0, total: 0 },
     verification: { correct: 0, total: 0 },
+    common_denominators: { correct: 0, total: 0 },
+    multiplying: { correct: 0, total: 0 },
+    dividing: { correct: 0, total: 0 },
+    mixed_numbers: { correct: 0, total: 0 },
   };
   for (const ans of attempt.answers) {
     const q = questions.find((qq) => qq.id === ans.question_id);
@@ -70,14 +78,62 @@ function buildUserPrompt(req: QuizTakeRequest): string {
   ].join("\n");
 }
 
+// Every nested field downstream of buildUserPrompt and the skill/mistake
+// derivations must be type-checked. Anything malformed → caller returns 200
+// with { analysis: null, error: "invalid_response" } — never throw.
+
+function isAnswerShape(x: unknown): x is QuizAttempt["answers"][number] {
+  if (!x || typeof x !== "object") return false;
+  const a = x as Record<string, unknown>;
+  return (
+    typeof a.question_id === "string" &&
+    typeof a.correct === "boolean" &&
+    typeof a.student_answer === "string"
+  );
+}
+
+const VALID_SKILLS: ReadonlySet<string> = new Set([
+  "setting_up",
+  "inverse_ops",
+  "simplification",
+  "verification",
+  "common_denominators",
+  "multiplying",
+  "dividing",
+  "mixed_numbers",
+]);
+
+function isQuestionShape(x: unknown): x is QuizQuestion {
+  if (!x || typeof x !== "object") return false;
+  const q = x as Record<string, unknown>;
+  return (
+    typeof q.id === "string" &&
+    typeof q.skill === "string" &&
+    VALID_SKILLS.has(q.skill) &&
+    typeof q.question === "string" &&
+    typeof q.equation === "string" &&
+    typeof q.answer === "number"
+  );
+}
+
 function isValidRequestShape(body: unknown): body is QuizTakeRequest {
   if (!body || typeof body !== "object") return false;
   const b = body as Record<string, unknown>;
-  const attempt = b.attempt as Record<string, unknown> | null | undefined;
-  if (!attempt || typeof attempt !== "object") return false;
-  if (!Array.isArray(attempt.answers)) return false;
+
   if (typeof b.topicTitle !== "string") return false;
-  if (!Array.isArray(b.questions)) return false;
+
+  const attempt = b.attempt;
+  if (!attempt || typeof attempt !== "object") return false;
+  const a = attempt as Record<string, unknown>;
+  if (typeof a.total_seconds !== "number") return false;
+  if (typeof a.score !== "number") return false;
+  if (typeof a.total !== "number") return false;
+  if (!Array.isArray(a.answers) || !a.answers.every(isAnswerShape)) return false;
+
+  if (!Array.isArray(b.questions) || !b.questions.every(isQuestionShape)) {
+    return false;
+  }
+
   return true;
 }
 

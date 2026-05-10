@@ -6,6 +6,7 @@ import Sidebar from "@/components/sidebar";
 import Topbar from "@/components/topbar";
 import SettingsModal from "@/components/settings-modal";
 import { getStudentName } from "@/components/settings-modal";
+import BrowserAIDownloadModal from "@/components/browser-ai-download-modal";
 import AIPanel from "@/components/ai-panel";
 import { AIContextProvider, useAIContext } from "@/components/ai-context";
 import { loadProfile } from "@/lib/progress";
@@ -202,14 +203,25 @@ function ShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { expanded, toggleExpand: toggle } = useAIContext();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
+  const [studentName, setStudentName] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Hydration guard. Server SSR + the very first client render must
+  // produce identical HTML; once `mounted` flips to true after hydration,
+  // we're free to render localStorage-derived content (student name,
+  // bilingual subtitle, persisted toggles, etc.). This avoids the
+  // "Expected server HTML to contain matching <p> in <div>" hydration
+  // mismatch that fires when studentName is populated from localStorage
+  // and the topbar's conditional subtitle <p> appears asymmetrically.
+  const [mounted, setMounted] = useState(false);
 
   const refreshProfile = useCallback(() => {
     setProfile(loadProfile());
+    setStudentName(getStudentName());
   }, []);
 
   useEffect(() => {
+    setMounted(true);
     refreshProfile();
     const onFocus = () => refreshProfile();
     const onVisible = () => {
@@ -232,8 +244,12 @@ function ShellInner({ children }: { children: React.ReactNode }) {
     refreshProfile();
   }, [pathname, refreshProfile]);
 
-  const studentName = typeof window !== "undefined" ? getStudentName() : "";
-  const subtitle = pathname === "/" && studentName ? `Welcome back, ${studentName}` : undefined;
+  // Gate subtitle on `mounted` — see hydration guard comment above.
+  // Until React confirms hydration is done, server and first client
+  // render both produce subtitle=undefined → no <p> in topbar tree.
+  const subtitle = mounted && pathname === "/" && studentName
+    ? `Welcome back, ${studentName}`
+    : undefined;
 
   const aiPanelHidden = pathname === "/dashboard";
   const centerHidden = expanded === "panel" && !aiPanelHidden;
@@ -278,6 +294,13 @@ function ShellInner({ children }: { children: React.ReactNode }) {
         onClose={() => setSettingsOpen(false)}
         onProfileChange={refreshProfile}
       />
+
+      {/* Renders only when the WebLLM engine is loading or errored —
+          silent in idle/ready states. Mounted at shell level so the
+          download progress / error UI overlays any page the learner
+          is on, not just /review. Self-contained: subscribes to the
+          engine status stream, no props needed. */}
+      <BrowserAIDownloadModal />
     </div>
   );
 }

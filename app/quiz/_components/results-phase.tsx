@@ -32,6 +32,10 @@ const SKILL_LABEL: Record<QuizSkill, string> = {
   inverse_ops: "Inverse operations",
   simplification: "Simplification",
   verification: "Verification",
+  common_denominators: "Common denominators",
+  multiplying: "Multiplying",
+  dividing: "Dividing",
+  mixed_numbers: "Mixed numbers",
 };
 
 function getScoreBand(score: number): { label: string; color: string } {
@@ -107,6 +111,10 @@ export default function ResultsPhaseView({
       inverse_ops: { correct: 0, total: 0 },
       simplification: { correct: 0, total: 0 },
       verification: { correct: 0, total: 0 },
+      common_denominators: { correct: 0, total: 0 },
+      multiplying: { correct: 0, total: 0 },
+      dividing: { correct: 0, total: 0 },
+      mixed_numbers: { correct: 0, total: 0 },
     };
     for (const ans of attempt.answers) {
       const q = quiz.questions.find((qq) => qq.id === ans.question_id);

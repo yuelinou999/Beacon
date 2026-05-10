@@ -289,10 +289,7 @@ export default function LearnV2TopicPage() {
         />
       )}
       {currentPhase === 2 && !phases.analogy && (
-        <PhasePlaceholder
-          phase={2}
-          onBack={() => setCurrentPhase(1)}
-        />
+        <CompletePhaseView topicId={topic.id} />
       )}
       {currentPhase === 3 && phases.example && (
         <ExamplePhaseView
@@ -301,10 +298,7 @@ export default function LearnV2TopicPage() {
         />
       )}
       {currentPhase === 3 && !phases.example && (
-        <PhasePlaceholder
-          phase={3}
-          onBack={() => setCurrentPhase(1)}
-        />
+        <CompletePhaseView topicId={topic.id} />
       )}
       {currentPhase === 4 && phases.guided && (
         <GuidedPhaseView
@@ -313,10 +307,7 @@ export default function LearnV2TopicPage() {
         />
       )}
       {currentPhase === 4 && !phases.guided && (
-        <PhasePlaceholder
-          phase={4}
-          onBack={() => setCurrentPhase(1)}
-        />
+        <CompletePhaseView topicId={topic.id} />
       )}
       {currentPhase === 5 && phases.independent && (
         <IndependentPhaseView
@@ -325,64 +316,22 @@ export default function LearnV2TopicPage() {
         />
       )}
       {currentPhase === 5 && !phases.independent && (
-        <PhasePlaceholder
-          phase={5}
-          onBack={() => setCurrentPhase(1)}
-        />
-      )}
-      {currentPhase === "complete" && (
         <CompletePhaseView topicId={topic.id} />
       )}
+      {currentPhase === "complete" && (
+        // Reached after IndependentPhaseView completes. The independent
+        // phase has exactly 3 questions per the curriculum schema, so
+        // {3, 3} mirrors the previous hardcoded "3 out of 3" claim.
+        // Wiring real correct counts from IndependentPhaseView state is
+        // a follow-up; for now this preserves the existing celebration
+        // copy on the full-topic completion path while the missing-phase
+        // shortcuts (bridge topics) omit the prop and show generic copy.
+        <CompletePhaseView
+          topicId={topic.id}
+          solvedSummary={{ correct: 3, total: 3 }}
+        />
+      )}
     </div>
   );
 }
 
-function PhasePlaceholder({
-  phase,
-  onBack,
-}: {
-  phase: 2 | 3 | 4 | 5 | "complete";
-  onBack: () => void;
-}) {
-  const label =
-    phase === 2
-      ? "Phase 2 (Real-life connection) — coming in Step 2b"
-      : phase === 3
-        ? "Phase 3 (Worked example) — coming in Step 2c"
-        : phase === 4
-          ? "Phase 4 (Guided practice) — coming in Step 2d"
-          : phase === 5
-            ? "Phase 5 (Independent practice) — coming in Step 2e"
-            : "Lesson complete — coming in Step 2e";
-
-  return (
-    <div className="max-w-2xl mx-auto">
-      <div
-        className="rounded-xl p-8 text-center"
-        style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E5EA" }}
-      >
-        <p
-          style={{
-            fontSize: "15px",
-            color: "#1F2937",
-            lineHeight: 1.6,
-            marginBottom: "20px",
-          }}
-        >
-          {label}
-        </p>
-        <button
-          onClick={onBack}
-          className="px-8 py-3 rounded-lg transition-colors"
-          style={{
-            backgroundColor: "#0F2A4A",
-            color: "#FFFFFF",
-            fontSize: "15px",
-          }}
-        >
-          Back to Phase 1
-        </button>
-      </div>
-    </div>
-  );
-}

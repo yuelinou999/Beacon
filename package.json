@@ -14,6 +14,7 @@
     "test:all": "node scripts/run-tests.mjs"
   },
   "dependencies": {
+    "@mlc-ai/web-llm": "^0.2.83",
     "katex": "^0.16.45",
     "lucide-react": "^1.11.0",
     "mathjs": "^15.2.0",

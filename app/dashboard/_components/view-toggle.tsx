@@ -23,7 +23,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
       <ToggleButton
         active={value === "teacher"}
         onClick={() => onChange("teacher")}
-        label="Teacher view"
+        label="Family view"
       />
     </div>
   );

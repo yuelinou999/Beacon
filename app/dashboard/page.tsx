@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { useAIContext } from "@/components/ai-context";
 import BilingualSubtitle from "@/components/bilingual-subtitle";
+import { loadProfile } from "@/lib/progress";
 import type { PortraitResponse } from "@/lib/portrait";
 import ViewToggle, { type ViewMode } from "./_components/view-toggle";
 import Section1Portrait from "./_components/section1-portrait";
@@ -34,10 +35,17 @@ export default function DashboardPage() {
   const loadPortrait = useCallback(async () => {
     setState({ status: "loading" });
     try {
+      // Send the live learner profile from localStorage. Without this the
+      // route falls back to data/student.json (a fresh-zero seed), which
+      // means the portrait would describe a student with no progress
+      // regardless of who's actually using the app — directly contradicting
+      // every other surface (Home / Subject / Teacher / Family) that reads
+      // from localStorage.
+      const profile = loadProfile();
       const res = await fetch("/api/portrait", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: "{}",
+        body: JSON.stringify({ profile }),
       });
       if (!res.ok) {
         const text = await res.text();

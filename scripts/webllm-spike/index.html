@@ -283,6 +283,40 @@
     statusEl.textContent = text;
   }
 
+  // The Gemma 3 1B (Plan A) prebuilt record ships with BOTH
+  // context_window_size (4096) AND sliding_window_size (512) positive,
+  // which WebLLM's runtime rejects with "Only one of ... can be positive".
+  // Setting context_window_size: -1 leaves sliding_window active (fine for
+  // our short algebra prompts), and sliding-window mode then requires
+  // attention_sink_size: 0 ("default sliding window behavior").
+  //
+  // The Gemma 2 2B (Plan B) prebuilt record uses a DIFFERENT config shape,
+  // and applying Plan A's override breaks it with "Need to specify either
+  // sliding_window_size or max_window_size" — the override zeroed out its
+  // only positive window field. So this patch is Plan-A-only; Plan B uses
+  // WebLLM defaults.
+  function buildPatchedAppConfig(modelId) {
+    const base = webllm.prebuiltAppConfig;
+    const PLAN_A_ID = "gemma3-1b-it-q4f16_1-MLC";
+    return {
+      ...base,
+      model_list: base.model_list.map((record) => {
+        if (record.model_id !== modelId) return record;
+        if (modelId === PLAN_A_ID) {
+          return {
+            ...record,
+            overrides: {
+              ...(record.overrides ?? {}),
+              context_window_size: -1,
+              attention_sink_size: 0,
+            },
+          };
+        }
+        return record;
+      }),
+    };
+  }
+
   async function loadModel() {
     const modelId = modelSel.value;
     loadBtn.disabled = true;
@@ -292,6 +326,7 @@
     const t0 = performance.now();
     try {
       engine = await webllm.CreateMLCEngine(modelId, {
+        appConfig: buildPatchedAppConfig(modelId),
         initProgressCallback: (p) => {
           // p: { progress: 0..1, timeElapsed: number, text: string }
           setStatus(`${p.text}  ·  ${(p.progress * 100).toFixed(1)}%  ·  ${p.timeElapsed.toFixed(1)}s`);
@@ -334,8 +369,15 @@
         messages,
         stream: true,
         // Keep generation budget modest for the spike.
-        max_tokens: 400,
+        max_tokens: 320,
         temperature: 0.7,
+        // Repetition control — Gemma 3 1B without these settings goes into
+        // severe "x = 7 / x = 7 / x = 7" loops on short-token languages
+        // (Hindi especially). Defaults of 0 are too permissive for a 1B
+        // model. These values are conservative — strong enough to break
+        // tight loops without making generation feel forced.
+        frequency_penalty: 1.0,
+        presence_penalty: 0.6,
       });
 
       for await (const chunk of stream) {
@@ -419,8 +461,12 @@
         const stream = await engine.chat.completions.create({
           messages: history,
           stream: true,
-          max_tokens: 250,
+          max_tokens: 220,
           temperature: 0.7,
+          // Same penalties as single-turn — prevents the "x = 7" loop
+          // from poisoning turn 2 and turn 3 via the accumulating history.
+          frequency_penalty: 1.0,
+          presence_penalty: 0.6,
         });
         for await (const chunk of stream) {
           const delta = chunk?.choices?.[0]?.delta?.content;

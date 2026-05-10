@@ -9,7 +9,7 @@ import { loadProfile } from "@/lib/progress";
 import { resolveActiveStudyTarget, type ActiveStudyTarget } from "@/lib/active-target";
 import { DEMO_TOPIC_ID } from "@/lib/demo-targets";
 
-type ModuleId = "home" | "learn" | "practice" | "quiz" | "review" | "dashboard";
+type ModuleId = "home" | "learn" | "practice" | "quiz" | "review" | "dashboard" | "teacher";
 type ModuleStatus = "ready" | "preview" | "soon";
 
 interface NavItem {
@@ -40,6 +40,7 @@ function buildNavItems(target: ActiveStudyTarget): NavItem[] {
     { id: "quiz", href: quizHref, label: "Quiz", status: "ready" },
     { id: "review", href: "/review", label: "Review", status: "ready" },
     { id: "dashboard", href: "/dashboard", label: "Dashboard", status: "ready" },
+    { id: "teacher", href: "/teacher", label: "Family view", status: "ready" },
   ];
 }
 
@@ -115,6 +116,16 @@ function ModuleIcon({ id }: { id: ModuleId }) {
           <line x1="6" y1="20" x2="6" y2="14" />
         </svg>
       );
+    case "teacher":
+      // Mortarboard / graduation-cap silhouette — distinguishes the
+      // efficacy HUD from the student-facing /dashboard sibling.
+      return (
+        <svg {...iconBase}>
+          <path d="M22 10v6" />
+          <path d="M2 10l10-5 10 5-10 5-10-5z" />
+          <path d="M6 12v5c0 1.66 3 3 6 3s6-1.34 6-3v-5" />
+        </svg>
+      );
   }
 }
 
@@ -167,7 +178,11 @@ function SidebarInner({
   const isNavActive = (href: string) => {
     if (href === "/") return pathname === "/";
     const path = href.split("?")[0];
-    return pathname.startsWith(path);
+    // Path-segment-aware match: `/teacher` should highlight on
+    // `/teacher` and `/teacher/<anything>` but NOT on `/teacher-foo`.
+    // Plain startsWith was vulnerable to that false positive once
+    // sibling routes like `/teacher-something` were introduced.
+    return pathname === path || pathname.startsWith(path + "/");
   };
 
   const mathActive =

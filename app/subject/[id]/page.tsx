@@ -9,7 +9,12 @@ import { getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
 import { useAIContext } from "@/components/ai-context";
 import BilingualSubtitle from "@/components/bilingual-subtitle";
-import { getAllTopics, getGrade7, isUnitAuthored } from "@/lib/curriculum";
+import {
+  getAllTopics,
+  getGrade7,
+  isUnitAuthored,
+  isTopicProgressable,
+} from "@/lib/curriculum";
 import type {
   StudentProfile,
   CurriculumTopic,
@@ -44,6 +49,14 @@ type UnitStatus = "completed" | "in-progress" | "eligible" | "locked" | "coming_
 interface UnitView {
   unit: CurriculumUnit;
   topics: CurriculumTopic[];
+  // Subset of `topics` that can actually accumulate mastery — i.e. non-stub
+  // AND has a practice or quiz bank. Stubs (no authored content) and bridge
+  // topics (concept/analogy only, no practice) cannot reach MASTERY_STRONG
+  // because the only mastery channels are practice attempts and quiz attempts
+  // (lib/progress.ts:341,408). Including them in the completion denominator
+  // would make condensed units like unit_2_proportional uncompletable by
+  // design — see code review notes from Day 5.
+  progressableTopics: CurriculumTopic[];
   topicProgress: Map<string, { mastery: number; attempts: number; last_seen: string | null }>;
   status: UnitStatus;
   startedTopics: number;
@@ -53,7 +66,13 @@ interface UnitView {
 }
 
 function isUnitCompleted(view: Omit<UnitView, "status" | "resumeTopicId">): boolean {
-  return view.topics.length > 0 && view.completedTopics === view.topics.length;
+  // Use progressableTopics as the denominator — non-progressable topics
+  // can't reach MASTERY_STRONG, so requiring 100% of `topics` would mean
+  // a unit with any bridge or stub topic could never report completion.
+  return (
+    view.progressableTopics.length > 0 &&
+    view.completedTopics === view.progressableTopics.length
+  );
 }
 
 function deriveUnitStatus(
@@ -258,14 +277,19 @@ function MathCourseCatalog({
       .map((tid) => allTopics.find((t) => t.id === tid))
       .filter((t): t is CurriculumTopic => t !== undefined);
 
+    // Topics the learner can actually finish via practice/quiz — drives
+    // every progress metric below and the resume-target selection. The
+    // full `topics` list is still kept for rendering the lesson list so
+    // bridge/stub rows stay visible (just inert).
+    const progressableTopics = topics.filter(isTopicProgressable);
+
     const topicProgress = new Map<
       string,
       { mastery: number; attempts: number; last_seen: string | null }
     >();
-    let startedTopics = 0;
-    let completedTopics = 0;
-    let masterySum = 0;
 
+    // Hydrate progress for every row we render — including bridges/stubs
+    // — so the topic-list UI can show their (always 0) mastery bars.
     for (const t of topics) {
       const tp = profile
         ? getTopicProgress(profile, t.id)
@@ -275,18 +299,30 @@ function MathCourseCatalog({
         attempts: tp.attempts,
         last_seen: tp.last_seen,
       });
+    }
+
+    // Progression metrics count progressable topics only — bridges and
+    // stubs can never raise mastery, so including them in the denominator
+    // permanently caps avgMastery and blocks unit completion.
+    let startedTopics = 0;
+    let completedTopics = 0;
+    let masterySum = 0;
+    for (const t of progressableTopics) {
+      const tp = topicProgress.get(t.id) ?? { mastery: 0, attempts: 0, last_seen: null };
       if (tp.mastery > 0) startedTopics += 1;
       if (tp.mastery >= MASTERY_STRONG) completedTopics += 1;
       masterySum += tp.mastery;
     }
 
-    const avgMastery = topics.length > 0 ? masterySum / topics.length : 0;
+    const avgMastery =
+      progressableTopics.length > 0 ? masterySum / progressableTopics.length : 0;
 
     // First-pass partial view, then status derivation needs unitCompletion map
     // built progressively (units are listed in dependency order in the JSON).
     const partial = {
       unit,
       topics,
+      progressableTopics,
       topicProgress,
       startedTopics,
       completedTopics,
@@ -308,24 +344,40 @@ function MathCourseCatalog({
       status === "completed" || status === "coming_soon",
     );
 
-    // Resume target: first started-but-not-mastered, else first not-started, else first.
+    // Resume target: only ever points at a progressable topic — never
+    // route a learner into a bridge or stub that has no completion path.
+    // Order: first started-but-not-mastered, else first not-started,
+    // else first progressable topic.
     const resumeTopicId =
-      topics.find((t) => {
+      progressableTopics.find((t) => {
         const m = topicProgress.get(t.id)?.mastery ?? 0;
         return m > 0 && m < MASTERY_STRONG;
       })?.id ??
-      topics.find((t) => (topicProgress.get(t.id)?.mastery ?? 0) === 0)?.id ??
-      topics[0]?.id ??
+      progressableTopics.find(
+        (t) => (topicProgress.get(t.id)?.mastery ?? 0) === 0,
+      )?.id ??
+      progressableTopics[0]?.id ??
       null;
 
     unitViews.push({ ...partial, status, resumeTopicId });
   }
 
   const totalTopics = allTopics.length;
+  // Mastery-bearing topic count across the whole catalog. Used as the
+  // denominator for the "Mastered: X of Y" summary so the ratio reflects
+  // topics the learner can actually complete (not stubs/bridges that are
+  // permanently 0 mastery). Also used as the weighted-average denominator.
+  const totalProgressableTopics = unitViews.reduce(
+    (s, v) => s + v.progressableTopics.length,
+    0,
+  );
   const overallCompleted = unitViews.reduce((s, v) => s + v.completedTopics, 0);
   const overallMastery =
-    totalTopics > 0
-      ? unitViews.reduce((s, v) => s + v.avgMastery * v.topics.length, 0) / totalTopics
+    totalProgressableTopics > 0
+      ? unitViews.reduce(
+          (s, v) => s + v.avgMastery * v.progressableTopics.length,
+          0,
+        ) / totalProgressableTopics
       : 0;
 
   // Recommendation: first in-progress unit, else first eligible.
@@ -462,11 +514,13 @@ function MathCourseCatalog({
                 {units.length} units &middot; {totalTopics} lessons &middot; ~{grade.estimated_hours} hours total
               </span>
             </div>
-            {/* Intentional addition vs. design reference: surfaces real student progress. */}
+            {/* Intentional addition vs. design reference: surfaces real student progress.
+                Denominator is totalProgressableTopics — only counting topics that can
+                actually accumulate mastery — so the ratio matches what the math gates. */}
             <div style={{ fontSize: "13px", color: "#6B7280" }}>
               Mastered:{" "}
               <span style={{ color: "#1F2937", fontWeight: 500 }}>
-                {overallCompleted} of {totalTopics}
+                {overallCompleted} of {totalProgressableTopics}
               </span>
               {" · "}
               <span style={{ color: "#1F2937", fontWeight: 500 }}>
@@ -505,7 +559,16 @@ function MathCourseCatalog({
         {/* SECTION 3: Unit Cards */}
         <div className="space-y-4">
           {unitViews.map((view) => {
-            const { unit, status, topics, topicProgress, completedTopics, avgMastery, resumeTopicId } = view;
+            const {
+              unit,
+              status,
+              topics,
+              progressableTopics,
+              topicProgress,
+              completedTopics,
+              avgMastery,
+              resumeTopicId,
+            } = view;
             const isExpanded = expandedUnitId === unit.id;
             const colors = STATUS_COLOR[status];
             const prereqLabel =
@@ -621,14 +684,14 @@ function MathCourseCatalog({
                       </div>
                       {status === "in-progress" && (
                         <div style={{ fontSize: "12px", color: "#2563EB", fontWeight: 500 }}>
-                          {completedTopics}/{topics.length} lessons &middot; {Math.round(avgMastery * 100)}% mastery
+                          {completedTopics}/{progressableTopics.length} lessons &middot; {Math.round(avgMastery * 100)}% mastery
                         </div>
                       )}
                     </div>
                     <UnitFooterCta
                       status={status}
                       resumeTopicId={resumeTopicId}
-                      firstTopicId={topics[0]?.id ?? null}
+                      firstTopicId={progressableTopics[0]?.id ?? topics[0]?.id ?? null}
                       onActivate={() => onActivateUnit(unit.id)}
                       onCheckReadiness={() => toggleAdvisor(unit.id)}
                       advisorOpen={advisorUnitId === unit.id}
@@ -658,11 +721,17 @@ function MathCourseCatalog({
                         const mastery = tp.mastery;
                         const isLocked = status === "locked";
                         const isComingSoon = status === "coming_soon";
-                        // CTA-disabling combination: locked AND coming-soon
-                        // both replace the Start/Practice buttons with a
-                        // text-only label. Different reason, same affordance
-                        // posture (non-actionable, dimmed row).
-                        const isInert = isLocked || isComingSoon;
+                        // Per-row preview: a topic that exists in the unit
+                        // but cannot accumulate mastery (stub or bridge).
+                        // Different from `isComingSoon` (which is unit-level)
+                        // and from `isLocked` (prereq gate). Same inert
+                        // affordance posture, different label.
+                        const isPreview = !isTopicProgressable(topic);
+                        // CTA-disabling combination: locked, coming-soon,
+                        // and per-row preview all replace the Start/Practice
+                        // buttons with a text-only label. Different reasons,
+                        // same posture (non-actionable, dimmed row).
+                        const isInert = isLocked || isComingSoon || isPreview;
                         // Within-unit prereq enforcement: a topic's prerequisite
                         // is another topic id; we let the user open any topic
                         // whose unit is unlocked (the unit gate is the primary
@@ -726,6 +795,10 @@ function MathCourseCatalog({
                             ) : isComingSoon ? (
                               <span style={{ fontSize: "11px", color: "#6B7280" }} className="shrink-0">
                                 Coming soon
+                              </span>
+                            ) : isPreview ? (
+                              <span style={{ fontSize: "11px", color: "#6B7280" }} className="shrink-0">
+                                Preview only
                               </span>
                             ) : (
                               <div className="flex gap-2 shrink-0">

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { loadProfile, getTopicProgress } from "@/lib/progress";
-import { getTopicsForUnit, getUnits, getUnit } from "@/lib/curriculum";
+import { getTopicsForUnit, getUnits, getUnit, isTopicProgressable } from "@/lib/curriculum";
 import { resolveActiveStudyTarget } from "@/lib/active-target";
 import { getStudentName, getBilingual } from "@/components/settings-modal";
 import { onSettingsChanged } from "@/lib/settings-events";
@@ -14,7 +14,16 @@ import curriculum from "@/data/curriculum.json";
 import subjects, { type SubjectDef } from "@/data/subjects";
 
 const GREETINGS = ["Hello", "Welcome back", "Good to see you", "Hey", "Hi there"];
-const greeting = GREETINGS[new Date().getDate() % GREETINGS.length];
+// NOTE: greeting selection happens inside the component (after mount) —
+// not at module load — to keep server SSR and the first client render
+// deterministic. Module-level `new Date().getDate()` would evaluate
+// once on the server (build/request time) and again on the client
+// (bundle parse time); around midnight or across timezones the two
+// can disagree, which surfaces as a hydration text mismatch in the
+// hero <h1>. Picking a fixed greeting on the server side and updating
+// to the date-of-month-rotated one only after `mounted` keeps the
+// initial render deterministic.
+const SSR_DEFAULT_GREETING = GREETINGS[0];
 
 function masteryLabel(m: number): { text: string; color: string } {
   if (m >= 1) return { text: "Mastered", color: "#059669" };
@@ -30,6 +39,11 @@ export default function Home() {
   const [studentName, setStudentName] = useState("");
   const [bilingual, setBilingual] = useState(false);
   const [hoveredSubject, setHoveredSubject] = useState<SubjectDef | null>(null);
+  // See SSR_DEFAULT_GREETING comment near the top of this file. Until
+  // mounted, the greeting is the deterministic SSR default so server
+  // HTML and the first client render produce identical text. After
+  // mount, we rotate by date-of-month so repeat visits see variety.
+  const [greeting, setGreeting] = useState<string>(SSR_DEFAULT_GREETING);
 
   useEffect(() => {
     const refresh = () => {
@@ -38,6 +52,7 @@ export default function Home() {
       setBilingual(getBilingual());
     };
     refresh();
+    setGreeting(GREETINGS[new Date().getDate() % GREETINGS.length]);
     // focus refreshes when the user returns to this tab; the custom event
     // covers same-tab updates immediately (e.g. toggling settings inline).
     window.addEventListener("focus", refresh);
@@ -55,7 +70,16 @@ export default function Home() {
     return { topic: t, ...tp };
   });
 
-  const avgMastery = topicData.reduce((sum, t) => sum + t.mastery, 0) / topics.length;
+  // Mastery aggregation matches the Subject and Teacher views: only topics
+  // that can actually accumulate mastery (non-stub, with a practice or quiz
+  // bank — see lib/curriculum.ts:isTopicProgressable) count toward the
+  // denominator. Including unauthored bridge/stub rows would permanently
+  // dilute the headline number and make Home disagree with /subject and
+  // /teacher about how much progress the learner has actually made.
+  const progressableTopicData = topicData.filter((t) => isTopicProgressable(t.topic));
+  const avgMastery = progressableTopicData.length > 0
+    ? progressableTopicData.reduce((sum, t) => sum + t.mastery, 0) / progressableTopicData.length
+    : 0;
   const totalWrong = profile?.wrong_answers?.length || 0;
   const totalAttempts = topicData.reduce((sum, t) => sum + t.attempts, 0);
 
@@ -265,7 +289,7 @@ export default function Home() {
             {hoveredSubject ? (
               <HoveredDetail
                 subject={hoveredSubject}
-                topicData={topicData}
+                topicData={progressableTopicData}
                 totalAttempts={totalAttempts}
                 bilingual={bilingual}
               />

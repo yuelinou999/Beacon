@@ -101,7 +101,11 @@ export type QuizSkill =
   | "setting_up"
   | "inverse_ops"
   | "simplification"
-  | "verification";
+  | "verification"
+  | "common_denominators"
+  | "multiplying"
+  | "dividing"
+  | "mixed_numbers";
 
 // Quiz-bank question. Pre-authored, fixed in curriculum.json. Numeric
 // `answer` plus a `skill` tag for per-question categorization.
@@ -438,6 +442,16 @@ export interface ExplainRequest {
   // students reading in Hindi / Spanish / Swahili / French / Arabic see
   // the alt explanation in their reading language.
   language: import("./learner-language").LearnerLanguage;
+  // Optional curriculum-grounding fields. When `topicId` is present,
+  // /api/explain pulls the topic's concept + the originating bank
+  // entry's alt_explanation via lib/curriculum-rag.retrieveContextForTopic
+  // and injects them into Gemma's prompt — keeping the alt explanation
+  // CONSISTENT with what was actually taught instead of inventing a
+  // disconnected approach. Optional for backward compat: a request
+  // without these fields still produces a valid (un-grounded) explanation.
+  topicId?: string;
+  bankQuestionId?: string;
+  source?: "practice" | "quiz";
 }
 
 export interface ExplainResponse {

@@ -42,7 +42,80 @@
       "prerequisite": null,
       "difficulty_base": 1,
       "unit_id": "unit_2_proportional",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "Comparing two quantities",
+          "explanation": "A ratio compares two quantities by showing how many of one thing there are for each of another. Ratios can be written three ways: 'a to b', a:b, or a/b. The order matters: a ratio of 3 cups of flour to 2 cups of sugar is not the same as 2 cups of flour to 3 cups of sugar.",
+          "key_idea": "A ratio compares two quantities. Order matters: 3:2 is not the same as 2:3.",
+          "visual": { "type": "grid" }
+        },
+        "analogy": {
+          "title": "Lemonade recipe",
+          "scenario": "A simple lemonade recipe uses 1 cup of lemon juice for every 4 cups of water. The ratio 1:4 captures the relationship — for each cup of juice you need 4 cups of water. To make twice as much lemonade, scale both sides: 2 cups of juice and 8 cups of water keeps the same 1:4 ratio.",
+          "illustration_hint": "lemonade_pitcher_with_cups",
+          "question": "If a recipe uses 1 cup of lemon juice for every 4 cups of water, how many cups of water do you need for 3 cups of lemon juice?",
+          "options": [4, 7, 12],
+          "correct": 12,
+          "feedback_correct": "Right — keep the ratio 1:4 by scaling both sides. 3 cups of juice means 3 × 4 = 12 cups of water.",
+          "feedback_incorrect": "Scale both quantities by the same factor. 3 cups of juice is 3× the original; water must also become 3× as much (4 → 12)."
+        },
+        "example": {
+          "title": "Writing and simplifying a ratio",
+          "problem": "A bag has 6 red marbles and 4 blue marbles. Write the simplified ratio of red to blue.",
+          "steps": [
+            { "math": "6 red, 4 blue", "explanation": "Identify the two quantities the question is comparing." },
+            { "math": "6 : 4", "explanation": "Write the ratio in the order asked: red first, then blue." },
+            { "math": "3 : 2", "explanation": "Simplify by dividing both numbers by their common factor 2. The simplified ratio is 3:2." }
+          ]
+        },
+        "guided": {
+          "title": "Practice writing ratios",
+          "problem": "Work through ratio problems step by step.",
+          "sub_steps": [
+            {
+              "question": "A jar has 5 marbles and 3 candies. What is the ratio of marbles to candies?",
+              "type": "choice",
+              "options": ["5:3", "3:5", "8:1"],
+              "correct": "5:3",
+              "feedback_correct": "Right — write the items in the requested order: marbles (5) first, candies (3) second.",
+              "feedback_wrong": "The order in the question is 'marbles to candies'. Match that order in the ratio."
+            },
+            {
+              "question": "Simplify the ratio 10:15. Enter the first number after simplifying.",
+              "type": "number",
+              "correct": 2,
+              "feedback_correct": "Right — divide both by 5: 10/5 = 2 and 15/5 = 3. Simplified ratio is 2:3.",
+              "feedback_wrong": "Find the largest number that divides both 10 and 15 evenly. That is 5. Then divide both numbers by it."
+            },
+            {
+              "question": "A recipe uses 6 cups of flour to 4 cups of milk. If you double the recipe, how many cups of milk do you need?",
+              "type": "number",
+              "correct": 8,
+              "feedback_correct": "Yes — doubling the recipe doubles every ingredient. 4 × 2 = 8 cups of milk.",
+              "feedback_wrong": "Doubling means multiplying every quantity by 2. Apply that to the milk amount."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Try writing ratios",
+          "questions": [
+            { "equation": "Simplify the ratio 8:6. Enter the first number after simplifying.", "answer": 4 },
+            { "equation": "A recipe uses 2 eggs for every 1 cup of milk. How many eggs for 4 cups of milk?", "answer": 8 },
+            { "equation": "A bag has 12 blue and 8 red marbles. Simplify the ratio of blue to red. Enter the first number.", "answer": 3 }
+          ]
+        }
+      },
+      "practice": {
+        "title": "Practice — what is a ratio",
+        "questions": [
+          { "id": "p1", "question": "A bag has 6 apples and 4 oranges. Simplify the ratio of apples to oranges. Enter the first number after simplifying.",                  "answer": 3,  "difficulty": "easy",   "explanation": "Divide both by 2: 6/2 = 3 and 4/2 = 2. Simplified ratio is 3:2.",                                "alt_explanation": "Imagine pairing apples and oranges into groups of 2. After grouping, every '3 apples' goes with '2 oranges' — the ratio 3:2." },
+          { "id": "p2", "question": "A recipe uses 2 cups of flour for every 1 cup of water. How many cups of water do you need for 6 cups of flour?",                "answer": 3,  "difficulty": "easy",   "explanation": "The ratio of flour to water is 2:1. Six cups of flour is 3 groups of 2, so 3 cups of water.", "alt_explanation": "Split the flour into pairs. Each pair needs 1 cup of water. 6 cups of flour makes 3 pairs, so 3 cups of water." },
+          { "id": "p3", "question": "Simplify the ratio 12:18. Enter the first number after simplifying.",                                                            "answer": 2,  "difficulty": "medium", "explanation": "GCF of 12 and 18 is 6. Divide both: 12/6 = 2 and 18/6 = 3. Simplified ratio is 2:3.",          "alt_explanation": "Find the biggest number that divides both 12 and 18 evenly. That is 6. Divide both by 6 to get 2:3." },
+          { "id": "p4", "question": "A stadium has 200 home fans and 50 visitor fans. Simplify the ratio of home to visitor. Enter the first number.",               "answer": 4,  "difficulty": "medium", "explanation": "Divide both by 50: 200/50 = 4 and 50/50 = 1. Simplified ratio is 4:1.",                          "alt_explanation": "Group fans by 50. There are 4 home-fan groups for every 1 visitor-fan group — that is the 4:1 ratio." },
+          { "id": "p5", "question": "A snack mix is 3 parts nuts to 2 parts raisins. If you have 12 cups of nuts, how many cups of raisins do you need?",            "answer": 8,  "difficulty": "hard",   "explanation": "12 cups of nuts is 12 ÷ 3 = 4 groups. Each group has 2 parts raisins, so 4 × 2 = 8 cups.",      "alt_explanation": "Scale the ratio up: 3:2 becomes 12:? when multiplied by 4. Apply the same factor to raisins: 2 × 4 = 8 cups." },
+          { "id": "p6", "question": "The ratio of dogs to cats at a shelter is 5:3. If there are 24 cats, how many dogs are there?",                                  "answer": 40, "difficulty": "hard",   "explanation": "24 cats is 24 ÷ 3 = 8 groups. Each group has 5 dogs, so 5 × 8 = 40 dogs.",                      "alt_explanation": "Find the scale factor first: 3 × ? = 24, so the factor is 8. Apply that factor to dogs: 5 × 8 = 40." }
+        ]
+      }
     },
     {
       "id": "unit_rate",
@@ -50,7 +123,80 @@
       "prerequisite": "what_is_ratio",
       "difficulty_base": 1,
       "unit_id": "unit_2_proportional",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "How much for one",
+          "explanation": "A unit rate tells you how much of one quantity matches exactly ONE unit of another. We use unit rates to compare prices (cost per item), speed (km per hour), and earnings (dollars per hour). To find a unit rate, divide the total amount by the total quantity.",
+          "key_idea": "A unit rate is 'how much per ONE'. Find it by dividing.",
+          "visual": { "type": "grid" },
+          "main_equation": "180 km in 3 hours = 60 km/hour"
+        },
+        "analogy": {
+          "title": "Comparing prices fairly",
+          "scenario": "Two stores sell apples. Store A: 6 apples for $3. Store B: 8 apples for $5. To compare them fairly, find the price PER APPLE. Store A: $3 ÷ 6 = $0.50 per apple. Store B: $5 ÷ 8 = $0.625 per apple. Now you can see Store A is cheaper per apple, even though its total looks smaller.",
+          "illustration_hint": "two_stores_price_per_apple",
+          "question": "If 4 notebooks cost 12 dollars, what is the price per notebook in dollars?",
+          "options": [3, 6, 16],
+          "correct": 3,
+          "feedback_correct": "Right — divide total cost by quantity: 12 ÷ 4 = 3 dollars per notebook.",
+          "feedback_incorrect": "To find price per ONE notebook, divide the total cost by the number of notebooks: 12 ÷ 4 = 3."
+        },
+        "example": {
+          "title": "Finding speed as a unit rate",
+          "problem": "A car travels 180 kilometers in 3 hours. What is the speed in km per hour?",
+          "steps": [
+            { "math": "180 km / 3 hours", "explanation": "Set up division: total distance divided by total time." },
+            { "math": "180 ÷ 3 = 60", "explanation": "Divide to find how far the car goes in just one hour." },
+            { "math": "60 km per hour", "explanation": "The unit rate is 60 km/hour. The car covers 60 km in each hour." }
+          ]
+        },
+        "guided": {
+          "title": "Find unit rates from real situations",
+          "problem": "Practice converting totals into unit rates.",
+          "sub_steps": [
+            {
+              "question": "If 5 books cost 40 dollars, what is the price per book in dollars?",
+              "type": "number",
+              "correct": 8,
+              "feedback_correct": "Right — 40 ÷ 5 books = 8 dollars per book.",
+              "feedback_wrong": "Divide total cost (40) by the number of items (5)."
+            },
+            {
+              "question": "A printer prints 24 pages in 4 minutes. How many pages per minute?",
+              "type": "number",
+              "correct": 6,
+              "feedback_correct": "Yes — 24 ÷ 4 = 6 pages per minute.",
+              "feedback_wrong": "Divide total pages by total minutes to find pages per ONE minute."
+            },
+            {
+              "question": "A worker earns 90 dollars in 6 hours. What is the hourly rate in dollars?",
+              "type": "number",
+              "correct": 15,
+              "feedback_correct": "Right — 90 ÷ 6 hours = 15 dollars per hour.",
+              "feedback_wrong": "Hourly rate is total earnings divided by total hours: 90 ÷ 6."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Unit-rate fluency",
+          "questions": [
+            { "equation": "240 words in 4 minutes. Words per minute?", "answer": 60 },
+            { "equation": "12 pencils cost 9 dollars. Price per pencil in dollars (decimal).", "answer": 0.75 },
+            { "equation": "5 km run in 25 minutes. Minutes per km?", "answer": 5 }
+          ]
+        }
+      },
+      "practice": {
+        "title": "Practice — unit rates",
+        "questions": [
+          { "id": "p1", "question": "Five oranges cost 10 dollars. What is the price per orange in dollars?",                                                              "answer": 2,    "difficulty": "easy",   "explanation": "10 ÷ 5 = 2 dollars per orange.",                                                          "alt_explanation": "Split the total cost evenly across the items: 10 dollars across 5 oranges means 2 dollars each." },
+          { "id": "p2", "question": "A car travels 120 km in 2 hours. What is the speed in km per hour?",                                                                  "answer": 60,   "difficulty": "easy",   "explanation": "120 ÷ 2 = 60 km per hour.",                                                                "alt_explanation": "Speed is the distance covered in one hour. If 2 hours covers 120 km, one hour covers half — 60 km." },
+          { "id": "p3", "question": "A printer prints 50 pages in 4 minutes. How many pages per minute? Enter as a decimal.",                                              "answer": 12.5, "difficulty": "medium", "explanation": "50 ÷ 4 = 12.5 pages per minute.",                                                           "alt_explanation": "Splitting 50 pages evenly into 4 minutes gives twelve and a half pages per minute." },
+          { "id": "p4", "question": "A pack of 8 batteries costs 6 dollars. What is the price per battery in dollars? Enter as a decimal.",                                "answer": 0.75, "difficulty": "medium", "explanation": "6 ÷ 8 = 0.75 dollars per battery.",                                                        "alt_explanation": "Six dollars split eight ways is 75 cents apiece — three quarters per battery." },
+          { "id": "p5", "question": "Pack A: 5 pens for 10 dollars. Pack B: 8 pens for 14 dollars. Which pack costs less per pen? Enter the cheaper price per pen in dollars.","answer": 1.75, "difficulty": "hard",   "explanation": "Pack A: 10 ÷ 5 = 2 dollars per pen. Pack B: 14 ÷ 8 = 1.75 dollars per pen. Pack B is cheaper.","alt_explanation": "Compute price-per-pen for both packs separately, then pick the smaller. A is 2/pen; B is 1.75/pen — B wins at 1.75." },
+          { "id": "p6", "question": "A faucet leaks 3 liters of water in 4 hours. How many liters per hour? Enter as a decimal.",                                          "answer": 0.75, "difficulty": "hard",   "explanation": "3 ÷ 4 = 0.75 liters per hour.",                                                            "alt_explanation": "Three liters split across four hours is three-quarters of a liter each hour." }
+        ]
+      }
     },
     {
       "id": "proportional_tables",
@@ -58,7 +204,80 @@
       "prerequisite": "unit_rate",
       "difficulty_base": 2,
       "unit_id": "unit_2_proportional",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "Proportional relationships in tables",
+          "explanation": "Two quantities are PROPORTIONAL when they always multiply by the same number. In a table, this means dividing any 'output ÷ input' pair gives the same result. If 1 hour of work pays 15 dollars, then 4 hours pays 60 and 7 hours pays 105 — the ratio dollars-per-hour stays at 15.",
+          "key_idea": "In a proportional table, dividing any 'output ÷ input' pair gives the same constant.",
+          "visual": { "type": "grid" }
+        },
+        "analogy": {
+          "title": "Recipe scaling",
+          "scenario": "Imagine a juice recipe: 2 oranges make 1 cup of juice. Doubling oranges to 4 gives 2 cups; tripling to 6 oranges gives 3 cups. The pairs (2, 1), (4, 2), (6, 3) all share the same ratio — 2 oranges per cup. That is what 'proportional' means: every entry follows the same rate.",
+          "illustration_hint": "scaling_juice_recipe_table",
+          "question": "A table shows: 2 hours → 50 km, 4 hours → 100 km, 6 hours → 150 km. What is the constant rate in km per hour?",
+          "options": [25, 50, 100],
+          "correct": 25,
+          "feedback_correct": "Right — 50/2 = 25, 100/4 = 25, 150/6 = 25. Every row gives the same answer.",
+          "feedback_incorrect": "Pick any row and divide the km by the hours. Every row gives the same number — that is the constant rate."
+        },
+        "example": {
+          "title": "Spotting a proportional table",
+          "problem": "Is the table {1 → 4, 2 → 8, 3 → 12, 4 → 16} proportional? If yes, what is the ratio?",
+          "steps": [
+            { "math": "4 ÷ 1 = 4", "explanation": "Divide output by input for the first row." },
+            { "math": "8 ÷ 2 = 4", "explanation": "Same calculation for the second row — also 4." },
+            { "math": "12 ÷ 3 = 4 and 16 ÷ 4 = 4", "explanation": "Every row gives 4." },
+            { "math": "ratio = 4", "explanation": "Yes, the table IS proportional. The constant ratio is 4." }
+          ]
+        },
+        "guided": {
+          "title": "Read these proportional tables",
+          "problem": "Find ratios and missing values.",
+          "sub_steps": [
+            {
+              "question": "Table: 1 → 6, 2 → 12, 3 → 18. What is the constant ratio?",
+              "type": "number",
+              "correct": 6,
+              "feedback_correct": "Right — every row divides to 6.",
+              "feedback_wrong": "Divide any output by its matching input: 6/1, 12/2, or 18/3. They all equal 6."
+            },
+            {
+              "question": "Table: 5 → 20, 10 → 40, 15 → 60. What is the ratio?",
+              "type": "number",
+              "correct": 4,
+              "feedback_correct": "Yes — 20/5 = 4, and the same for every row.",
+              "feedback_wrong": "Pick a row and divide. 20 ÷ 5 = 4."
+            },
+            {
+              "question": "If a proportional table has 2 → 14, what is the value when input is 5?",
+              "type": "number",
+              "correct": 35,
+              "feedback_correct": "Right — the ratio is 14/2 = 7. So input 5 gives output 5 × 7 = 35.",
+              "feedback_wrong": "First find the ratio (14/2 = 7), then multiply by the new input."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Tables fluency",
+          "questions": [
+            { "equation": "Table: 3 → 9, 6 → 18, 9 → 27. What is the ratio?", "answer": 3 },
+            { "equation": "Table: 1 → 5, 2 → 10. What is the value when input is 7?", "answer": 35 },
+            { "equation": "Table: 2 → 8, 3 → 12, 4 → 16. What is the ratio?", "answer": 4 }
+          ]
+        }
+      },
+      "practice": {
+        "title": "Practice — proportional tables",
+        "questions": [
+          { "id": "p1", "question": "Table: 1 → 7, 2 → 14, 3 → 21. What is the ratio?",                                                                "answer": 7,   "difficulty": "easy",   "explanation": "Divide any pair: 7/1 = 7, 14/2 = 7, 21/3 = 7.",                                       "alt_explanation": "Look at the simplest row (1 → 7). The ratio output ÷ input is just 7. Confirm with the other rows." },
+          { "id": "p2", "question": "Table: 1 → 9, 2 → 18. What is the value when input is 5?",                                                       "answer": 45,  "difficulty": "easy",   "explanation": "Ratio is 9. Then 5 × 9 = 45.",                                                         "alt_explanation": "Each input 'costs' 9 of output. Five inputs cost 5 × 9 = 45." },
+          { "id": "p3", "question": "Table: 4 → 12, 6 → 18, 8 → 24. What is the ratio?",                                                              "answer": 3,   "difficulty": "medium", "explanation": "12/4 = 3, 18/6 = 3, 24/8 = 3.",                                                       "alt_explanation": "Pick the easiest pair: 12 ÷ 4 = 3. The other rows give the same answer." },
+          { "id": "p4", "question": "If a proportional relationship gives output 50 for input 10, what is the output for input 7?",                  "answer": 35,  "difficulty": "medium", "explanation": "Ratio is 50/10 = 5. So 7 × 5 = 35.",                                                  "alt_explanation": "Find the rate first (50 ÷ 10 = 5 per input). Then apply to the new input: 7 × 5 = 35." },
+          { "id": "p5", "question": "Table: 2 → 5, 4 → 10, 6 → 15. What is the value when input is 10?",                                              "answer": 25,  "difficulty": "hard",   "explanation": "Ratio is 5/2 = 2.5. Then 10 × 2.5 = 25.",                                             "alt_explanation": "The ratio is 2.5 (not a whole number, but still constant). Multiply: 10 × 2.5 = 25." },
+          { "id": "p6", "question": "A worker is paid proportionally. 4 hours of work pays 50 dollars; 6 hours pays 75 dollars. How much for 10 hours of work?", "answer": 125, "difficulty": "hard", "explanation": "Hourly rate: 50/4 = 12.5 (also 75/6 = 12.5). Ten hours: 10 × 12.5 = 125 dollars.",     "alt_explanation": "Confirm proportionality from two given pairs (50/4 = 75/6 = 12.5). Then scale up: 10 hours × 12.50/hr = 125." }
+        ]
+      }
     },
     {
       "id": "proportional_graphs",
@@ -66,7 +285,24 @@
       "prerequisite": "proportional_tables",
       "difficulty_base": 2,
       "unit_id": "unit_2_proportional",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "Proportional relationships on a graph",
+          "explanation": "A proportional relationship looks like a STRAIGHT LINE that passes through the origin (0, 0) when graphed. The steepness of the line — its slope — is exactly the constant ratio you'd find by dividing any matching (x, y) pair from a proportional table. If a line bends, has a gap, or doesn't touch (0, 0), the relationship is NOT proportional.",
+          "key_idea": "A proportional graph is a straight line through the origin. The slope equals the constant ratio.",
+          "visual": { "type": "grid" }
+        },
+        "analogy": {
+          "title": "What you see on the graph",
+          "scenario": "A proportional graph has the cleanest possible visual signature: a single straight line starting at the origin (0, 0). If you can lay a ruler from (0, 0) through any data point and ALL the other data points sit on that same ruler line, the relationship is proportional. The slope of the ruler is the constant of proportionality.",
+          "illustration_hint": "straight_line_through_origin_vs_curved",
+          "question": "A graph passes through (0, 0), (2, 6), and (4, 12). What is the constant ratio?",
+          "options": [3, 6, 12],
+          "correct": 3,
+          "feedback_correct": "Right — divide y by x at any non-origin point: 6/2 = 3, 12/4 = 3.",
+          "feedback_incorrect": "Pick any point that isn't (0, 0) and divide the y-coordinate by the x-coordinate. All such ratios are equal."
+        }
+      }
     },
     {
       "id": "constant_proportionality",
@@ -74,7 +310,81 @@
       "prerequisite": "proportional_graphs",
       "difficulty_base": 3,
       "unit_id": "unit_2_proportional",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "The constant of proportionality",
+          "explanation": "When two quantities are proportional, they're connected by a single number — the CONSTANT OF PROPORTIONALITY, usually written as k. The relationship is y = k × x. Once you know k, you can find any y from any x. Common k examples in real life: speed (km per hour), price (dollars per item), density (grams per cubic centimeter).",
+          "key_idea": "y = kx. Find k by dividing y ÷ x for any matching pair.",
+          "visual": { "type": "grid" },
+          "main_equation": "y = k × x"
+        },
+        "analogy": {
+          "title": "k is the recipe",
+          "scenario": "Think of k as a recipe rule: 'for every 1 of x, you get k of y'. If a recipe says 'each cup of flour makes 8 cookies', then k = 8. With 5 cups of flour, you get 5 × 8 = 40 cookies. With 12 cups, you get 96. The constant k captures the entire relationship in a single number.",
+          "illustration_hint": "recipe_card_with_k_value",
+          "question": "A relationship has k = 5. What is y when x = 9?",
+          "options": [9, 14, 45],
+          "correct": 45,
+          "feedback_correct": "Right — y = k × x = 5 × 9 = 45.",
+          "feedback_incorrect": "Apply the formula y = k × x. Multiply k (5) by x (9)."
+        },
+        "example": {
+          "title": "Finding k from a pair",
+          "problem": "Two quantities are proportional. When x = 4, y = 28. Find k and write the equation.",
+          "steps": [
+            { "math": "y = k × x", "explanation": "Start with the proportional equation." },
+            { "math": "28 = k × 4", "explanation": "Substitute the known values for y and x." },
+            { "math": "k = 28 ÷ 4 = 7", "explanation": "Solve for k by dividing both sides by 4." },
+            { "math": "y = 7x", "explanation": "The full proportional equation is y = 7x." }
+          ]
+        },
+        "guided": {
+          "title": "Use y = kx",
+          "problem": "Find k or apply it to find y.",
+          "sub_steps": [
+            {
+              "question": "If x = 2 and y = 12, what is k?",
+              "type": "number",
+              "correct": 6,
+              "feedback_correct": "Yes — k = y ÷ x = 12 ÷ 2 = 6.",
+              "feedback_wrong": "Divide y by x to isolate k: 12 ÷ 2."
+            },
+            {
+              "question": "If k = 4 and x = 7, what is y?",
+              "type": "number",
+              "correct": 28,
+              "feedback_correct": "Right — y = k × x = 4 × 7 = 28.",
+              "feedback_wrong": "Multiply k (4) by x (7)."
+            },
+            {
+              "question": "If k = 9, what is y when x = 5?",
+              "type": "number",
+              "correct": 45,
+              "feedback_correct": "Yes — 9 × 5 = 45.",
+              "feedback_wrong": "Use y = kx = 9 × 5."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Apply k",
+          "questions": [
+            { "equation": "If x = 5 and y = 35, what is k?", "answer": 7 },
+            { "equation": "If k = 6, what is y when x = 11?", "answer": 66 },
+            { "equation": "A car travels 240 km in 4 hours at constant speed. What is k (km per hour)?", "answer": 60 }
+          ]
+        }
+      },
+      "practice": {
+        "title": "Practice — constant of proportionality",
+        "questions": [
+          { "id": "p1", "question": "If x = 3 and y = 24, what is k?",                                                                                  "answer": 8,   "difficulty": "easy",   "explanation": "k = y ÷ x = 24 ÷ 3 = 8.",                                                                "alt_explanation": "k is just y divided by x. 24 split into 3 equal x-units gives 8 per unit." },
+          { "id": "p2", "question": "If k = 5, what is y when x = 7?",                                                                                  "answer": 35,  "difficulty": "easy",   "explanation": "y = k × x = 5 × 7 = 35.",                                                                "alt_explanation": "Each unit of x is worth 5 units of y. Seven x-units total 7 × 5 = 35." },
+          { "id": "p3", "question": "If x = 12 and y = 96, what is k?",                                                                                 "answer": 8,   "difficulty": "medium", "explanation": "k = 96 ÷ 12 = 8.",                                                                       "alt_explanation": "Divide y by x. 96 ÷ 12 = 8 per unit of x." },
+          { "id": "p4", "question": "A printer prints at constant speed: 60 pages in 5 minutes. What is k in pages per minute?",                       "answer": 12,  "difficulty": "medium", "explanation": "k = 60 ÷ 5 = 12 pages per minute.",                                                      "alt_explanation": "Pages per ONE minute: 60 pages over 5 minutes is 12 pages per minute." },
+          { "id": "p5", "question": "A worker earns proportionally. If 8 hours of work pays 120 dollars, how much for 15 hours?",                      "answer": 225, "difficulty": "hard",   "explanation": "k = 120 ÷ 8 = 15 dollars per hour. Then 15 × 15 = 225 dollars for 15 hours.",            "alt_explanation": "Find the hourly rate first (120 ÷ 8 = 15/hr), then scale up to 15 hours: 15 × 15 = 225." },
+          { "id": "p6", "question": "y = kx. If y = 84 when x = 7, what is y when x = 12?",                                                            "answer": 144, "difficulty": "hard",   "explanation": "k = 84 ÷ 7 = 12. Then y = 12 × 12 = 144.",                                              "alt_explanation": "Two-step: first solve for k (84/7 = 12), then plug in the new x (12 × 12 = 144)." }
+        ]
+      }
     },
     {
       "id": "proportional_equations",
@@ -162,7 +472,86 @@
       "prerequisite": null,
       "difficulty_base": 1,
       "unit_id": "unit_5_rational",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "Numbers below zero",
+          "explanation": "Negative numbers describe amounts less than zero. They are useful for temperature, debt, floors below ground, and any situation where moving backward or below a starting point matters.",
+          "key_idea": "A negative number is less than zero, and numbers farther left on the number line are smaller.",
+          "visual": { "type": "number_line", "from": -6, "to": 6, "highlight": -3 }
+        },
+        "analogy": {
+          "title": "Below ground",
+          "scenario": "Imagine an elevator in a building. Floor 0 is the lobby. If you go down 2 floors, you are at floor -2. Negative numbers help describe positions below the starting floor.",
+          "illustration_hint": "elevator_below_lobby",
+          "question": "If the lobby is 0 and you go down 4 floors, what floor are you on?",
+          "options": [-4, 4, 0],
+          "correct": -4,
+          "feedback_correct": "Right - going below 0 gives a negative floor number.",
+          "feedback_incorrect": "Moving down from 0 means the floor number becomes negative."
+        },
+        "example": {
+          "title": "Reading the number line",
+          "problem": "Which number is greater: -2 or 3?",
+          "steps": [
+            { "math": "-2 ... 0 ... 3", "explanation": "On a number line, numbers to the right are greater." },
+            { "math": "-2 is left of 3", "explanation": "Since -2 is to the left of 3, it is the smaller number." },
+            { "math": "3 > -2", "explanation": "So 3 is greater than -2." }
+          ]
+        },
+        "guided": {
+          "title": "Compare signed numbers",
+          "problem": "Think about temperatures on a winter day.",
+          "sub_steps": [
+            {
+              "question": "Which is colder: 2 degrees or -2 degrees?",
+              "type": "choice",
+              "options": ["2 degrees", "-2 degrees", "They are equal"],
+              "correct": "-2 degrees",
+              "feedback_correct": "Right - lower temperature means a smaller number.",
+              "feedback_wrong": "Negative temperatures are below zero, so they are colder."
+            },
+            {
+              "question": "What number is 3 units left of 0 on a number line?",
+              "type": "number",
+              "correct": -3,
+              "feedback_correct": "Yes - three steps left from 0 lands at -3.",
+              "feedback_wrong": "Moving left from 0 gives a negative number."
+            },
+            {
+              "question": "Which is greater: -1 or -5? Enter the greater number.",
+              "type": "number",
+              "correct": -1,
+              "feedback_correct": "Correct - -1 is to the right of -5.",
+              "feedback_wrong": "Among negative numbers, the one closer to zero is greater."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Try these comparisons",
+          "questions": [
+            { "equation": "Which is greater: -4 or 1? Enter the greater number.", "answer": 1 },
+            { "equation": "What number is 5 units below 0?", "answer": -5 },
+            { "equation": "Which is greater: -2 or -7? Enter the greater number.", "answer": -2 }
+          ]
+        }
+      },
+      "practice": {
+        "title": "Practice — negative numbers",
+        "questions": [
+          { "id": "p1",  "question": "Which number is less?",                                                           "equation": "-3 or 2",   "answer": -3, "difficulty": "easy",   "explanation": "-3 is left of 2 on the number line, so it is less.",                                  "alt_explanation": "Any negative number is less than any positive number. Since -3 is negative and 2 is positive, -3 is smaller." },
+          { "id": "p2",  "question": "What number is 4 units below 0?",                                                                          "answer": -4, "difficulty": "easy",   "explanation": "Four units below zero is -4.",                                                          "alt_explanation": "Start at 0 and move left 4 spaces: -1, -2, -3, -4." },
+          { "id": "p3",  "question": "Which temperature is colder?",                                                    "equation": "-5 or 1",   "answer": -5, "difficulty": "easy",   "explanation": "-5 is a lower temperature than 1.",                                                    "alt_explanation": "Colder means smaller on the number line. -5 is farther left than 1." },
+          { "id": "p4",  "question": "Which number is greater?",                                                        "equation": "-2 or -6",  "answer": -2, "difficulty": "easy",   "explanation": "-2 is closer to zero, so it is greater.",                                              "alt_explanation": "Between two negative numbers, the one farther right is greater. -2 is right of -6." },
+          { "id": "p5",  "question": "A submarine is 3 units below sea level. Represent its position with an integer.",                          "answer": -3, "difficulty": "medium", "explanation": "Below sea level is represented by a negative number, so the position is -3.",          "alt_explanation": "Sea level is 0. Anything below 0 is negative, so 3 units below sea level is -3." },
+          { "id": "p6",  "question": "Which number is greater?",                                                        "equation": "0 or -8",   "answer": 0,  "difficulty": "medium", "explanation": "Zero is to the right of -8, so it is greater.",                                        "alt_explanation": "Negative numbers are all less than zero. That makes 0 the greater number." },
+          { "id": "p7",  "question": "Antarctica reaches 25 degrees below zero one winter day. Write this temperature as an integer.",            "answer": -25, "difficulty": "medium", "explanation": "Below zero is negative, so 25 below zero is -25.",                                       "alt_explanation": "Zero is the freezing point. Each step below zero adds another negative degree, so 25 steps below is -25." },
+          { "id": "p8",  "question": "Of the integers -8, 5, -3, and 0, which is the smallest? Enter that number.",                              "answer": -8, "difficulty": "medium", "explanation": "-8 is the leftmost integer on the number line, so it is the smallest.",                "alt_explanation": "Plot all four on a number line. The one farthest to the left is the smallest. -8 wins." },
+          { "id": "p9",  "question": "What number is 2 units above -5?",                                                                          "answer": -3, "difficulty": "hard",   "explanation": "Starting at -5 and moving up 2 lands at -3.",                                          "alt_explanation": "Count forward from -5: -4, -3. So the result is -3." },
+          { "id": "p10", "question": "Which integer lies between -6 and -4?",                                                                    "answer": -5, "difficulty": "hard",   "explanation": "-5 is the only integer between -6 and -4 on the number line.",                         "alt_explanation": "List the consecutive integers there: -6, -5, -4. The middle one is -5." },
+          { "id": "p11", "question": "You start at 5 on the number line and move 7 units to the left. Where do you land?",                       "answer": -2, "difficulty": "hard",   "explanation": "5 - 7 = -2.",                                                                          "alt_explanation": "From 5, take 5 steps left to reach 0, then 2 more steps left to land at -2." },
+          { "id": "p12", "question": "A scoreboard shows -15. After winning, the score changes to -8. By how many points did the score go up?", "answer": 7,  "difficulty": "hard",   "explanation": "-8 - (-15) = -8 + 15 = 7.",                                                            "alt_explanation": "Going from -15 to -8 is moving 7 steps to the right on the number line — that is a gain of 7 points." }
+        ]
+      }
     },
     {
       "id": "adding_integers",
@@ -170,7 +559,85 @@
       "prerequisite": "negative_numbers",
       "difficulty_base": 2,
       "unit_id": "unit_5_rational",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "Moving right and left",
+          "explanation": "Adding integers means moving on a number line. Positive numbers move you right, and negative numbers move you left. Subtracting a negative is the same as adding a positive.",
+          "key_idea": "Same signs add together; different signs compare distances from zero.",
+          "visual": { "type": "number_line", "from": -10, "to": 10, "highlight": -1 }
+        },
+        "analogy": {
+          "title": "Walking on a path",
+          "scenario": "Imagine standing on a path at 0. Walking forward uses positive steps, and walking backward uses negative steps. Integer addition tracks where you end up after all those moves.",
+          "illustration_hint": "walker_forward_backward",
+          "question": "If you start at 0 and move 3 steps right, then 5 steps left, where do you land?",
+          "options": [-2, 2, 8],
+          "correct": -2,
+          "feedback_correct": "Right - after moving right 3 and left 5, you are 2 units left of 0.",
+          "feedback_incorrect": "Combine the moves: +3 then -5 gives 3 - 5."
+        },
+        "example": {
+          "title": "Adding opposites",
+          "problem": "Find 6 + (-8).",
+          "steps": [
+            { "math": "6 + (-8)", "explanation": "The signs are different, so compare distances from zero." },
+            { "math": "8 - 6 = 2", "explanation": "There are 2 more negative units than positive units." },
+            { "math": "-2", "explanation": "The result keeps the sign of the larger distance, so the answer is -2." }
+          ]
+        },
+        "guided": {
+          "title": "Compute with signs",
+          "problem": "Work through integer addition and subtraction.",
+          "sub_steps": [
+            {
+              "question": "What is -4 + 9?",
+              "type": "number",
+              "correct": 5,
+              "feedback_correct": "Yes - the positive distance is larger, so the answer is 5.",
+              "feedback_wrong": "Compare distances: 9 units positive and 4 units negative."
+            },
+            {
+              "question": "What is 7 - 10?",
+              "type": "number",
+              "correct": -3,
+              "feedback_correct": "Correct - subtracting 10 from 7 gives -3.",
+              "feedback_wrong": "Think of 7 - 10 as 7 + (-10)."
+            },
+            {
+              "question": "What is -6 - (-2)?",
+              "type": "number",
+              "correct": -4,
+              "feedback_correct": "Right - subtracting a negative is adding the opposite.",
+              "feedback_wrong": "Rewrite -6 - (-2) as -6 + 2."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Now you try",
+          "questions": [
+            { "equation": "Find -3 + 8", "answer": 5 },
+            { "equation": "Find -7 + (-4)", "answer": -11 },
+            { "equation": "Find 5 - (-6)", "answer": 11 }
+          ]
+        }
+      },
+      "practice": {
+        "title": "Practice — adding and subtracting integers",
+        "questions": [
+          { "id": "p1",  "question": "Find the sum.",                                                                  "equation": "-3 + 8",       "answer": 5,   "difficulty": "easy",   "explanation": "Different signs: 8 − 3 = 5, and the larger distance is positive.",                                       "alt_explanation": "Start at -3 and move 8 steps right. You pass 0 and land at 5." },
+          { "id": "p2",  "question": "Find the sum.",                                                                  "equation": "-7 + (-4)",    "answer": -11, "difficulty": "easy",   "explanation": "Same-sign negatives add: -(7+4) = -11.",                                                                  "alt_explanation": "Think of owing 7 dollars and then owing 4 more. Now you owe 11 dollars, so the total is -11." },
+          { "id": "p3",  "question": "Find the difference.",                                                           "equation": "5 - (-6)",     "answer": 11,  "difficulty": "easy",   "explanation": "Subtracting a negative becomes addition: 5 + 6 = 11.",                                                    "alt_explanation": "Taking away a debt is a gain. So 5 − (-6) means 5 plus 6 more." },
+          { "id": "p4",  "question": "Find the difference.",                                                           "equation": "9 - 12",       "answer": -3,  "difficulty": "easy",   "explanation": "9 − 12 = -3.",                                                                                            "alt_explanation": "Starting at 9 and moving 12 left lands 3 units below zero." },
+          { "id": "p5",  "question": "Find the sum.",                                                                  "equation": "-10 + 15",     "answer": 5,   "difficulty": "medium", "explanation": "Different signs: 15 − 10 = 5, and the sign of the larger distance is positive.",                          "alt_explanation": "The +15 cancels 10 of the negatives and still has 5 positives left over." },
+          { "id": "p6",  "question": "Find the value.",                                                                "equation": "-6 - (-2)",    "answer": -4,  "difficulty": "medium", "explanation": "Rewrite as -6 + 2 = -4.",                                                                                "alt_explanation": "Subtracting a negative means turn around and move right 2 from -6, which lands at -4." },
+          { "id": "p7",  "question": "Find the value.",                                                                "equation": "-3 - (-7)",    "answer": 4,   "difficulty": "medium", "explanation": "Rewrite as -3 + 7 = 4.",                                                                                  "alt_explanation": "Two negatives in a row flip into a plus: -3 − (-7) becomes -3 + 7. Move 7 right from -3 to land at 4." },
+          { "id": "p8",  "question": "Find the value.",                                                                "equation": "-4 + 7 - 3",   "answer": 0,   "difficulty": "medium", "explanation": "Combine left to right: -4 + 7 = 3, then 3 − 3 = 0.",                                                       "alt_explanation": "On a number line, start at -4. Move 7 right (now at 3), then 3 left (back to 0)." },
+          { "id": "p9",  "question": "A hiker is at elevation 4 meters and descends 9 meters. What is the new elevation?",                       "answer": -5,  "difficulty": "hard",   "explanation": "Start at 4 and subtract 9: 4 − 9 = -5.",                                                                  "alt_explanation": "On a number line, move 9 left from 4. You pass zero and end at -5." },
+          { "id": "p10", "question": "A bank account is -8 dollars. You deposit 13 dollars. What is the new balance?",                            "answer": 5,   "difficulty": "hard",   "explanation": "-8 + 13 = 5.",                                                                                            "alt_explanation": "The deposit first covers the 8-dollar debt, then leaves 5 dollars above zero." },
+          { "id": "p11", "question": "The temperature was 8 degrees, then dropped by 12 degrees, then rose by 5 degrees. What is the final temperature?", "answer": 1, "difficulty": "hard", "explanation": "8 − 12 + 5 = -4 + 5 = 1.",                                                                                "alt_explanation": "Step through the changes: 8 → -4 (after the drop) → 1 (after the rise). Order does not change the total." },
+          { "id": "p12", "question": "An account starts at -20 dollars. You deposit 30 dollars, then spend 15 dollars. What is the balance?",                "answer": -5,  "difficulty": "hard",   "explanation": "-20 + 30 − 15 = 10 − 15 = -5.",                                                                          "alt_explanation": "First the deposit erases the debt and leaves you at +10; spending 15 then drops you 15 below that, ending at -5." }
+        ]
+      }
     },
     {
       "id": "multiplying_integers",
@@ -178,7 +645,85 @@
       "prerequisite": "adding_integers",
       "difficulty_base": 2,
       "unit_id": "unit_5_rational",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "Signs in multiplication and division",
+          "explanation": "When multiplying or dividing integers, first find the sign, then the size. Same signs give a positive result. Different signs give a negative result.",
+          "key_idea": "Same signs → positive. Different signs → negative.",
+          "visual": { "type": "grid" }
+        },
+        "analogy": {
+          "title": "Removing a removal",
+          "scenario": "Imagine a game where every penalty subtracts 4 points from your score. If the referee then announces 'three previous penalties are cancelled', that is the same as removing three subtractions of 4 — and removing a subtraction adds the points back. So three cancelled penalties give (-3) × (-4) = +12 points. A negative times a negative is a positive because cancelling a loss is a gain.",
+          "illustration_hint": "scoreboard_cancelled_penalties",
+          "question": "What is (-3) × (-4)?",
+          "options": [-12, 12, -7],
+          "correct": 12,
+          "feedback_correct": "Right — cancelling three penalties of 4 points adds 12 to your score. Negative times negative is positive.",
+          "feedback_incorrect": "Two negatives cancel: removing 3 losses of 4 each gives +12, not -12."
+        },
+        "example": {
+          "title": "Apply the sign rule",
+          "problem": "Find (-5) x (-2).",
+          "steps": [
+            { "math": "(-5) x (-2)", "explanation": "Both factors are negative, so the product will be positive." },
+            { "math": "5 x 2 = 10", "explanation": "Multiply the absolute values." },
+            { "math": "10", "explanation": "Same signs give a positive result, so the answer is 10." }
+          ]
+        },
+        "guided": {
+          "title": "Work with sign rules",
+          "problem": "Find products and quotients with integers.",
+          "sub_steps": [
+            {
+              "question": "What is -3 x 6?",
+              "type": "number",
+              "correct": -18,
+              "feedback_correct": "Correct - different signs make a negative product.",
+              "feedback_wrong": "3 x 6 = 18, then apply the sign rule."
+            },
+            {
+              "question": "What is 20 / (-5)?",
+              "type": "number",
+              "correct": -4,
+              "feedback_correct": "Yes - different signs make a negative quotient.",
+              "feedback_wrong": "20 divided by 5 is 4, then apply the sign."
+            },
+            {
+              "question": "What is (-24) / (-6)?",
+              "type": "number",
+              "correct": 4,
+              "feedback_correct": "Right - same signs make a positive quotient.",
+              "feedback_wrong": "24 divided by 6 is 4, and negative divided by negative is positive."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Check your fluency",
+          "questions": [
+            { "equation": "Find 4 x (-7)", "answer": -28 },
+            { "equation": "Find (-8) x (-3)", "answer": 24 },
+            { "equation": "Find (-18) / 3", "answer": -6 }
+          ]
+        }
+      },
+      "practice": {
+        "title": "Practice — multiplying and dividing integers",
+        "questions": [
+          { "id": "p1",  "question": "Find the product.",                                                                                  "equation": "4 × (-7)",      "answer": -28, "difficulty": "easy",   "explanation": "4 × 7 = 28, and different signs make the answer negative.",                            "alt_explanation": "Four groups of -7 means adding -7 four times: -7 + -7 + -7 + -7 = -28." },
+          { "id": "p2",  "question": "Find the product.",                                                                                  "equation": "(-8) × (-3)",   "answer": 24,  "difficulty": "easy",   "explanation": "8 × 3 = 24, and same signs make the answer positive.",                                 "alt_explanation": "Picture removing 3 separate losses of 8 each. Erasing those losses adds 24 back to your total." },
+          { "id": "p3",  "question": "Find the quotient.",                                                                                 "equation": "(-18) ÷ 3",     "answer": -6,  "difficulty": "easy",   "explanation": "18 / 3 = 6, and different signs make the answer negative.",                            "alt_explanation": "Split a loss of 18 into 3 equal groups. Each group is a loss of 6." },
+          { "id": "p4",  "question": "Find the quotient.",                                                                                 "equation": "(-24) ÷ (-6)",  "answer": 4,   "difficulty": "easy",   "explanation": "24 / 6 = 4, and same signs make the answer positive.",                                 "alt_explanation": "Ask: how many groups of -6 fit into -24? Four groups (since 4 × -6 = -24). Same-sign division gives a positive count." },
+          { "id": "p5",  "question": "Find the product.",                                                                                  "equation": "-5 × 9",        "answer": -45, "difficulty": "medium", "explanation": "5 × 9 = 45, and the signs are different, so the answer is -45.",                       "alt_explanation": "Nine groups of -5 stacked together: -5 added nine times is -45." },
+          { "id": "p6",  "question": "Find the quotient.",                                                                                 "equation": "42 ÷ (-7)",     "answer": -6,  "difficulty": "medium", "explanation": "42 / 7 = 6, and different signs make the answer negative.",                            "alt_explanation": "Splitting a positive 42 into negative-sized groups of -7 gives -6 groups (since -6 × -7 = 42)." },
+          { "id": "p7",  "question": "Find the product.",                                                                                  "equation": "(-12) × (-3)",  "answer": 36,  "difficulty": "medium", "explanation": "12 × 3 = 36, and same signs make the answer positive.",                                "alt_explanation": "Three cancellations of a 12-point penalty add 36 points back. Negative × negative is positive." },
+          { "id": "p8",  "question": "Find the quotient.",                                                                                 "equation": "(-50) ÷ 10",    "answer": -5,  "difficulty": "medium", "explanation": "50 / 10 = 5, and different signs make the answer negative.",                           "alt_explanation": "A loss of 50 split into 10 equal shares is a loss of 5 per share." },
+          { "id": "p9",  "question": "A diver changes depth by -4 meters each minute for 3 minutes. What is the total change?",                                          "answer": -12, "difficulty": "hard",   "explanation": "3 × (-4) = -12.",                                                                       "alt_explanation": "Repeating a change of -4 three times means -4 + -4 + -4 = -12." },
+          { "id": "p10", "question": "A total loss of -36 points is shared equally across 6 rounds. What was the change each round?",                                    "answer": -6,  "difficulty": "hard",   "explanation": "-36 / 6 = -6.",                                                                         "alt_explanation": "If 6 equal rounds combine to a loss of 36, each round must be a loss of 6." },
+          { "id": "p11", "question": "A factory loses 6 units of inventory each day for 8 days. What is the total change in inventory?",                                  "answer": -48, "difficulty": "hard",   "explanation": "8 × (-6) = -48.",                                                                       "alt_explanation": "Multiply the daily loss by the number of days: a loss of 6 repeated for 8 days totals a loss of 48." },
+          { "id": "p12", "question": "Find the value of the expression.",                                                                  "equation": "(-2) × 3 × (-4)","answer": 24,  "difficulty": "hard",   "explanation": "Step by step: (-2) × 3 = -6, then (-6) × (-4) = 24.",                                    "alt_explanation": "Count the negative signs. There are two — an even count means the final result is positive. Then 2 × 3 × 4 = 24." }
+        ]
+      }
     },
     {
       "id": "fraction_operations",
@@ -186,7 +731,106 @@
       "prerequisite": "multiplying_integers",
       "difficulty_base": 3,
       "unit_id": "unit_5_rational",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "Fractions need matched pieces",
+          "explanation": "Fractions describe parts of a whole. To add or subtract them, the pieces must be the same size — that is why we use a common denominator. Multiplication is different: when you multiply two fractions, you are taking a fraction of a fraction, so multiply numerators across and denominators across. Division flips the question: dividing by a fraction is the same as multiplying by its reciprocal, because asking 'how many halves fit in three-quarters' is repeated subtraction in reverse.",
+          "key_idea": "Addition and subtraction need a common denominator. Multiplication multiplies straight across. Division multiplies by the reciprocal.",
+          "visual": { "type": "grid" },
+          "main_equation": "1/2 + 1/3 = 5/6"
+        },
+        "analogy": {
+          "title": "Slices of the same pizza",
+          "scenario": "Imagine two pizzas at a party. The first is cut into halves, the second into quarters. If a friend grabs one slice from each pizza, you cannot say they took 'two slices total' — the slices are different sizes. Before adding, both pizzas must be redrawn in the same-sized pieces. That is exactly what a common denominator does for fractions.",
+          "illustration_hint": "two_pizzas_halves_and_quarters",
+          "question": "What decimal is equal to 1/4 + 1/2?",
+          "options": [0.25, 0.5, 0.75],
+          "correct": 0.75,
+          "feedback_correct": "Right — rewrite 1/2 as 2/4, then 1/4 + 2/4 = 3/4 = 0.75.",
+          "feedback_incorrect": "Convert 1/2 into quarters first: 1/2 = 2/4. Now both pieces match."
+        },
+        "example": {
+          "title": "Combining all four operations",
+          "problem": "Find (1/2 + 1/4) ÷ 3/4.",
+          "steps": [
+            { "math": "1/2 = 2/4", "explanation": "Rewrite 1/2 with denominator 4 so the addition lines up." },
+            { "math": "2/4 + 1/4 = 3/4", "explanation": "Now both fractions share the same denominator. Add the numerators." },
+            { "math": "(3/4) ÷ (3/4)", "explanation": "Substitute the sum back into the original division." },
+            { "math": "(3/4) × (4/3)", "explanation": "Dividing by a fraction is multiplying by its reciprocal — flip the second fraction." },
+            { "math": "12/12 = 1", "explanation": "Multiply across, then simplify. The answer is 1." }
+          ]
+        },
+        "guided": {
+          "title": "Practice every operation",
+          "problem": "Work carefully across addition, multiplication, and division.",
+          "sub_steps": [
+            {
+              "question": "What is 1/2 + 1/4? Enter the simplified answer as a decimal.",
+              "type": "number",
+              "correct": 0.75,
+              "feedback_correct": "Yes — 1/2 is 2/4, so 2/4 + 1/4 = 3/4 = 0.75.",
+              "feedback_wrong": "Rewrite 1/2 as 2/4 first, then add."
+            },
+            {
+              "question": "What is 1 1/2 × 2/3? Enter the simplified answer as a decimal.",
+              "type": "number",
+              "correct": 1,
+              "feedback_correct": "Right — 1 1/2 is 3/2, so (3/2) × (2/3) = 6/6 = 1.",
+              "feedback_wrong": "First convert 1 1/2 to the improper fraction 3/2, then multiply across."
+            },
+            {
+              "question": "What is 3/5 divided by 1/2? Enter the answer as a decimal.",
+              "type": "number",
+              "correct": 1.2,
+              "feedback_correct": "Right — multiply by the reciprocal: 3/5 × 2/1 = 6/5 = 1.2.",
+              "feedback_wrong": "Dividing by 1/2 is the same as multiplying by 2."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Fraction fluency",
+          "questions": [
+            { "equation": "Find 1/4 + 3/4 as a decimal.", "answer": 1 },
+            { "equation": "Find 5/6 - 1/3 as a decimal.", "answer": 0.5 },
+            { "equation": "Find (3/4) ÷ (1/2) as a decimal.", "answer": 1.5 }
+          ]
+        }
+      },
+      "practice": {
+        "title": "Practice — fraction operations",
+        "questions": [
+          { "id": "p1",  "question": "Add the fractions. Enter a decimal.",       "equation": "1/5 + 2/5",       "answer": 0.6,   "difficulty": "easy",   "explanation": "Same denominator — add the numerators: 1 + 2 = 3, so 3/5 = 0.6.",                       "alt_explanation": "Imagine a chocolate bar divided into 5 equal strips. One strip plus two strips is three strips, which is 3/5 of the bar." },
+          { "id": "p2",  "question": "Subtract the fractions. Enter a decimal.",  "equation": "7/8 - 3/8",       "answer": 0.5,   "difficulty": "easy",   "explanation": "Same denominator — subtract the numerators: 7 − 3 = 4, so 4/8 = 1/2 = 0.5.",            "alt_explanation": "Out of 8 equal slices, take away 3. You have 4 slices left, which is half the whole." },
+          { "id": "p3",  "question": "Multiply the fractions. Enter a decimal.",  "equation": "1/2 × 1/2",       "answer": 0.25,  "difficulty": "easy",   "explanation": "Multiply numerators and denominators: 1×1=1, 2×2=4, so 1/4 = 0.25.",                   "alt_explanation": "A half OF a half. Picture a square cut in half, then cut that half in half again — each piece is one quarter." },
+          { "id": "p4",  "question": "Divide the fractions. Enter a decimal.",    "equation": "1/2 ÷ 1/4",       "answer": 2,     "difficulty": "easy",   "explanation": "Multiply by the reciprocal: 1/2 × 4/1 = 4/2 = 2.",                                     "alt_explanation": "Ask: how many quarter-pieces fit inside a half? Two of them. So the answer is 2." },
+          { "id": "p5",  "question": "Add the fractions. Enter a decimal.",       "equation": "1/3 + 1/6",       "answer": 0.5,   "difficulty": "medium", "explanation": "Common denominator is 6: 1/3 = 2/6, so 2/6 + 1/6 = 3/6 = 1/2 = 0.5.",                   "alt_explanation": "Convert thirds to sixths so the pieces match. One third covers two-sixths; add one more sixth to land on three-sixths, which is half." },
+          { "id": "p6",  "question": "Subtract the fractions. Enter a decimal.",  "equation": "3/4 - 1/8",       "answer": 0.625, "difficulty": "medium", "explanation": "Common denominator 8: 3/4 = 6/8, then 6/8 − 1/8 = 5/8 = 0.625.",                       "alt_explanation": "Imagine a pie cut into 8 slices. Three-quarters is six slices; remove one slice to get five slices, which is 5/8." },
+          { "id": "p7",  "question": "Multiply. Enter a decimal.",                "equation": "6 × 2/3",         "answer": 4,     "difficulty": "medium", "explanation": "Six groups of 2/3 means 12/3 = 4.",                                                    "alt_explanation": "Take 2/3 six times: 2/3 + 2/3 + 2/3 + 2/3 + 2/3 + 2/3 = 12/3 wholes = 4." },
+          { "id": "p8",  "question": "Divide the fractions. Enter a decimal.",    "equation": "3/4 ÷ 1/2",       "answer": 1.5,   "difficulty": "medium", "explanation": "Multiply by the reciprocal: 3/4 × 2/1 = 6/4 = 3/2 = 1.5.",                             "alt_explanation": "Ask how many halves fit inside three-quarters. One half fits, plus another quarter — that is one and a half halves." },
+          { "id": "p9",  "question": "Add the mixed numbers. Enter a decimal.",   "equation": "1 1/4 + 2 1/4",   "answer": 3.5,   "difficulty": "hard",   "explanation": "Convert to improper: 5/4 + 9/4 = 14/4 = 7/2 = 3.5.",                                    "alt_explanation": "The whole-number parts add to 3, and the fraction parts add to 2/4 = 1/2. Total: 3 + 1/2 = 3.5." },
+          { "id": "p10", "question": "Multiply the mixed number. Enter a decimal.","equation": "1 1/2 × 2/5",    "answer": 0.6,   "difficulty": "hard",   "explanation": "Convert 1 1/2 = 3/2, then 3/2 × 2/5 = 6/10 = 0.6.",                                     "alt_explanation": "Always convert mixed numbers to improper fractions before multiplying. 1 1/2 is three halves; three halves OF two-fifths is 6/10." },
+          { "id": "p11", "question": "Compute step by step. Enter a decimal.",    "equation": "(1/2 + 1/4) × 2/3","answer": 0.5,   "difficulty": "hard",   "explanation": "Inside parentheses: 1/2 + 1/4 = 3/4. Then 3/4 × 2/3 = 6/12 = 0.5.",                    "alt_explanation": "Two-step problems: handle the inside of the parentheses first, then apply the outer operation. Order matters." },
+          { "id": "p12", "question": "Xiaomei cuts 1 mooncake into 8 equal pieces. She eats 3 and her brother eats 2. What fraction of the mooncake is left? Enter as a decimal.", "answer": 0.375, "difficulty": "hard", "explanation": "Pieces eaten: 3 + 2 = 5. Pieces left: 8 − 5 = 3, so 3/8 = 0.375.", "alt_explanation": "Start with the whole (8/8 = 1). Subtract what has been eaten: 1 − 5/8 = 3/8 of the mooncake is left." }
+        ]
+      },
+      "quiz": {
+        "title": "Fraction operations quiz",
+        "description": "Test all four fraction operations including mixed numbers across the four sub-skills.",
+        "estimated_minutes": 8,
+        "difficulty_label": "Mixed (easy → hard)",
+        "questions": [
+          { "id": "q1",  "question": "Add the fractions. Enter a decimal.",        "equation": "1/4 + 1/4",   "answer": 0.5,   "skill": "common_denominators", "alt_explanation": "Two quarter-slices make a half. 1/4 + 1/4 = 2/4 = 1/2 = 0.5." },
+          { "id": "q2",  "question": "Add the fractions. Enter a decimal.",        "equation": "1/3 + 1/6",   "answer": 0.5,   "skill": "common_denominators", "alt_explanation": "Convert thirds to sixths so pieces match: 1/3 = 2/6. Then 2/6 + 1/6 = 3/6 = 1/2 = 0.5." },
+          { "id": "q3",  "question": "Subtract the fractions. Enter a decimal.",   "equation": "7/8 - 1/4",   "answer": 0.625, "skill": "common_denominators", "alt_explanation": "Find the common denominator 8: 1/4 = 2/8. Then 7/8 − 2/8 = 5/8 = 0.625." },
+          { "id": "q4",  "question": "Multiply the fractions. Enter a decimal.",   "equation": "1/2 × 1/4",   "answer": 0.125, "skill": "multiplying",         "alt_explanation": "A half OF a quarter. Picture a quarter slice; cut it in half — each piece is one-eighth (0.125)." },
+          { "id": "q5",  "question": "Multiply. Enter a decimal.",                 "equation": "4 × 3/8",     "answer": 1.5,   "skill": "multiplying",         "alt_explanation": "Four groups of 3/8 means 12/8. Simplify: 12/8 = 3/2 = 1.5." },
+          { "id": "q6",  "question": "Multiply the fractions. Enter a decimal.",   "equation": "3/5 × 5/6",   "answer": 0.5,   "skill": "multiplying",         "alt_explanation": "The 5 in numerator and denominator cancel, leaving 3/6 = 1/2 = 0.5." },
+          { "id": "q7",  "question": "Divide the fractions. Enter a decimal.",     "equation": "3/4 ÷ 1/2",   "answer": 1.5,   "skill": "dividing",            "alt_explanation": "Multiply by the reciprocal: 3/4 × 2/1 = 6/4 = 3/2 = 1.5." },
+          { "id": "q8",  "question": "Divide the fractions. Enter a decimal.",     "equation": "7/8 ÷ 1/4",   "answer": 3.5,   "skill": "dividing",            "alt_explanation": "Flip the second fraction and multiply: 7/8 × 4/1 = 28/8 = 7/2 = 3.5." },
+          { "id": "q9",  "question": "Add the mixed number. Enter a decimal.",     "equation": "1 1/2 + 1/4", "answer": 1.75,  "skill": "mixed_numbers",       "alt_explanation": "1 1/2 is 6/4. Then 6/4 + 1/4 = 7/4 = 1.75." },
+          { "id": "q10", "question": "Multiply the mixed number. Enter a decimal.","equation": "2 1/2 × 4/5", "answer": 2,     "skill": "mixed_numbers",       "alt_explanation": "Convert 2 1/2 = 5/2. Then (5/2) × (4/5) = 20/10 = 2." }
+        ]
+      }
     },
     {
       "id": "decimal_operations",
@@ -194,7 +838,85 @@
       "prerequisite": "fraction_operations",
       "difficulty_base": 3,
       "unit_id": "unit_5_rational",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "Line up place values",
+          "explanation": "When adding or subtracting decimals, line up the decimal points so tenths, hundredths, and whole numbers stay in the right columns. For multiplication, multiply as usual and then place the decimal in the product.",
+          "key_idea": "Decimal points must line up for addition and subtraction.",
+          "visual": { "type": "grid" }
+        },
+        "analogy": {
+          "title": "Money columns",
+          "scenario": "Think of decimals like dollars and cents. You would not place cents under dollars when adding money. Decimal points keep each place value in the correct column.",
+          "illustration_hint": "money_columns_decimal_alignment",
+          "question": "What is 2.5 + 0.7?",
+          "options": [3.2, 2.12, 3.1],
+          "correct": 3.2,
+          "feedback_correct": "Right - line up tenths and add.",
+          "feedback_incorrect": "Add the tenths column carefully: 5 tenths plus 7 tenths is 12 tenths."
+        },
+        "example": {
+          "title": "Subtracting decimals",
+          "problem": "Find 5.2 - 1.85.",
+          "steps": [
+            { "math": "5.20 - 1.85", "explanation": "Write 5.2 as 5.20 so the place values line up." },
+            { "math": "5.20 - 1.85 = 3.35", "explanation": "Subtract column by column." },
+            { "math": "3.35", "explanation": "So the difference is 3.35." }
+          ]
+        },
+        "guided": {
+          "title": "Operate with decimals",
+          "problem": "Use place value carefully.",
+          "sub_steps": [
+            {
+              "question": "What is 1.4 + 2.35?",
+              "type": "number",
+              "correct": 3.75,
+              "feedback_correct": "Yes - 1.40 + 2.35 = 3.75.",
+              "feedback_wrong": "Rewrite 1.4 as 1.40 before adding."
+            },
+            {
+              "question": "What is 6.2 - 0.8?",
+              "type": "number",
+              "correct": 5.4,
+              "feedback_correct": "Correct - 6.2 - 0.8 = 5.4.",
+              "feedback_wrong": "Subtract eight tenths from sixty-two tenths."
+            },
+            {
+              "question": "What is 0.6 x 4?",
+              "type": "number",
+              "correct": 2.4,
+              "feedback_correct": "Right - 6 tenths times 4 is 24 tenths, or 2.4.",
+              "feedback_wrong": "Multiply 6 by 4, then place the decimal one spot from the right."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Decimal fluency",
+          "questions": [
+            { "equation": "Find 3.7 + 1.26", "answer": 4.96 },
+            { "equation": "Find 8.5 - 2.75", "answer": 5.75 },
+            { "equation": "Find 1.2 x 3", "answer": 3.6 }
+          ]
+        }
+      },
+      "practice": {
+        "title": "Practice — decimal operations",
+        "questions": [
+          { "id": "p1",  "question": "Add the decimals.",                                                                "equation": "3.7 + 1.26",  "answer": 4.96,  "difficulty": "easy",   "explanation": "Write 3.7 as 3.70, then add: 3.70 + 1.26 = 4.96.",                                "alt_explanation": "Line up the decimal points so tenths stay under tenths and hundredths under hundredths." },
+          { "id": "p2",  "question": "Subtract the decimals.",                                                           "equation": "8.5 - 2.75",  "answer": 5.75,  "difficulty": "easy",   "explanation": "Write 8.5 as 8.50, then subtract to get 5.75.",                                  "alt_explanation": "Treat it like money: 8 dollars 50 cents minus 2 dollars 75 cents leaves 5 dollars 75 cents." },
+          { "id": "p3",  "question": "Multiply the decimals.",                                                           "equation": "1.2 × 3",     "answer": 3.6,   "difficulty": "easy",   "explanation": "12 × 3 = 36, then place the decimal one spot from the right.",                  "alt_explanation": "1.2 means twelve tenths. Three groups of twelve tenths make thirty-six tenths, or 3.6." },
+          { "id": "p4",  "question": "Add the decimals.",                                                                "equation": "2.5 + 0.68",  "answer": 3.18,  "difficulty": "easy",   "explanation": "2.50 + 0.68 = 3.18.",                                                              "alt_explanation": "Fill in the missing zero so the hundredths line up before adding." },
+          { "id": "p5",  "question": "Subtract the decimals.",                                                           "equation": "6.2 - 0.95",  "answer": 5.25,  "difficulty": "medium", "explanation": "Write 6.2 as 6.20, then subtract to get 5.25.",                                  "alt_explanation": "Regroup in the hundredths place just like you would with whole numbers." },
+          { "id": "p6",  "question": "Multiply the decimals.",                                                           "equation": "0.4 × 0.5",   "answer": 0.2,   "difficulty": "medium", "explanation": "4 × 5 = 20, and there are two decimal places total, so the product is 0.20 = 0.2.","alt_explanation": "Four tenths of five tenths is two tenths, which is 0.2." },
+          { "id": "p7",  "question": "Add the decimals.",                                                                "equation": "5.4 + 2.07",  "answer": 7.47,  "difficulty": "medium", "explanation": "Write 5.4 as 5.40 so the hundredths column lines up: 5.40 + 2.07 = 7.47.",     "alt_explanation": "When one number has fewer decimal places, pad it with a trailing zero so every column has a digit before adding." },
+          { "id": "p8",  "question": "Multiply the decimals.",                                                           "equation": "0.6 × 0.04",  "answer": 0.024, "difficulty": "medium", "explanation": "6 × 4 = 24. There are 3 total decimal places (1 + 2), so the product is 0.024.","alt_explanation": "Count the decimal places in both numbers and add them up. 1 + 2 = 3 decimal places in the answer." },
+          { "id": "p9",  "question": "A notebook costs 2.75 dollars and a pen costs 1.40 dollars. What is the total cost?",                       "answer": 4.15,  "difficulty": "hard",   "explanation": "2.75 + 1.40 = 4.15.",                                                              "alt_explanation": "Think in dollars and cents: 275 cents plus 140 cents is 415 cents, or 4.15 dollars." },
+          { "id": "p10", "question": "A runner finished a lap in 12.6 seconds and improved by 0.8 second. What is the new time?",                  "answer": 11.8,  "difficulty": "hard",   "explanation": "Improving by 0.8 second means subtracting: 12.6 - 0.8 = 11.8.",                    "alt_explanation": "Rewrite 12.6 as 12.60, then subtract 0.80." },
+          { "id": "p11", "question": "Xiaomei buys a pen for 12.50 yuan and an eraser for 8.75 yuan. What is the total cost in yuan?",            "answer": 21.25, "difficulty": "hard",   "explanation": "12.50 + 8.75 = 21.25 yuan.",                                                       "alt_explanation": "Add the whole-yuan parts (12 + 8 = 20) and the decimal parts (0.50 + 0.75 = 1.25 yuan), then combine: 20 + 1.25 = 21.25." },
+          { "id": "p12", "question": "A piece of cloth is 2.4 meters long. You cut off 0.85 meter for a project. How long is the remaining piece?", "answer": 1.55, "difficulty": "hard",   "explanation": "Rewrite 2.4 as 2.40, then 2.40 − 0.85 = 1.55 meters.",                            "alt_explanation": "Pad to two decimal places first (2.40), then subtract column by column. Borrow from the tenths to the hundredths if needed." }
+        ]
+      }
     },
     {
       "id": "rational_word_problems",
@@ -202,7 +924,85 @@
       "prerequisite": "decimal_operations",
       "difficulty_base": 4,
       "unit_id": "unit_5_rational",
-      "phases": { "stub": true }
+      "phases": {
+        "concept": {
+          "title": "Choose the right operation",
+          "explanation": "Rational number word problems mix integers, fractions, and decimals in real situations. The main challenge is deciding which operation fits the story, then keeping track of signs and units.",
+          "key_idea": "Translate the story to math before you calculate.",
+          "visual": { "type": "none" }
+        },
+        "analogy": {
+          "title": "Story to number sentence",
+          "scenario": "A word problem is like a short movie. Your job is to pause the movie, identify what changed, and write a matching number sentence before solving.",
+          "illustration_hint": "story_to_equation_cards",
+          "question": "A bank balance is -12 dollars and you deposit 20 dollars. What is the new balance?",
+          "options": [8, -8, 32],
+          "correct": 8,
+          "feedback_correct": "Right - depositing 20 into a -12 balance gives 8.",
+          "feedback_incorrect": "A deposit adds to the balance: -12 + 20 = 8."
+        },
+        "example": {
+          "title": "Combine story and sign",
+          "problem": "The temperature was 4 degrees, then dropped by 9 degrees. What is the new temperature?",
+          "steps": [
+            { "math": "4 + (-9)", "explanation": "A drop of 9 degrees means add negative 9." },
+            { "math": "4 + (-9) = -5", "explanation": "Different signs: 9 - 4 = 5, and the negative distance is larger." },
+            { "math": "-5 degrees", "explanation": "So the new temperature is -5 degrees." }
+          ]
+        },
+        "guided": {
+          "title": "Model each story",
+          "problem": "Read the situation, write the math, solve.",
+          "sub_steps": [
+            {
+              "question": "A diver is at -6 meters and rises 8 meters. What is the new depth?",
+              "type": "number",
+              "correct": 2,
+              "feedback_correct": "Yes - rising 8 means add 8: -6 + 8 = 2.",
+              "feedback_wrong": "Start at -6 and move 8 units toward the positive direction."
+            },
+            {
+              "question": "A recipe needs 3/4 cup of yogurt for each batch. How much yogurt is needed for 2 batches? Enter a decimal.",
+              "type": "number",
+              "correct": 1.5,
+              "feedback_correct": "Correct - 2 x 3/4 = 6/4 = 1.5.",
+              "feedback_wrong": "Two equal batches means multiply by 2."
+            },
+            {
+              "question": "A runner's time was 15.2 seconds and improved by 0.6 second. What is the new time?",
+              "type": "number",
+              "correct": 14.6,
+              "feedback_correct": "Right - improvement means the time gets smaller: 15.2 - 0.6 = 14.6.",
+              "feedback_wrong": "An improvement in time means subtract the amount improved."
+            }
+          ]
+        },
+        "independent": {
+          "title": "Solve from context",
+          "questions": [
+            { "equation": "A balance is -9 dollars and then increases by 14 dollars. What is the new balance?", "answer": 5 },
+            { "equation": "You drink 1/2 liter of water each hour for 3 hours. How many liters total? Enter a decimal.", "answer": 1.5 },
+            { "equation": "A plane descends 2.5 kilometers from 6 kilometers. What is the new height?", "answer": 3.5 }
+          ]
+        }
+      },
+      "practice": {
+        "title": "Practice — rational number word problems",
+        "questions": [
+          { "id": "p1",  "question": "A bank account has -9 dollars. You deposit 14 dollars. What is the new balance?",                                                                                  "answer": 5,     "difficulty": "easy",   "explanation": "-9 + 14 = 5.",                                                                "alt_explanation": "The deposit first cancels the 9-dollar debt, then leaves 5 dollars above zero." },
+          { "id": "p2",  "question": "The temperature is 3 degrees and drops by 8 degrees. What is the new temperature?",                                                                                "answer": -5,    "difficulty": "easy",   "explanation": "3 + (-8) = -5.",                                                              "alt_explanation": "A drop means move left on the number line. Eight steps left from 3 lands at -5." },
+          { "id": "p3",  "question": "A recipe uses 2/3 cup of oats each batch. How much is needed for 3 batches? Enter a decimal.",                                                                     "answer": 2,     "difficulty": "easy",   "explanation": "3 × 2/3 = 6/3 = 2.",                                                          "alt_explanation": "Three groups of two thirds make six thirds, and six thirds is 2 wholes." },
+          { "id": "p4",  "question": "A 1-liter water bottle has 0.4 liter taken out, then another 0.25 liter. How much water remains? Enter a decimal.",                                                "answer": 0.35,  "difficulty": "easy",   "explanation": "1 − 0.4 − 0.25 = 0.6 − 0.25 = 0.35 liter.",                                  "alt_explanation": "Subtract the two amounts removed in sequence: start at 1, drop to 0.6, drop again to 0.35." },
+          { "id": "p5",  "question": "You have 50 dollars and spend 32.75 dollars on groceries. How much change do you have left?",                                                                       "answer": 17.25, "difficulty": "medium", "explanation": "50.00 − 32.75 = 17.25 dollars.",                                              "alt_explanation": "Pad 50 to 50.00 first so the cents columns line up before subtracting." },
+          { "id": "p6",  "question": "A trip is 12.5 km long. After driving 4.75 km, how many km remain?",                                                                                                "answer": 7.75,  "difficulty": "medium", "explanation": "12.5 − 4.75 = 12.50 − 4.75 = 7.75 km.",                                       "alt_explanation": "Whatever you have driven plus what is left must equal the full trip. So remaining = total − driven." },
+          { "id": "p7",  "question": "You have 3/4 pound of trail mix and split it equally among 3 friends. How much does each friend get? Enter a decimal.",                                            "answer": 0.25,  "difficulty": "medium", "explanation": "(3/4) ÷ 3 = 3/12 = 1/4 = 0.25.",                                              "alt_explanation": "Dividing by 3 means making three equal shares. One quarter pound goes to each friend." },
+          { "id": "p8",  "question": "A game gives -2 points per mistake and +5 points per correct answer. After 4 mistakes and 6 correct answers, what is the total change in score?",                  "answer": 22,    "difficulty": "medium", "explanation": "(-2)(4) + (5)(6) = -8 + 30 = 22.",                                            "alt_explanation": "Compute each part separately, then combine: mistakes give -8 points, correct answers give +30; net is +22." },
+          { "id": "p9",  "question": "An account starts at 100 dollars. You withdraw 35.50, deposit 20, then spend 12.25. What is the final balance?",                                                    "answer": 72.25, "difficulty": "hard",   "explanation": "100 − 35.50 + 20 − 12.25 = 64.50 + 20 − 12.25 = 84.50 − 12.25 = 72.25.",       "alt_explanation": "Apply the transactions one at a time, in order. After each step the balance becomes the new starting point for the next." },
+          { "id": "p10", "question": "An old running record was 9.84 seconds. The new record is 9.65 seconds. By how many seconds was the record beaten?",                                                "answer": 0.19,  "difficulty": "hard",   "explanation": "9.84 − 9.65 = 0.19 second.",                                                  "alt_explanation": "Subtraction works directly because both times have two decimal places. Line them up and subtract column by column." },
+          { "id": "p11", "question": "A recipe needs 1/2 cup of flour per batch. You make 4 batches. How much flour total? Enter a decimal.",                                                             "answer": 2,     "difficulty": "hard",   "explanation": "4 × 1/2 = 4/2 = 2 cups.",                                                     "alt_explanation": "Four groups of one-half cup is the same as two whole cups, since two halves make a whole." },
+          { "id": "p12", "question": "A recipe needs 2/3 cup of sugar per batch. You scale to 1.5 batches. How much sugar in total? Enter a decimal.",                                                    "answer": 1,     "difficulty": "hard",   "explanation": "(2/3) × 1.5 = (2/3) × (3/2) = 6/6 = 1.",                                      "alt_explanation": "Convert 1.5 to the fraction 3/2. Then (2/3) × (3/2) = 1: the two fractions are reciprocals, so they multiply to one whole cup." }
+        ]
+      }
     },
     {
       "id": "what_is_variable",

@@ -1,10 +1,11 @@
 import { NextRequest } from "next/server";
 import { OLLAMA_URL, OLLAMA_MODEL } from "@/lib/config";
 import type { ExplainRequest, ExplainResponse } from "@/lib/types";
+import { isLearnerLanguage } from "@/lib/learner-language";
 import {
-  buildLanguageSuffix,
-  isLearnerLanguage,
-} from "@/lib/learner-language";
+  buildExplainSystemPrompt,
+  buildExplainUserPrompt,
+} from "@/lib/explain-prompt";
 
 // POST /api/explain — produce a NEW teaching approach for a problem the
 // student already missed once with one explanation. Used by /review's
@@ -22,34 +23,28 @@ import {
 // but the suffix approach generalizes cleanly to all 7 supported
 // languages without needing per-language hand-tuned prompts.
 
-const SYSTEM_PROMPT_BASE =
-  "You are a patient tutor explaining the SAME problem in a NEW way. The " +
-  "student's first explanation didn't click. Try a different angle: a " +
-  "visual, a physical analogy, smaller numbers first, or a step-by-step " +
-  "checklist. Do NOT repeat the original explanation. Keep it under 3 " +
-  "short sentences. Plain prose only — no bullet lists, no markdown, no " +
-  "emoji, no preamble like \"Here's another way\".";
-
-function buildUserPrompt(req: ExplainRequest): string {
-  const cleanQuestion = req.question.trim();
-  const cleanOriginal = req.originalExplanation.trim();
-  return [
-    `Question: ${cleanQuestion}`,
-    `Correct answer: ${req.correctAnswer}`,
-    `Explanation we already tried: ${cleanOriginal || "(none)"}`,
-    "Explain it differently.",
-  ].join("\n");
-}
+// Prompt construction lives in lib/explain-prompt.ts so the WebLLM
+// browser path (app/review/page.tsx when "Browser-side AI" toggle is
+// on) and this Ollama path stay behaviorally identical. Any tweak to
+// the system prompt or RAG injection strategy must happen in that
+// shared module to avoid backend drift.
 
 function isExplainRequest(body: unknown): body is ExplainRequest {
   if (!body || typeof body !== "object") return false;
   const b = body as Record<string, unknown>;
-  return (
-    typeof b.question === "string" &&
-    typeof b.originalExplanation === "string" &&
-    typeof b.correctAnswer === "string" &&
-    isLearnerLanguage(b.language)
-  );
+  if (typeof b.question !== "string") return false;
+  if (typeof b.originalExplanation !== "string") return false;
+  if (typeof b.correctAnswer !== "string") return false;
+  if (!isLearnerLanguage(b.language)) return false;
+  // Optional curriculum-context fields — when present, must match shape.
+  if (b.topicId !== undefined && typeof b.topicId !== "string") return false;
+  if (b.bankQuestionId !== undefined && typeof b.bankQuestionId !== "string") {
+    return false;
+  }
+  if (b.source !== undefined && b.source !== "practice" && b.source !== "quiz") {
+    return false;
+  }
+  return true;
 }
 
 export async function POST(req: NextRequest) {
@@ -67,8 +62,8 @@ export async function POST(req: NextRequest) {
   }
 
   const body: ExplainRequest = parsed;
-  const systemPrompt = SYSTEM_PROMPT_BASE + buildLanguageSuffix(body.language);
-  const userPrompt = buildUserPrompt(body);
+  const systemPrompt = buildExplainSystemPrompt(body);
+  const userPrompt = buildExplainUserPrompt(body);
 
   let ollamaRes: Response;
   try {
