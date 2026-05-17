@@ -1,5 +1,5 @@
-import { ollamaToolChat } from "@/lib/ollama";
 import { OLLAMA_MODEL, OLLAMA_URL } from "@/lib/config";
+import { PORTRAIT_JSON_SCHEMA } from "@/lib/portrait-schema";
 import type { OllamaMessage, StudentProfile } from "@/lib/types";
 
 // ── Schema (do not collapse fields) ────────────────────────
@@ -254,14 +254,16 @@ function stripCodeFence(text: string): string {
   return t;
 }
 
-const REQUIRED_TOP_KEYS = [
-  "headline",
-  "insights",
-  "profile",
-  "suggestions",
-  "quick_facts",
-  "confidence",
-] as const;
+// Hard-required: the demo centerpiece. A portrait missing any of these
+// has nothing meaningful to show, so validate() throws and the route
+// surfaces a clean 500 instead of a broken card. profile / suggestions /
+// quick_facts are intentionally NOT here — they are decorative and have
+// lenient auto-fill handlers further down, so a sparse (or, on an older
+// Ollama that ignores the schema `format`, an incomplete) response still
+// renders. PORTRAIT_JSON_SCHEMA makes all keys present in practice; this
+// list is the defense-in-depth floor under that, and matches the
+// strict/lenient split documented on validate() below.
+const REQUIRED_TOP_KEYS = ["headline", "insights", "confidence"] as const;
 
 const VALID_DIRECTIONS: TrendDirection[] = ["rising", "falling", "stable"];
 const VALID_LEVELS: Confidence[] = ["high", "medium", "low"];
@@ -500,30 +502,37 @@ interface RawChatLikeResponse {
 async function callOllamaToolChatNoTools(
   messages: OllamaMessage[],
 ): Promise<RawChatLikeResponse> {
-  // Try the existing wrapper with no tools. If Ollama rejects an empty tools
-  // array, fall back to a direct fetch (the same shape used by the spike).
-  try {
-    return (await ollamaToolChat(messages, [])) as RawChatLikeResponse;
-  } catch (err) {
-    const res = await fetch(`${OLLAMA_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: OLLAMA_MODEL,
-        messages,
-        stream: false,
-      }),
-    });
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(
-        `Ollama portrait request failed (after wrapper failed too): ` +
-          `wrapper=${err instanceof Error ? err.message : String(err)}; ` +
-          `direct=${res.status} ${errText}`,
-      );
-    }
-    return (await res.json()) as RawChatLikeResponse;
+  // Portrait output must be a single, COMPLETE JSON object. We pass the
+  // full PORTRAIT_JSON_SCHEMA as Ollama's `format` (structured outputs)
+  // rather than the bare "json" string. The bare string only guarantees
+  // syntactic validity — gemma4:e2b, a 2B-class model, would then emit
+  // valid JSON that stopped after headline/insights/profile and dropped
+  // suggestions/quick_facts/confidence (done_reason "stop", not
+  // truncation). The schema's `required` lists make the grammar refuse
+  // the closing brace until every key has been produced. Verified
+  // against gemma4:e2b: the schema path still returns the separate
+  // `thinking` trace the dashboard renders. See lib/portrait-schema.ts.
+  //
+  // Direct fetch instead of the ollamaToolChat wrapper: portrait wants
+  // free-form JSON, not a tool call, so the previous empty-tools call
+  // bought nothing, and the wrapper has no format passthrough.
+  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: OLLAMA_MODEL,
+      messages,
+      format: PORTRAIT_JSON_SCHEMA,
+      stream: false,
+    }),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(
+      `Ollama portrait request failed: ${res.status} ${errText}`,
+    );
   }
+  return (await res.json()) as RawChatLikeResponse;
 }
 
 export async function generatePortrait(

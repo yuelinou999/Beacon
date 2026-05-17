@@ -316,13 +316,19 @@ export default function ReviewPage() {
     // the runtime gate the WebLLM path would fail loudly instead of
     // falling back to /api/explain.
     const useBrowserAI = getBrowserAI() && isWebGpuAvailable();
-    // Server path uses 10s; browser-AI first inference can take longer
-    // because of just-in-time JIT/warmup. Spike data showed worst-case
-    // ~7s on M4 main thread; 30s gives Xiaomei's old Android headroom.
+    // Server path: Ollama + gemma4:e2b measures ~10-15s warm for this
+    // 2-3 sentence alt-explanation, and noticeably more on a cold model
+    // or a host under load. The earlier 10s budget sat right on top of
+    // the warm latency, so the abort fired before Gemma answered and
+    // the learner saw a timeout error instead of the explanation. 60s
+    // gives real headroom — on this path a slow answer always beats a
+    // timeout error, since there is nothing else for the learner to do
+    // but wait. Browser-AI first inference can also run long because of
+    // JIT/warmup; 30s gives Xiaomei's old Android headroom there.
     // The browser-AI generate() now respects controller.signal so
     // this timeout actually enforces (previously it only aborted the
     // unused fetch on the server path).
-    const timeoutMs = useBrowserAI ? 30_000 : 10_000;
+    const timeoutMs = useBrowserAI ? 30_000 : 60_000;
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     setAltState("loading");

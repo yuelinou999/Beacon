@@ -9,7 +9,13 @@ interface QuizTakeRequest {
   questions: QuizQuestion[];
 }
 
-const TIMEOUT_MS = 30_000;
+// Ollama + gemma4:e2b runs this 2-3 sentence post-mortem in ~10-15s warm,
+// but a cold model or a loaded host can run well past 30s. 60s keeps the
+// post-mortem from silently degrading to the no-analysis fallback on a
+// fresh machine — matches the /review explain budget. On timeout the route
+// still returns gracefully (analysis: null), so this is a headroom bump,
+// not a correctness fix.
+const TIMEOUT_MS = 60_000;
 
 const SYSTEM_PROMPT =
   `You are a math tutor analyzing a student's quiz performance. Be encouraging but specific. Avoid generic praise. 2-3 sentences only. No bullet points, no headers, no markdown.`;
