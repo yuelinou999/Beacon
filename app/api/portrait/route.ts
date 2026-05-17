@@ -41,11 +41,29 @@ export async function POST(req: NextRequest) {
     const response = await generatePortrait(profile);
     return Response.json(response, { status: 200 });
   } catch (err) {
-    const detail =
-      err instanceof Error
-        ? `${err.name}: ${err.message}`
-        : String(err);
     console.error("Portrait API error:", err);
+    // A failed fetch to the Ollama host — connection refused, DNS miss, or
+    // no host at all — surfaces as a TypeError whose message (or .cause)
+    // names the network failure. Two cases land here: the hosted demo,
+    // where there is no Ollama by design (Beacon is offline-first, AI runs
+    // on the device, not in the cloud), and a local run where `ollama
+    // serve` simply isn't up yet. Neither is a generation bug, so return a
+    // distinct code and let the dashboard explain the model-server
+    // requirement instead of showing a red parse-style error.
+    const cause =
+      err instanceof Error
+        ? String((err as { cause?: unknown }).cause ?? "")
+        : "";
+    const ollamaUnreachable =
+      err instanceof Error &&
+      /fetch failed|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|network|other side closed/i.test(
+        `${err.message} ${cause}`,
+      );
+    if (ollamaUnreachable) {
+      return Response.json({ error: "ollama_unreachable" }, { status: 503 });
+    }
+    const detail =
+      err instanceof Error ? `${err.name}: ${err.message}` : String(err);
     return Response.json(
       { error: "portrait_generation_failed", detail },
       { status: 500 },

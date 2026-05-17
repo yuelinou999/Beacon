@@ -21,6 +21,10 @@ import Section5QuickFacts from "./_components/section5-quickfacts";
 type DashboardState =
   | { status: "loading" }
   | { status: "error"; message: string }
+  // Ollama / model server not reachable — expected on the hosted demo and
+  // when `ollama serve` isn't up locally. Distinct from "error" so it gets
+  // an explanatory card, not a red failure.
+  | { status: "offline" }
   | { status: "ready"; data: PortraitResponse };
 
 export default function DashboardPage() {
@@ -48,6 +52,20 @@ export default function DashboardPage() {
         body: JSON.stringify({ profile }),
       });
       if (!res.ok) {
+        // Tell "model server unreachable" apart from a real generation
+        // failure — they want different copy. The portrait route returns
+        // { error: "ollama_unreachable" } for the former.
+        let errorCode = "";
+        try {
+          const body = (await res.clone().json()) as { error?: string };
+          errorCode = body.error ?? "";
+        } catch {
+          /* response body wasn't JSON — fall through to the generic error */
+        }
+        if (errorCode === "ollama_unreachable") {
+          setState({ status: "offline" });
+          return;
+        }
         const text = await res.text();
         throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
       }
@@ -103,6 +121,7 @@ export default function DashboardPage() {
 
         {/* Body */}
         {state.status === "loading" && <LoadingCard />}
+        {state.status === "offline" && <OfflineCard onRetry={loadPortrait} />}
         {state.status === "error" && (
           <ErrorCard message={state.message} onRetry={loadPortrait} />
         )}
@@ -160,6 +179,66 @@ function LoadingCard() {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// ── Offline / no-model-server state ─────────────────────
+// The portrait is the one dashboard surface that needs a live Gemma call.
+// On the hosted demo there is no Ollama (Beacon is offline-first by design —
+// AI runs on the device, not in the cloud); locally it means `ollama serve`
+// just isn't up. Neither is an app failure, so this card explains the
+// model-server requirement and points at the in-browser AI path instead of
+// showing a red error.
+function OfflineCard({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div
+      className="rounded-xl p-8"
+      style={{
+        backgroundColor: "#FFFFFF",
+        border: "1px solid #E2E5EA",
+        borderLeft: "3px solid #2563EB",
+      }}
+    >
+      <p style={{ fontSize: "15px", fontWeight: 500, color: "#0F2A4A", marginBottom: "10px" }}>
+        The learner portrait runs on Gemma
+      </p>
+      <p style={{ fontSize: "13px", color: "#6B7280", lineHeight: 1.7, marginBottom: "10px" }}>
+        This page generates your portrait with Gemma through Ollama, and the
+        model server isn&apos;t reachable right now.
+      </p>
+      <ul
+        style={{
+          fontSize: "13px",
+          color: "#6B7280",
+          lineHeight: 1.7,
+          marginBottom: "16px",
+          paddingLeft: "18px",
+        }}
+      >
+        <li>
+          Running Beacon locally? Start <code>ollama serve</code> with{" "}
+          <code>gemma4:e2b</code> pulled, then retry.
+        </li>
+        <li>
+          On the hosted demo, the model server isn&apos;t part of this
+          deployment — Beacon is offline-first, so AI runs on the device, not
+          in the cloud. The in-browser path is live on the{" "}
+          <Link href="/review" style={{ color: "#2563EB" }}>
+            Review
+          </Link>{" "}
+          page (Settings &rarr; Browser AI), and the full portrait is in the
+          submission video.
+        </li>
+      </ul>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="px-4 py-2 rounded-lg border transition-colors hover:border-blue-500"
+        style={{ borderColor: "#E2E5EA", color: "#1F2937", fontSize: "13px" }}
+      >
+        Try again
+      </button>
     </div>
   );
 }
