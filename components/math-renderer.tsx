@@ -108,7 +108,16 @@ function processInlineMath(text: string): string {
   return parts.join("");
 }
 
+// Tags that show up when a small LLM regurgitates KaTeX/MathML output it saw
+// during training. Detected verbatim inside $...$ delimiters, these would
+// otherwise be re-typeset by KaTeX (strict:false makes it accept anything),
+// producing italic angle-bracket soup instead of refusing to render.
+const RENDERED_MATH_LEAK = /<(?:mrow|mfrac|mn|mo|mi|msup|msub|msqrt|math|semantics|annotation|span\s+class="katex)/i;
+
 function renderLatex(latex: string, displayMode: boolean): string {
+  if (RENDERED_MATH_LEAK.test(latex)) {
+    return escapeHtml(latex);
+  }
   try {
     return katex.renderToString(latex, {
       displayMode,

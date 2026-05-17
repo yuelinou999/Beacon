@@ -12,3 +12,8 @@ build/
 .turbo
 *.tsbuildinfo
 next-env.d.ts
+.gstack/
+
+# Video production scratch — HTML used to render b-roll frames for the
+# submission video. Not app code; the rendered video lives outside this repo.
+video-assets/

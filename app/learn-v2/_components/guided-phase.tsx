@@ -34,7 +34,13 @@ export default function GuidedPhaseView({
     if (subStep.type === "choice") {
       isCorrect = answer === subStep.correct;
     } else {
-      isCorrect = parseInt(answer, 10) === subStep.correct;
+      // parseFloat (not parseInt) so decimal answers don't get truncated
+      // to 0 — same bug as independent-phase.tsx had on the unit-rate
+      // 9/12 = 0.75 question.
+      const userAnswer = parseFloat(answer);
+      isCorrect =
+        Number.isFinite(userAnswer) &&
+        Math.abs(userAnswer - (subStep.correct as number)) < 1e-9;
     }
     setFeedback({ step: currentSubStep, correct: isCorrect });
     if (isCorrect && currentSubStep < 2) {

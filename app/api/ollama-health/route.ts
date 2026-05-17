@@ -1,4 +1,6 @@
-const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
+// Health route reads from the same shared config as every other route so
+// OLLAMA_HOST / OLLAMA_URL / OLLAMA_MODEL resolution stays in one place.
+import { OLLAMA_URL } from "@/lib/config";
 
 export async function GET() {
   try {

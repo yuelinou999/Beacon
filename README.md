@@ -176,8 +176,9 @@ Today this toggle routes the `/review` "Show me a different way" flow through th
 
 | Variable | Default | Notes |
 |---|---|---|
-| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_MODEL` | `gemma4:e2b` | Override the host model |
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama server URL. Matches Ollama's own conventional env var. |
+| `OLLAMA_URL` | — | Legacy alias for `OLLAMA_HOST`; honored when set so older shell configs keep working. `OLLAMA_HOST` takes precedence. |
+| `OLLAMA_MODEL` | `gemma4:e2b` | Override the host model. Default tracks the hackathon's Gemma 4 E2B release. |
 
 ---
 

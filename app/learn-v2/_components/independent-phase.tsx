@@ -36,8 +36,16 @@ export default function IndependentPhaseView({
     };
 
   const handleSubmit = (i: number) => () => {
-    const userAnswer = parseInt(answers[i], 10);
-    const isCorrect = userAnswer === independent.questions[i].answer;
+    // parseFloat (not parseInt) so decimal answers like 0.75 don't get
+    // truncated to 0 and silently judged wrong. The bank stores answers
+    // as numbers (e.g. 0.75 for "9 dollars / 12 pencils"); compare with
+    // a small epsilon to absorb floating-point representation drift
+    // (e.g. 0.1 + 0.2 !== 0.3 in IEEE 754) so cleanly-typed correct
+    // answers always land as correct.
+    const userAnswer = parseFloat(answers[i]);
+    const expected = independent.questions[i].answer;
+    const isCorrect =
+      Number.isFinite(userAnswer) && Math.abs(userAnswer - expected) < 1e-9;
     const next: ResultTuple = [...results] as ResultTuple;
     next[i] = isCorrect;
     setResults(next);

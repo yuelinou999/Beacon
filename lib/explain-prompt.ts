@@ -26,8 +26,14 @@ const SYSTEM_PROMPT_BASE =
   "student's first explanation didn't click. Try a different angle: a " +
   "visual, a physical analogy, smaller numbers first, or a step-by-step " +
   "checklist. Do NOT repeat the original explanation. Keep it under 3 " +
-  "short sentences. Plain prose only — no bullet lists, no markdown, no " +
-  "emoji, no preamble like \"Here's another way\".";
+  "short sentences. Plain prose only — no bullet lists, no markdown " +
+  "(no **bold**, no #headings, no `code`), no emoji, no preamble like " +
+  "\"Here's another way\". " +
+  "Write all math in plain text: fractions as a/b (e.g., 3/4, not \\frac{3}{4}), " +
+  "multiplication as a × b or a*b, powers as a^b. Do NOT use LaTeX commands " +
+  "(no \\frac, no \\cdot, no \\times, no $...$). Do NOT use HTML or MathML " +
+  "tags (no <mrow>, no <mfrac>, no <span class=\"katex\">). Just write the " +
+  "numbers and operators as a student would on paper.";
 
 export function buildExplainSystemPrompt(req: ExplainRequest): string {
   return SYSTEM_PROMPT_BASE + buildLanguageSuffix(req.language);
