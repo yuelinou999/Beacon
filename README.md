@@ -1,28 +1,44 @@
 # Beacon
 
-**A complete offline classroom — curriculum, lessons, practice, review, and family-facing analytics — running entirely on a single device. For places where the missing piece isn't bandwidth, but the teacher and the textbook.**
+**An offline mathematics classroom for a learner who has a device but no mathematics teacher within reach, no textbook in her language, and no reliable internet.** Hand-written grade-7 curriculum, deterministic practice and spaced-repetition review, a family-facing progress view, and a small Gemma model that is allowed to do a few specific things — and not others.
 
-Built for the **Kaggle Gemma 4 Good Hackathon** — *Future of Education* and *Ollama Special Technology Prize* tracks.
+Built for the **Kaggle Gemma 4 Good Hackathon** (May 2026), *Future of Education* and *Ollama Special Technology Prize* tracks. Designed around one learner: Xiaomei, 12, rural Yunnan, Mandarin-bilingual, a hand-me-down Android tablet that may or may not have wifi today.
+
+Live demo: https://beacon-xi-cyan.vercel.app · Three-minute video: https://youtu.be/KknRXptUryg · Learning-science rationale: [PEDAGOGY.md](./PEDAGOGY.md)
 
 ---
 
-## The strategic thesis
+## Where the model is allowed to act
 
-When most people think about underserved learners they think about **bandwidth**. Get the internet to the village and the rest follows. That framing misses the harder problem.
+Beacon is not "an AI tutor." It is a structured curriculum with deterministic rules, and a language model that is given a bounded set of jobs. The table is the current product behavior, route by route.
 
-In many parts of the world the bottleneck isn't connectivity — it's **people and materials**. Schools where one teacher covers four grades. Communities where no textbook exists in the child's first language. A curious 12-year-old with a question, and no one to ask and no book to re-read.
+| Job | Surface | What the model does | What it cannot do |
+|---|---|---|---|
+| Re-explain a wrong answer | `/review` → `/api/explain` | After the learner has read the **hand-written** explanation for that question and asks for another angle, the model re-explains the *same* problem, grounded in the lesson text (RAG). A second request gives a third angle. | Give the first explanation. Decide whether the answer was right. |
+| Side-panel tutor | `components/ai-panel.tsx` → `/api/assistant` | Free-form chat next to the lesson. *Guided* mode gives hints and asks leading questions; *Explain* mode gives full step-by-step explanations on request. | Change any stored state — it cannot touch mastery, the review queue, or the curriculum. |
+| Narrate a verdict | `/subject` → `/api/advisor` | Puts a readiness verdict (`ready / almost_ready / review_first`) into two warm sentences. | Change the verdict. It is computed in `lib/advisor.ts` from prerequisite mastery and passed to the model as a fact. |
+| Quiz post-mortem | `/quiz` → `/api/quiz/take` | Two or three sentences on strengths and weaknesses, from a per-skill breakdown the code already computed. | Score the quiz. |
+| Learner portrait | `/dashboard` → `/api/portrait` | Reads the learner's local profile and writes a narrative portrait: where time goes, behavior under difficulty, an independence trend, usage preferences, suggestions — with a required confidence level and an instruction to say "too few sessions to know" rather than invent. **This is the one surface where the model characterizes the learner, and it is shown in both the student and family views.** | Alter any number. The portrait is a reading of the log, not a source of it. |
+| Greeting, practice-prompt chips, translation | `/api/greeting`, `/api/suggestions`, `/api/translate` | Short generative text; runtime translation of UI and content into 7 languages. | — |
 
-Connectivity is logistics. **The real gap is the teacher and the textbook.**
+**Never the model:** which answer is correct (`answersMatch`, bank-authored answers), mastery updates (`lib/progress.ts`), the spaced-repetition schedule, the readiness verdict, and every number in the family view (`lib/efficacy.ts` — no LLM calls in the metrics path). Practice and quiz questions are all hand-authored; none are generated.
 
-Beacon is built for those places. A single tablet runs a complete classroom: hand-authored curriculum, scaffolded lessons, graded practice, spaced-repetition review, and a parent-facing analytics surface — all powered by Gemma running locally, with no requirement that the device be online today, tomorrow, or ever again. The model is the teacher; the bank is the textbook; the device is the classroom.
+## How the boundary got here
 
-Beacon is built around a single persona: **Xiaomei** — 12 years old, rural Yunnan, China, Mandarin-bilingual, learning on a hand-me-down Android tablet that may or may not have wifi today. Every design choice is downstream of what works for Xiaomei.
+It was not a principle we started with. The first build (April 27) had the model teaching the lesson, generating practice questions, and grading them. A nine-run spike on `gemma4:e2b` produced schema-valid JSON every time and semantically clean content seven times out of nine — one run gave `x = 2.5` for `2x + 5 = 15`; one was flagged because its answer index and its explanation did not agree (raw runs and the verifier replay are in `scripts/spike-output/lesson/`; commit `c10605f`). A math-verifier layer was written the next day and abandoned the day after that: for a learner who cannot yet check the explanation herself, a wrong answer in the primary teaching content is not something to catch downstream. Commit `f16bf97` moves all lesson content to a hand-written `curriculum.json`; practice and quiz banks followed (`483e3f7`, `7055ac6`), and the model's re-explanation was demoted behind the hand-written one (`2a9a906`). `lib/prompts.ts` and the tool definitions in `lib/ollama.ts` are the retired April design, kept in the tree as the record of that evaluation; no route imports them.
 
-Three gaps, three pillars:
+## What the rules assume — open questions
 
-1. **Closing the connectivity gap** — Gemma 2 2B runs in the browser tab via WebLLM (~1.6 GB, one-time download, then permanently cached in IndexedDB). Close the browser, turn wifi off entirely, reopen — the classroom still works. Verified end-to-end (`scripts/webllm-spike/` for the head-to-head A/B that picked the model).
-2. **Closing the teacher gap** — three fully-authored math units (200+ practice questions, hand-written alt-explanations on every one), spaced-repetition review, deterministic verdict + LLM-narrated assessment, curriculum-grounded RAG, three-layer wrong-answer remediation. The model and the curriculum together do the work a teacher would normally do. See [PEDAGOGY.md](./PEDAGOGY.md) for the learning-science mapping.
-3. **Closing the materials gap** — 7 supported languages (en/zh/hi/es/sw/fr/ar) via runtime translation; cultural anchors (mooncake / yuan) for learners whose textbook would otherwise be a foreign object; persona Xiaomei (rural Yunnan, China, 12 y/o, Mandarin-bilingual, old Android tablet) drives every difficulty and example choice.
+Moving judgment out of the model into code makes it auditable. It does not make it correct. The rules in `lib/progress.ts` and `lib/efficacy.ts` each carry an assumption about how learning shows up in behavior, and they were not chosen together:
+
+- Completing a lesson raises a topic to at least 0.3 mastery (completion is partial evidence).
+- A practice answer moves mastery +0.10 / −0.05 (every answer is reversible evidence about current ability).
+- A quiz score can only raise mastery (`max(existing, score/total)`; a low score does not count as counter-evidence).
+- A review success advances the next-review interval (1, 2, 4, 8, 16, 32 days) and a failure resets it, but never touches mastery.
+- The family view's "Mistakes corrected" counts a mistake as corrected after **one** successful review — a threshold chosen because a two-week pilot never reaches the higher tiers, not from a model of forgetting.
+- `error_type` on a wrong answer is currently a constant (`calculation` for practice, `concept` for quiz); the mistake taxonomy shown in `/review` and `/teacher` reflects the schema, not a judgment about the learner.
+
+Whether these local rules describe one coherent learner, and what evidence would tell us, is the question this project left open. It has been used by three children, two weeks each; that is enough to find bugs and not enough to evaluate any of the above.
 
 ---
 
@@ -185,15 +201,6 @@ Today this toggle routes the `/review` "Show me a different way" flow through th
 ## Privacy
 
 Beacon transmits no student data. There is no analytics SDK, no telemetry endpoint, no remote model. Profile data lives in `localStorage` on the student's device. Models live in either Ollama (host disk) or IndexedDB (browser cache). **Turn wifi off and Beacon still works.**
-
----
-
-## What Beacon is NOT
-
-- Not a chatbot wrapper. It's a structured curriculum with a tutor on top.
-- Not LLM-generated content. The 200+ practice/quiz questions and their alt-explanations are all hand-authored — see [PEDAGOGY.md §4](./PEDAGOGY.md).
-- Not pretending to evaluate learning via LLM. The Teacher View is fully deterministic; assessment verdicts are deterministic; LLM is used for warm communication of structured data, not to score the student.
-- Not online-only with an "offline mode" bolted on. Offline is the design center; the toggle just picks WHERE the model runs.
 
 ---
 
