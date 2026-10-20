@@ -1,8 +1,10 @@
 # Beacon — Pedagogical Foundation
 
+> **Historical note (October 2026).** This brief was written for the Kaggle Gemma 4 Good Hackathon in May 2026 and records the project's early design assumptions. The learning-science references below are the principles those choices drew on, not evidence that Beacon's design has been tested or validated with learners. For what the model currently can and cannot do, see the [README](./README.md).
+
 **One-page brief for the Kaggle Gemma 4 Good Hackathon — Future of Education + Ollama Special Tech tracks.**
 
-Beacon is built for **the places where the missing piece in education isn't bandwidth — it's the teacher and the textbook**. Connectivity is a logistics problem; pedagogy and materials are the harder problems. Other offline-first projects (rightly) close the connectivity gap. Beacon goes further: a single tablet running a complete classroom — curriculum, scaffolded lessons, graded practice, spaced-repetition review, and a parent-facing analytics surface — so a curious 12-year-old can learn even when no teacher and no textbook are within reach. Every design choice below is downstream of that claim, and every choice is grounded in established learning science.
+Beacon is built for **the places where the missing piece in education isn't bandwidth — it's the teacher and the textbook**. Connectivity is a logistics problem; pedagogy and materials are the harder problems. Other offline-first projects (rightly) close the connectivity gap. Beacon goes further: a single tablet running a complete classroom — curriculum, scaffolded lessons, graded practice, spaced-repetition review, and a parent-facing analytics surface — so a curious 12-year-old can learn even when no teacher and no textbook are within reach. Every design choice below is downstream of that claim, and each was informed by the learning-science principles cited alongside it. Those principles shaped the design; they are not evidence that Beacon itself has been tested with learners.
 
 ---
 
@@ -24,11 +26,11 @@ Beacon is built for **the places where the missing piece in education isn't band
 
 When a learner answers wrong on `/review`:
 
-- **Amber Layer 1** = the bank's pre-authored `alt_explanation` for that question. Hand-authored alongside the lesson, **deterministic**, always available, **never hallucinates**.
+- **Amber Layer 1** = the bank's pre-authored `alt_explanation` for that question. Hand-authored alongside the lesson, **deterministic**, and always available. Because it is written by a person rather than generated, it cannot contain model hallucinations, though it can still contain authoring errors. Layers 2 and 3 below are model-generated and can be wrong.
 - **Blue Layer 2** = Gemma generates a fresh explanation grounded in curriculum RAG (see §4).
 - **Purple Layer 3** = "Another angle from Gemma" — student-triggered second LLM take with the original Layer 1 explicitly excluded.
 
-**Why three layers and not just one LLM call**: the first response is *always* correct because it is hand-authored. The student never sees a confident wrong answer from the AI. The AI's role is to add additional angles, not to replace the lesson author. This is the "**deterministic core, LLM scaffolding**" pattern applied to remediation.
+**Why three layers and not just one LLM call**: the first response the student sees is hand-authored rather than generated, so a model error can only appear in an extra angle the student asks for, not in the first explanation. The AI's role is to add additional angles, not to replace the lesson author. This is the "**deterministic core, LLM scaffolding**" pattern applied to remediation.
 
 Backed by: multiple representations (Bruner — varying explanations of the same idea aids transfer); error-correction-as-instruction (Hattie's effect-size analysis ranks corrective feedback in the top decile of pedagogical interventions).
 

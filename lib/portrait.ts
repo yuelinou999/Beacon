@@ -150,7 +150,7 @@ const SCHEMA_DESCRIPTION = `{
     }
   },
   "profile": {
-    "learning_style":    { "label": "short label, e.g. 'procedural' or 'exploratory'", "description": "1-2 sentence description", "modality_scores": /* OPTIONAL */ [ { "modality": "Try it yourself", "score": 80 }, { "modality": "Guided examples", "score": 60 }, { "modality": "Next-day review", "score": 40 }, { "modality": "Long explanations", "score": 20 } ] },
+    "learning_style":    { "label": "short neutral phrase about which Beacon features were used, e.g. 'mostly practice' — never a learner type", "description": "1-2 sentences on which parts of Beacon the learner used and how often, citing session_logs / answer_history only" },
     "emerging_patterns": /* OPTIONAL */ [ { "trend": "rising | falling | stable", "description": "1 sentence" } ]   /* 0-3 items; replaces the older 'interests' field */
   },
   "suggestions": [
@@ -191,7 +191,7 @@ export function buildPortraitPrompt(profile: StudentProfile): {
     "explain in confidence.reason that you do not have enough data yet. " +
     "Do NOT invent specific behaviors that aren't supported by the data. " +
     "It is better to say \"too few sessions to know\" than to fabricate a " +
-    "learning style. " +
+    "description of the learner. " +
     "Required fields are required regardless of data sparsity. If unsure, " +
     "use the most neutral allowed value (e.g. direction: \"stable\", " +
     "level: \"low\") and explain the uncertainty in the corresponding " +
@@ -208,8 +208,10 @@ export function buildPortraitPrompt(profile: StudentProfile): {
     "- weekly_values (insights.independence_trend.weekly_values): emit only " +
     "when there are at least 2 distinct weeks of session data. Otherwise " +
     "OMIT (do NOT emit a flat array of zeros).\n" +
-    "- modality_scores (profile.learning_style.modality_scores): emit only " +
-    "when there are >=10 logged interactions. Otherwise OMIT.\n" +
+    "- profile.learning_style: despite the field name, describe ONLY which " +
+    "Beacon features the log shows were used. Never describe the learner as " +
+    "a type of learner (visual, auditory, hands-on, procedural, etc.) and " +
+    "never emit modality_scores.\n" +
     "- emerging_patterns (profile.emerging_patterns): 0-3 items; emit only " +
     "patterns the data actually supports. For sparse data, an empty array " +
     "or omission is the correct answer.\n" +
@@ -270,7 +272,7 @@ const VALID_LEVELS: Confidence[] = ["high", "medium", "low"];
 
 const DEFAULT_LEARNING_STYLE: PortraitProfileCard = {
   label: "undetermined",
-  description: "Not enough data to determine learning style.",
+  description: "Not enough activity yet to describe how Beacon has been used.",
 };
 
 const DEFAULT_METADATA: PortraitMetadata = {
